@@ -1,4 +1,5 @@
 from Tkinter import *
+import Tkinter as tk  # gives tk namespace
 
 frames=[]
 current = 0
@@ -116,21 +117,21 @@ root=Tk()
 root.wm_geometry("%dx%d+%d+%d" % (sizex, sizey, posx, posy))
 
 myframe=Frame(root,relief=GROOVE,width=sizex,height=sizey,bd=1)
-myframe.grid(row = 2, column=0)
+myframe.grid(row = 3, column=0)
 
 myframe.place(x=0,y=0)
 canvas=Canvas(myframe)
-
-
-
-# create the listbox (note that size is in characters)
-listbox1 = tk.Listbox(root, width=50, height=6)
+listbox1 = tk.Listbox(canvas, width=50, height=6)
 listbox1.grid(row=0, column=0)
  
 # create a vertical scrollbar to the right of the listbox
 yscroll = tk.Scrollbar(command=listbox1.yview, orient=tk.VERTICAL)
 yscroll.grid(row=0, column=1, sticky=tk.N+tk.S)
 listbox1.configure(yscrollcommand=yscroll.set)
+
+
+
+# create the listbox (note that size is in characters)
 
 
 
@@ -144,6 +145,18 @@ canvas.pack(side="left")
 canvas.create_window((0,0),window=frame,anchor='nw')
 frame.bind("<Configure>",myfunction)
 
+
+
+
+
+
+
+
+
+
+
+
+
 bt1 = Button(frame, text="prev", command=decr)
 bt1.grid(row = 0, column=0)
 bt2 = Button(frame, text="suiv", command=incr)
@@ -151,6 +164,16 @@ bt2.grid(row = 0, column=1)
 bt3 = Button(frame, text="finish")
 bt3.grid(row = 0, column=2)
 frames.extend([Frame(frame,bg='black', padx=20, pady = 20), Frame(frame, bg='green', padx=20, pady = 20), Frame(frame,bg='red', padx=20, pady = 20)])
+
+
+
+
+
+
+
+
+
+
 
 ButtonImage = PhotoImage(file='img.png')
 
@@ -163,6 +186,12 @@ for i in range(0,50):
 
 b2 = Button(frames[2], text="test")
 b2.grid(row = 0, column = 0)
+
+
+
+
+
+
 
 update.last = -1
 update()

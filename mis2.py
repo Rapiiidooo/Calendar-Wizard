@@ -13,24 +13,14 @@ imageCalender=["format/calendrier-format-bancaire.png",
 "format/calendrier-format-mural-double.png",
 "format/calendrier-format-poster.png"]
 
-class Application(Frame):     
-    current = 0
+class Application(Frame):
     _max = 3
+    current = 0
 
-    def incr():
-	    global current
-	    current = current + 1
-	    update()
-
-    def decr():
-	    global current
-	    current = current - 1
-	    update()
-
+    
     def update(self):
-	    global current
-	    if(current <= 0):
-		    current = 0
+	    if(self.current <= 0):
+		    self.current = 0
 		    self.bt1.config(state=DISABLED)
 		    self.bt3.config(state=DISABLED)
 	    else:
@@ -43,11 +33,20 @@ class Application(Frame):
 			    self.bt3.config(state=DISABLED)
 			    self.bt1.config(state=ACTIVE)
 
-	    if(update.last != -1):
-		    frames[update.last].grid_forget()
-	    frames[current].grid(row = 1, column=0)
-	    update.last = current
-            
+	    if(self.last != -1):
+		    self.frames[self.last].grid_forget()
+	    #app.frames[current].grid(row = 1, column=0)
+	    self.last = self.current
+
+
+    def increment():
+	    self.current = self.current + 1
+  
+    def decrement(self):
+	    self.current
+	    self.current = self.current - 1
+	    update()
+
     def get_list(self,event):
         # get selected line index
         index = self.listbox1.curselection()[0]
@@ -60,10 +59,18 @@ class Application(Frame):
         self.grid()
         self.master.title("CalanderWizard :for")
 
+
+
+        self.frames=[]
+       
+
+
+
+
         for r in range(6):
             self.master.rowconfigure(r, weight=1)    
         self.master.columnconfigure(0, weight=1)
-        self.bt1=Button(master, text="Precedent")
+        self.bt1=Button(master, text="Precedent",command=self.increment)
         self.bt1.grid(row=6,column=0,sticky=E+W)
         self.master.columnconfigure(1, weight=1)
         self.bt2=Button(master, text="Suivant")
@@ -79,6 +86,7 @@ class Application(Frame):
             self.listbox1.insert(tk.END, item)
         self.listbox1.bind('<ButtonRelease-1>', self.get_list)
         self.listbox1.pack()
+
 
         Frame2 = Frame(master, bg="red")
         Frame2.grid(row = 3, column = 0, rowspan = 3, columnspan = 1, sticky = W+E+N+S)
@@ -97,7 +105,14 @@ class Application(Frame):
         self.previewCanvas = Canvas(Frame3,bg="green",width=self.photo.width(), height=self.photo.height())
         self.myimg=self.previewCanvas.create_image(0, 0, anchor=NW, image=self.photo)
         self.previewCanvas.pack()
-       
+        
+
+        master2 = Frame(self.frames, bg="yellow")
+        
+        self.frames.extend([master,master2])
+        self.update.last = -1
+        self.update()
+
 
 
 root = Tk()

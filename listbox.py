@@ -1,5 +1,6 @@
- 
+from Tkinter import *
 import Tkinter as tk  # gives tk namespace
+
 def add_item():
     """
     add the text in the Entry widget to the end of the listbox
@@ -92,7 +93,34 @@ chem_list = [chem.rstrip() for chem in chem_list]
 root = tk.Tk()
 root.title("Listbox Operations")
 # create the listbox (note that size is in characters)
-listbox1 = tk.Listbox(root, width=50, height=6)
+
+
+
+fenetre=Frame(root, borderwidth=2, relief=GROOVE)
+
+# frame 1
+Frame1 = Frame(fenetre, borderwidth=2, relief=GROOVE)
+Frame1.pack(side=LEFT, padx=30, pady=30)
+
+# frame 2
+Frame2 = Frame(fenetre, borderwidth=2, relief=GROOVE)
+Frame2.pack(side=LEFT, padx=10, pady=10)
+
+# frame 3 dans frame 2
+Frame3 = Frame(Frame2, bg="white", borderwidth=2, relief=GROOVE)
+Frame3.pack(side=RIGHT, padx=5, pady=5)
+
+# Ajout de labels
+Label(Frame1, text="Frame 1").pack(padx=10, pady=10)
+Label(Frame2, text="Frame 2").pack(padx=10, pady=10)
+Label(Frame3, text="Frame 3",bg="white").pack(padx=10, pady=10)
+
+
+
+
+
+
+listbox1 = tk.Listbox(Frame1, width=50, height=6)
 listbox1.grid(row=0, column=0)
  
 # create a vertical scrollbar to the right of the listbox
