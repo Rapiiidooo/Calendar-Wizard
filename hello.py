@@ -1,4 +1,4 @@
-from Tkinter import *
+from tkinter import *
 
 frames=[]
 current = 0

@@ -1,5 +1,5 @@
-from Tkinter import *
-import Tkinter as tk  # gives tk namespace
+from tkinter import *
+import tkinter as tk  # gives tk namespace
 sizex = 400
 sizey = 300
 posx  = 100
@@ -16,36 +16,37 @@ imageCalender=["format/calendrier-format-bancaire.png",
 class Application(Frame):
     _max = 3
     current = 0
-
+    last = -1
     
     def update(self):
-	    if(self.current <= 0):
-		    self.current = 0
-		    self.bt1.config(state=DISABLED)
-		    self.bt3.config(state=DISABLED)
-	    else:
-		    if(current >= _max - 1):
-			    current = _max - 1
-			    self.bt2.config(state=DISABLED)
-			    self.bt3.config(state=ACTIVE)
-		    else:
-			    self.bt2.config(state=ACTIVE)
-			    self.bt3.config(state=DISABLED)
-			    self.bt1.config(state=ACTIVE)
+        if(self.current <= 0):
+            self.current = 0
+            self.bt1.config(state=DISABLED)
+            self.bt3.config(state=DISABLED)
+        else:
+            if(self.current >= _max - 1):
+                self.current = _max - 1
+                self.bt2.config(state=DISABLED)
+                self.bt3.config(state=ACTIVE)
+            else:
+                self.bt2.config(state=ACTIVE)
+                self.bt3.config(state=DISABLED)
+                self.bt1.config(state=ACTIVE)
+        if(self.last != -1):
+            self.frames[self.last].grid_forget()
+        tmp= self.frames[self.current]
+#	    tmp.grid(row = 1, column=0)
+        self.last=self.current
 
-	    if(self.last != -1):
-		    self.frames[self.last].grid_forget()
-	    #app.frames[current].grid(row = 1, column=0)
-	    self.last = self.current
+    def increment(self):
+	    self.current
+	    self.current = self.current - 1
+	    self.update()
 
-
-    def increment():
-	    self.current = self.current + 1
-  
     def decrement(self):
 	    self.current
 	    self.current = self.current - 1
-	    update()
+	    self.update()
 
     def get_list(self,event):
         # get selected line index
@@ -70,10 +71,10 @@ class Application(Frame):
         for r in range(6):
             self.master.rowconfigure(r, weight=1)    
         self.master.columnconfigure(0, weight=1)
-        self.bt1=Button(master, text="Precedent",command=self.increment)
+        self.bt1=Button(master, text="Precedent",command=self.decrement)
         self.bt1.grid(row=6,column=0,sticky=E+W)
         self.master.columnconfigure(1, weight=1)
-        self.bt2=Button(master, text="Suivant")
+        self.bt2=Button(master, text="Suivant",command=self.increment)
         self.bt2.grid(row=6,column=1,sticky=E+W)        
         self.master.columnconfigure(2, weight=3)
         self.bt3=Button(master, text="Termine")
@@ -84,7 +85,7 @@ class Application(Frame):
         self.listbox1 = tk.Listbox(Frame1)
         for item in typeOfCalender:
             self.listbox1.insert(tk.END, item)
-        self.listbox1.bind('<ButtonRelease-1>', self.get_list)
+        self.listbox1.bind('<<ListboxSelect>>', self.get_list)
         self.listbox1.pack()
 
 
@@ -108,9 +109,9 @@ class Application(Frame):
         
 
         master2 = Frame(self.frames, bg="yellow")
+        master1 = Frame(self.frames, bg="orange")
         
-        self.frames.extend([master,master2])
-        self.update.last = -1
+        self.frames.extend([master1,master2])
         self.update()
 
 

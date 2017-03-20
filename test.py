@@ -9,6 +9,7 @@ class MainApplication(tk.Frame):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def _on_mousewheel(self, event):
+        print(datetime.datetime.now())
         tup = self.scrollbar_middle.get()
         if(tup[0] != 0 or tup[1] != 1):
             self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
