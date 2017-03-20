@@ -1,5 +1,5 @@
-from Tkinter import *
-import Tkinter as tk  # gives tk namespace
+from tkinter import *
+import tkinter as tk  # gives tk namespace
 
 frames=[]
 current = 0

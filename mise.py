@@ -1,5 +1,5 @@
-from Tkinter import *
-import Tkinter as tk  # gives tk namespace
+from tkinter import *
+import tkinter as tk  # gives tk namespace
 
 def get_list(event):
     # get selected line index
@@ -47,7 +47,7 @@ listbox1 = tk.Listbox(Frame0)
 for item in typeOfCalender:
     listbox1.insert(tk.END, item)
 
-listbox1.bind('<ButtonRelease-1>', get_list)
+listbox1.bind('<<ListboxSelect>>', get_list)
 listbox1.pack()
 # choix de model
 

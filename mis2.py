@@ -1,5 +1,5 @@
-from Tkinter import *
-import Tkinter as tk  # gives tk namespace
+from tkinter import *
+import tkinter as tk  # gives tk namespace
 sizex = 400
 sizey = 300
 posx  = 100
@@ -40,7 +40,7 @@ class Application(Frame):
 
     def increment(self):
 	    self.current
-	    self.current = self.current - 1
+	    self.current = self.current + 1
 	    self.update()
 
     def decrement(self):
@@ -71,7 +71,7 @@ class Application(Frame):
         for r in range(6):
             self.master.rowconfigure(r, weight=1)    
         self.master.columnconfigure(0, weight=1)
-        self.bt1=Button(master, text="Precedent",command=self.decrement)
+        self.bt1=Button(master, text="Precedent",command=decrement.self)
         self.bt1.grid(row=6,column=0,sticky=E+W)
         self.master.columnconfigure(1, weight=1)
         self.bt2=Button(master, text="Suivant",command=self.increment)
@@ -85,7 +85,7 @@ class Application(Frame):
         self.listbox1 = tk.Listbox(Frame1)
         for item in typeOfCalender:
             self.listbox1.insert(tk.END, item)
-        self.listbox1.bind('<ButtonRelease-1>', self.get_list)
+        self.listbox1.bind('<<ListboxSelect>>', self.get_list)
         self.listbox1.pack()
 
 
@@ -109,8 +109,13 @@ class Application(Frame):
         
 
         master2 = Frame(self.frames, bg="yellow")
+        master1 = Frame(self.frames, bg="orange")
         
+<<<<<<< HEAD
         self.frames.extend([master,master2])
+=======
+        self.frames.extend([master1,master2])
+>>>>>>> 8026a45235939da7faec1e6dc01749d0ed945c12
         self.update()
 
 
