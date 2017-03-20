@@ -38,7 +38,7 @@ def update():
 	if(update.last != -1):
 		frames[update.last].grid_forget()
 	frames[current].grid(row = 1, column=0)
-	update.last = current
+	self.update.last = self.current
 
 
 def myfunction(event):
@@ -163,7 +163,7 @@ bt2 = Button(frame, text="suiv", command=incr)
 bt2.grid(row = 0, column=1)
 bt3 = Button(frame, text="finish")
 bt3.grid(row = 0, column=2)
-frames.extend([Frame(frame,bg='black', padx=20, pady = 20), Frame(frame, bg='green', padx=20, pady = 20), Frame(frame,bg='red', padx=20, pady = 20)])
+frames = [Frame(frame,bg='black', padx=20, pady = 20), Frame(frame, bg='green', padx=20, pady = 20), Frame(frame,bg='red', padx=20, pady = 20)]
 
 
 
