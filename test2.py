@@ -52,27 +52,29 @@ class MainApplication(tk.Frame):
 
     def increment(self):
 
-	    self.current = self.current + 1
-	    self.update()
+        self.current = self.current + 1
+        self.update()
 
     def decrement(self):
-	    self.current = self.current - 1
-	    self.update()
+        self.current = self.current - 1
+        self.update()
 
     def _event_canvas(self, event):
-        #print(datetime.datetime.now())
         tup = self.scrollbar_middle.get()
-        print(tup)
-        # if(tup[0] <= 0):
-        #     self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        #if(tup[0] != 0 or tup[1] != 1):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        if(tup[0] == 0 and tup[1] == 1):
+            self.canvas.yview_moveto(0.0)
 
     def _on_mousewheel(self, event):
+        if(event.num == 5):
+            event.delta = -120;
+        elif(event.num == 4):
+            event.delta = 120;
         print(datetime.datetime.now())
         tup = self.scrollbar_middle.get()
         if(tup[0] != 0 or tup[1] != 1):
             self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        print(event.num)
 
     def get_list(self,event):
         # get selected line index
@@ -104,7 +106,9 @@ class MainApplication(tk.Frame):
         self.scrollbar_middle.pack(side="right", fill="y")
         self.canvas.pack(side="left")
         self.canvas.create_window((0,0),window=self.canvas_frame,anchor='nw')
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        #self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        self.canvas.bind_all("<Button-4>", self._on_mousewheel)
+        self.canvas.bind_all("<Button-5>", self._on_mousewheel)
 
     def make_bottom(self):
         self.bottom = Frame(self, bg='red')
