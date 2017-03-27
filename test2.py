@@ -1,6 +1,7 @@
 from Tkinter import *
 import Tkinter as tk
 import datetime
+import sys
 
 typeOfCalender=["bancaire","bureau","magnetique","mural","double-mural","poster"]
 imageCalender=["format/calendrier-format-bancaire.png",
@@ -106,9 +107,11 @@ class MainApplication(tk.Frame):
         self.scrollbar_middle.pack(side="right", fill="y")
         self.canvas.pack(side="left")
         self.canvas.create_window((0,0),window=self.canvas_frame,anchor='nw')
-        #self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
-        self.canvas.bind_all("<Button-4>", self._on_mousewheel)
-        self.canvas.bind_all("<Button-5>", self._on_mousewheel)
+	if sys.platform == "Windows":
+             self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+	elif sys.platform == "Linux":
+            self.canvas.bind_all("<Button-4>", self._on_mousewheel)
+            self.canvas.bind_all("<Button-5>", self._on_mousewheel)
 
     def make_bottom(self):
         self.bottom = Frame(self, bg='red')
