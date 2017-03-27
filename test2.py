@@ -114,9 +114,9 @@ class MainApplication(tk.Frame):
             self.bottom_button[i].grid(row=0, column=i)
 
     def make_frames(self):
-        frame1 = Frame(self.canvas_frame, bg = 'black', padx=20, pady = 20)
+        frame3 = Frame(self.canvas_frame, bg = 'black', padx=20, pady = 20)
         for i in range(0, 20):
-            tmp = Button(frame1, text="osef")
+            tmp = Button(frame3, text="osef")
             tmp.grid(row=i, column=0)
 
 
@@ -153,9 +153,30 @@ class MainApplication(tk.Frame):
         ########### ELEMENT MIDDLE FRAME 1
 
 
-        frame3 = Frame(self.canvas_frame, bg = 'yellow', padx=20, pady = 20)
-        lab3 = Label(frame3, text="salut")
+
+
+        frame1 = Frame(self.canvas_frame, bg = 'yellow', padx=20, pady = 20)
+        lab3 = Label(frame1, text="Parametre")
         lab3.pack()
+        Frame2_checkbutton = Frame(frame1, bg="blue")
+        Frame2_checkbutton.grid(row = 0, column = 0, rowspan = 3, columnspan = 2, sticky = W+E+N+S) 
+
+        self.var1 = IntVar()
+        self.var2 = IntVar()
+        self.var3 = IntVar()
+        self.var4 = IntVar()
+        c1 = Checkbutton(frame1, text="Numero de jour", variable=self.var1) #command=self.cb)
+        c2 = Checkbutton(frame1, text="Nom de jour entier", variable=self.var2) #command=self.cb)
+        c3 = Checkbutton(frame1, text="Afficher mois suivant", variable=self.var3) #command=self.cb)
+        c4 = Checkbutton(frame1, text="Afficher mois precedent", variable=self.var4) #command=self.cb)
+
+        c1.pack()
+        c2.pack()
+        c3.pack()
+        c4.pack()
+
+        s = Spinbox(frame1, from_=2, to=100)
+        s.pack()
 
         
         self.frames = [frame1, frame2, frame3]
