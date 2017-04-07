@@ -1,206 +1,107 @@
-from tkinter import *
-import tkinter as tk  # gives tk namespace
-
-frames=[]
-current = 0
-_max = 3
-sizex = 800
-sizey = 600
-posx  = 100
-posy  = 100
-
-def incr():
-	global current
-	current = current + 1
-	update()
-
-def decr():
-	global current
-	current = current - 1
-	update()
-
-def update():
-	global current
-	if(current <= 0):
-		current = 0
-		bt1.config(state=DISABLED)
-		bt3.config(state=DISABLED)
-	else:
-		if(current >= _max - 1):
-			current = _max - 1
-			bt2.config(state=DISABLED)
-			bt3.config(state=ACTIVE)
-		else:
-			bt2.config(state=ACTIVE)
-			bt3.config(state=DISABLED)
-			bt1.config(state=ACTIVE)
-
-	if(update.last != -1):
-		frames[update.last].grid_forget()
-	frames[current].grid(row = 1, column=0)
-	self.update.last = self.current
+﻿from Tkinter import *
+import Tkinter as tk  # gives tk namespace
+import ttk
+from tkColorChooser import askcolor
 
 
-def myfunction(event):
-    canvas.configure(scrollregion=canvas.bbox("all"),width=sizex-20,height=sizey-5)
+def getColor():
+        color = askcolor() 
+        print color
 
-def add_item():
-    """
-    add the text in the Entry widget to the end of the listbox
-    """
-    listbox1.insert(tk.END, enter1.get())
-def delete_item():
-    """
-    delete a selected line from the listbox
-    """
-    try:
-        # get selected line index
-        index = listbox1.curselection()[0]
-        listbox1.delete(index)
-    except IndexError:
-        pass
- 
-def get_list(event):
-    """
-    function to read the listbox selection
-    and put the result in an entry widget
-    """
-    # get selected line index
-    index = listbox1.curselection()[0]
-    # get the line's text
-    seltext = listbox1.get(index)
-    # delete previous text in enter1
-    enter1.delete(0, 50)
-    # now display the selected text
-    enter1.insert(0, seltext)
-def set_list(event):
-    """
-    insert an edited line from the entry widget
-    back into the listbox
-    """
-    try:
-        index = listbox1.curselection()[0]
-        # delete old listbox line
-        listbox1.delete(index)
-    except IndexError:
-        index = tk.END
-    # insert edited item back into listbox1 at index
-    listbox1.insert(index, enter1.get())
-def sort_list():
-    """
-    function to sort listbox items case insensitive
-    """
-    temp_list = list(listbox1.get(0, tk.END))
-    temp_list.sort(key=str.lower)
-    # delete contents of present listbox
-    listbox1.delete(0, tk.END)
-    # load listbox with sorted data
-    for item in temp_list:
-        listbox1.insert(tk.END, item)
-def save_list():
-    """
-    save the current listbox contents to a file
-    """
-    # get a list of listbox lines
-    temp_list = list(listbox1.get(0, tk.END))
-    # add a trailing newline char to each line
-    temp_list = [chem + '\n' for chem in temp_list]
-    # give the file a different name
-    fout = open("chem_data2.txt", "w")
-    fout.writelines(temp_list)
-    fout.close()
+def make_frames(self):
+    self.wm_geometry("%dx%d+%d+%d" % (400, 400, 0, 0))
+    Label(self, text="Font",bg="blue").pack(padx=10, pady=10)
+    
+    p0 = PanedWindow(self, orient=HORIZONTAL)
+    p1 = PanedWindow(self, orient=HORIZONTAL)
+    p2 = PanedWindow(self, orient=HORIZONTAL)
+    p3 = PanedWindow(self, orient=HORIZONTAL)
+    p4 = PanedWindow(self, orient=HORIZONTAL)
+
+    combo1 = ttk.Combobox(p1, width=10);
+    combo2 = ttk.Combobox(p2, width=10);
+    combo3 = ttk.Combobox(p3, width=10);
+    combo4 = ttk.Combobox(p4, width=10);
+
+    combo1['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+    combo1.current(1)
+    combo1.bind("<<ComboboxSelected>>")
+
+    combo2['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+    combo2.current(1)
+    combo2.bind("<<ComboboxSelected>>")
+
+    combo3['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+    combo3.current(1)
+    combo3.bind("<<ComboboxSelected>>")
+
+    combo4['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+    combo4.current(1)
+    combo4.bind("<<ComboboxSelected>>")
+
+    spb1 = Spinbox(p1, from_=2, to=100, width=3)
+    spb2 = Spinbox(p2, from_=2, to=100, width=3)
+    spb3 = Spinbox(p3, from_=2, to=100, width=3)
+    spb4 = Spinbox(p4, from_=2, to=100, width=3)
+
+    colorpickerbtn1 = Button(p1,text='Font Color', command=getColor)
+    colorpickerbtn2 = Button(p2,text='Font Color', command=getColor)
+    colorpickerbtn3 = Button(p3,text='Font Color', command=getColor)
+    colorpickerbtn4 = Button(p4,text='Font Color', command=getColor)
+
+    Label(self, text="Year").pack()
+    p1.add(combo1)
+    p1.add(spb1)
+    p1.add(colorpickerbtn1)
+    p1.pack()
+
+    Label(self, text="Month").pack()
+    p2.add(combo2)
+    p2.add(spb2)
+    p2.add(colorpickerbtn2)
+    p2.pack()
+
+    Label(self, text="Week").pack()
+    p3.add(combo3)
+    p3.add(spb3)
+    p3.add(colorpickerbtn3)
+    p3.pack()
+
+    Label(self, text="Day").pack()
+    p4.add(combo4)
+    p4.add(spb4)
+    p4.add(colorpickerbtn4)
+    p4.pack()
+
+    #spinbox.place(relx=1, x=1, y=1, anchor=NE)
+
+
+    # frame3 = Frame(self.canvas_frame, bg = 'black', padx=20, pady = 20)
+    # Frame3_list = Frame(frame3, bg="blue")
+    # Frame3_list.grid(row = 0, column = 0, rowspan = 1, columnspan = 2, sticky = W+E+N+S)  
+    # Label(Frame3_list, text="Font",bg="blue").pack(padx=10, pady=10)
+    # self.fontVar = StringVar()
+    # self.Frame3_combo = ttk.Combobox(Frame3_list, textvariable=self.fontVar)
+    # self.Frame3_combo['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+    # self.Frame3_combo.current(1)
+    # self.Frame3_combo.bind("<<ComboboxSelected>>",self.selectFont)
+    # self.Frame3_combo.pack()
+    # Frame3_spinbox2 = Spinbox(Frame3_list, from_=8, to=100, width=3)
+    # Frame3_spinbox2.pack()
+    # #Frame3_spinbox2.place(relx=1, x=1, y=1, anchor=NE)
+
+    # Frame3_size = Frame(frame3, bg="blue")
+    # Frame3_size.grid(row = 1, column = 0, rowspan = 1, columnspan = 3, sticky = W+E+N+S)  
+    # Frame3_spinbox = Spinbox(Frame3_size, from_=2, to=100)
+    # Frame3_spinbox.pack()
+    # Frame3_colorpicker=Button(Frame3_size,text='Font Color', command=self.getColor)
+    # Frame3_colorpicker.pack()
  
 
 
+fenetre = Tk()
 
-root=Tk()
-root.wm_geometry("%dx%d+%d+%d" % (sizex, sizey, posx, posy))
+make_frames(fenetre)
 
-myframe=Frame(root,relief=GROOVE,width=sizex,height=sizey,bd=1)
-myframe.grid(row = 3, column=0)
+fenetre.mainloop()
 
-myframe.place(x=0,y=0)
-canvas=Canvas(myframe)
-listbox1 = tk.Listbox(canvas, width=50, height=6)
-listbox1.grid(row=0, column=0)
- 
-# create a vertical scrollbar to the right of the listbox
-yscroll = tk.Scrollbar(command=listbox1.yview, orient=tk.VERTICAL)
-yscroll.grid(row=0, column=1, sticky=tk.N+tk.S)
-listbox1.configure(yscrollcommand=yscroll.set)
-
-
-
-# create the listbox (note that size is in characters)
-
-
-
-
-frame=Frame(canvas)
-myscrollbar=Scrollbar(myframe,orient="vertical",command=canvas.yview)
-canvas.configure(yscrollcommand=myscrollbar.set)
-
-myscrollbar.pack(side="right",fill="y")
-canvas.pack(side="left")
-canvas.create_window((0,0),window=frame,anchor='nw')
-frame.bind("<Configure>",myfunction)
-
-
-
-
-
-
-
-
-
-
-
-
-
-bt1 = Button(frame, text="prev", command=decr)
-bt1.grid(row = 0, column=0)
-bt2 = Button(frame, text="suiv", command=incr)
-bt2.grid(row = 0, column=1)
-bt3 = Button(frame, text="finish")
-bt3.grid(row = 0, column=2)
-frames = [Frame(frame,bg='black', padx=20, pady = 20), Frame(frame, bg='green', padx=20, pady = 20), Frame(frame,bg='red', padx=20, pady = 20)]
-
-
-
-
-
-
-
-
-
-
-
-ButtonImage = PhotoImage(file='img.png')
-
-taCanvas = Canvas(frames[0])
-taCanvas.create_image(300/2,231/2,image=ButtonImage)
-taCanvas.pack()
-for i in range(0,50):
-	b2 = Button(frames[1], text="test")
-	b2.grid(row = i, column = 0)
-
-b2 = Button(frames[2], text="test")
-b2.grid(row = 0, column = 0)
-
-
-
-
-
-
-
-update.last = -1
-update()
-
-def _on_mousewheel(event):
-	tup = myscrollbar.get()
-	if(tup[0] != 0 or tup[1] != 1):
-		canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-
-canvas.bind_all("<MouseWheel>", _on_mousewheel)   
-
-root.mainloop()

@@ -141,8 +141,13 @@ localization = {
      ['Måndag', 'Tisdag','Onsdag', 'Torsdag','Fredag', 'Lördag','Söndag']]
 }
 
-typeOfCalender=["bancaire","bureau","magnetique","mural","double-mural","poster"]
-imageCalender=["format/calendrier-format-bancaire.png",
+typeOfCalender = {
+#'French' :
+    'bancaire', 'bureau', 'magnetique', 'mural', 'double-mural', 'poster'
+}
+
+imageCalender = [
+"format/calendrier-format-bancaire.png",
 "format/calendrier-format-bureau.png",
 "format/calendrier-format-magnetique.png",
 "format/calendrier-format-mural.png",
@@ -288,20 +293,69 @@ class MainApplication(tk.Frame):
     def make_frames(self):
         frame3 = Frame(self.canvas_frame, bg = 'black', padx=20, pady = 20)
         Frame3_list = Frame(frame3, bg="blue")
-        Frame3_list.grid(row = 0, column = 0, rowspan = 1, columnspan = 1, sticky = W+E+N+S)  
-        Label(Frame3_list, text="Font",bg="blue").pack(padx=10, pady=10)
-        self.fontVar = StringVar()
-        self.Frame3_combo = ttk.Combobox(Frame3_list, textvariable=self.fontVar)
-        self.Frame3_combo['values'] = ('Arial', 'Arial Bold', 'Arial Black')
-        self.Frame3_combo.current(1)
-        self.Frame3_combo.bind("<<ComboboxSelected>>",self.selectFont)
-        self.Frame3_combo.pack()
-        Frame3_size = Frame(frame3, bg="blue")
-        Frame3_size.grid(row = 1, column = 0, rowspan = 1, columnspan = 3, sticky = W+E+N+S)  
-        Frame3_spinbox = Spinbox(Frame3_size, from_=2, to=100)
-        Frame3_spinbox.pack()    
-        Frame3_colorpicker=Button(Frame3_size,text='Font Color', command=self.getColor)
-        Frame3_colorpicker.pack()
+        Frame3_list.grid(row = 0, column = 0, rowspan = 1, columnspan = 2, sticky = W+E+N+S)  
+        Label(Frame3_list, text="Font",bg="blue").pack()
+    
+        p0 = PanedWindow(Frame3_list, orient=HORIZONTAL)
+        p1 = PanedWindow(Frame3_list, orient=HORIZONTAL)
+        p2 = PanedWindow(Frame3_list, orient=HORIZONTAL)
+        p3 = PanedWindow(Frame3_list, orient=HORIZONTAL)
+        p4 = PanedWindow(Frame3_list, orient=HORIZONTAL)
+    
+        combo1 = ttk.Combobox(p1, width=10);
+        combo2 = ttk.Combobox(p2, width=10);
+        combo3 = ttk.Combobox(p3, width=10);
+        combo4 = ttk.Combobox(p4, width=10);
+    
+        combo1['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+        combo1.current(1)
+        combo1.bind("<<ComboboxSelected>>")
+    
+        combo2['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+        combo2.current(1)
+        combo2.bind("<<ComboboxSelected>>")
+    
+        combo3['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+        combo3.current(1)
+        combo3.bind("<<ComboboxSelected>>")
+    
+        combo4['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+        combo4.current(1)
+        combo4.bind("<<ComboboxSelected>>")
+    
+        spb1 = Spinbox(p1, from_=2, to=100, width=3)
+        spb2 = Spinbox(p2, from_=2, to=100, width=3)
+        spb3 = Spinbox(p3, from_=2, to=100, width=3)
+        spb4 = Spinbox(p4, from_=2, to=100, width=3)
+    
+        colorpickerbtn1 = Button(p1,text='Font Color', command=self.getColor)
+        colorpickerbtn2 = Button(p2,text='Font Color', command=self.getColor)
+        colorpickerbtn3 = Button(p3,text='Font Color', command=self.getColor)
+        colorpickerbtn4 = Button(p4,text='Font Color', command=self.getColor)
+    
+        Label(Frame3_list, text="Year").pack()
+        p1.add(combo1)
+        p1.add(spb1)
+        p1.add(colorpickerbtn1)
+        p1.pack()
+    
+        Label(Frame3_list, text="Month").pack()
+        p2.add(combo2)
+        p2.add(spb2)
+        p2.add(colorpickerbtn2)
+        p2.pack()
+    
+        Label(Frame3_list, text="Week").pack()
+        p3.add(combo3)
+        p3.add(spb3)
+        p3.add(colorpickerbtn3)
+        p3.pack()
+    
+        Label(Frame3_list, text="Day").pack()
+        p4.add(combo4)
+        p4.add(spb4)
+        p4.add(colorpickerbtn4)
+        p4.pack()
 
 
 
@@ -368,9 +422,10 @@ class MainApplication(tk.Frame):
         Label(Frame1_list, text="Models",bg="blue").pack(padx=10, pady=10)
         self.Frame1_listbox = tk.Listbox(Frame1_list)
         for item in typeOfCalender:
-            self.Frame1_listbox.insert(tk.END, item)
+            self.Frame1_listbox.insert(END, item)
         self.Frame1_listbox.bind('<<ListboxSelect>>', self.get_list)
         self.Frame1_listbox.pack()
+
 
         Frame1_list2 = Frame(frame1, bg="yellow",width=20)       
         Frame1_list2.grid(row = 0, column = 1,columnspan = 2,sticky = W+E+N+S) 
