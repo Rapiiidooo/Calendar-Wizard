@@ -148,7 +148,6 @@ typeOfCalender = {
 }
 
 imageCalender = [
-"format/calendrier-format-bancaire.png",
 "format/calendrier-format-bureau.png",
 "format/calendrier-format-magnetique.png",
 "format/calendrier-format-mural.png",
@@ -467,8 +466,9 @@ class MainApplication(tk.Frame):
         self.Frame1_listbox2.pack()
 
         Frame1_import = Frame(frame1,bg="red")
-        Frame1_import.grid(row = 3, column = 0, rowspan = 3, columnspan = 1, sticky = W+E+N+S)
-        self.Frame1_button=Button(Frame1_import, text = "import style",command=self.importAction)
+        Frame1_import.grid(row = 3, column = 0, rowspan = 1, columnspan = 1, sticky = W+E+N+S)
+        Label(Frame1_import, text="Models import",bg="red").pack(padx=10, pady=10)
+        self.Frame1_button=Button(Frame1_import, text = "import",command=self.importAction)
         self.Frame1_button.pack()
 
 
@@ -480,8 +480,8 @@ class MainApplication(tk.Frame):
         Frame1_preview.grid(row = 0, column = 2, rowspan = 6, columnspan =1, sticky = W+E+N+S)
         Label(Frame1_preview, text="Preview",bg="green").pack(padx=10, pady=10)
         self.photo=PhotoImage(file=imageCalender[0])
-        self.previewCanvas = Canvas(Frame1_preview,bg="green",width=200, height=100)
-        self.myimg=self.previewCanvas.create_image(0, 0, anchor=NW, image=self.photo)
+        self.previewCanvas = Canvas(Frame1_preview,bg="green",width=200, height=220)
+        self.myimg=self.previewCanvas.create_image(0, 0,anchor=NW, image=self.photo)
         self.previewCanvas.pack()
  
 
