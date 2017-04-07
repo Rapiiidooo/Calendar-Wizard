@@ -142,8 +142,13 @@ localization = {
      ['Måndag', 'Tisdag','Onsdag', 'Torsdag','Fredag', 'Lördag','Söndag']]
 }
 
-typeOfCalender=["bancaire","bureau","magnetique","mural","double-mural","poster"]
-imageCalender=["format/calendrier-format-bancaire.png",
+typeOfCalender = {
+#'French' :
+    'bancaire', 'bureau', 'magnetique', 'mural', 'double-mural', 'poster'
+}
+
+imageCalender = [
+"format/calendrier-format-bancaire.png",
 "format/calendrier-format-bureau.png",
 "format/calendrier-format-magnetique.png",
 "format/calendrier-format-mural.png",
@@ -383,7 +388,8 @@ class MainApplication(tk.Frame):
         Frame3_spinbox.pack()    
         Frame3_colorpicker=Button(Frame3_list,text='Font Color', command=self.getColor)
         Frame3_colorpicker.pack()
-
+        Frame3_list.grid(row = 0, column = 1, rowspan = 1, columnspan = 2, sticky = W+E+N+S)  
+        Label(Frame3_list, text="Font",bg="blue").pack()
 
 
 
