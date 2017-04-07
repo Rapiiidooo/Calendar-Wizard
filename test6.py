@@ -240,9 +240,6 @@ class MainApplication(tk.Frame):
     def get_list2(self,event):
         # get selected line index
         index = self.Frame1_listbox.curselection()[0]
-        print(index)
-        if index==0:
-            return
         self.photo=PhotoImage(file=imageCalender[index])
         self.previewCanvas.itemconfigure(self.myimg,image=self.photo)
         self.previewCanvas.image = self.photo
@@ -250,8 +247,6 @@ class MainApplication(tk.Frame):
     def get_langage(self,event):
         # get selected line index
         self.index = self.Frame2_listbox.curselection()[0]
-        if self.index==0:
-            return
         months=localization[self.Frame2_listbox.get(self.index)][0]	
     
         self.Frame2_listboxMonth.delete(0, END)
@@ -261,8 +256,7 @@ class MainApplication(tk.Frame):
 
     def select_month(self,event):
         index2 = self.Frame2_listboxMonth.curselection()[0]
-        if index2 != 0:
-            print(localization[self.Frame2_listbox.get(self.index)][0][index2])
+        print(localization[self.Frame2_listbox.get(self.index)][0][index2])
 
     def getColor(self):
         color = askcolor() 
@@ -360,7 +354,7 @@ class MainApplication(tk.Frame):
         Frame3_list2 = Frame(frame3, bg="blue")
         Frame3_list2.grid(row = 0, column = 0, columnspan = 1,sticky = W+E+N+S) 
         Label(Frame3_list2, text="Elements",bg="blue").pack(padx=10, pady=10)
-        self.Frame3_listbox = tk.Listbox(Frame3_list2)
+        self.Frame3_listbox = tk.Listbox(Frame3_list2,exportselection=0)
         self.Frame3_listbox.insert(tk.END,"Days string")
         self.Frame3_listbox.insert(tk.END,"Weeks string")
         self.Frame3_listbox.insert(tk.END,"Months string")
@@ -378,7 +372,11 @@ class MainApplication(tk.Frame):
         Label(Frame3_list, text="Font",bg="blue").pack(padx=10, pady=10)
         self.fontVar = StringVar()
         self.Frame3_combo = ttk.Combobox(Frame3_list, textvariable=self.fontVar)
-        self.Frame3_combo['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+        try:
+            self.Frame3_combo['values'] = scribus.getFontNames()
+        except :
+            self.Frame3_combo['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+
         self.Frame3_combo.current(1)
         self.Frame3_combo.bind("<<ComboboxSelected>>",self.selectFont)
         self.Frame3_combo.pack()
@@ -453,14 +451,14 @@ class MainApplication(tk.Frame):
         Frame1_list = Frame(frame1, bg="blue")
         Frame1_list.grid(row = 0, column = 1, columnspan = 1,sticky = W+E+N+S) 
         Label(Frame1_list, text="Models",bg="blue").pack(padx=10, pady=10)
-        self.Frame1_listbox = tk.Listbox(Frame1_list)
+        self.Frame1_listbox = tk.Listbox(Frame1_list,exportselection=0)
         self.Frame1_listbox.bind('<<ListboxSelect>>', self.get_list2)
         self.Frame1_listbox.pack()
 
         Frame1_list2 = Frame(frame1, bg="red",width=20)       
         Frame1_list2.grid(row = 0, column = 0,columnspan = 1,sticky = W+E+N+S) 
         Label(Frame1_list2, text="Types",bg="red").pack(padx=10, pady=10)
-        self.Frame1_listbox2 = tk.Listbox(Frame1_list2,width=20)
+        self.Frame1_listbox2 = tk.Listbox(Frame1_list2,width=20,exportselection=0)
         self.Frame1_listbox2.insert(tk.END, "month")
         self.Frame1_listbox2.insert(tk.END, "year")
         self.Frame1_listbox2.insert(tk.END, "day")
