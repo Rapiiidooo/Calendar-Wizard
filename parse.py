@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 
 from lxml import etree
@@ -6,7 +7,7 @@ import glob,os
 
 mon_type='year'
 models_path='.'
-
+    
 type_cal=re.compile('type=\'.*' + mon_type + '.*\'')
 
 # On cherche dans le repertoire avec les modeles
