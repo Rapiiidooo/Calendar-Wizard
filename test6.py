@@ -194,7 +194,7 @@ class MainApplication(tk.Frame):
         self.canvas.yview_moveto(0.0)
         self.scrollbar_middle.set(0.0, 1.0)
 
-    def importAction(self):#import marche
+    def actionImportModel(self):#import marche
         print("import")
         models_path='./models/'
         filename = askopenfilename(title="Ouvrir votre document",filetypes = [('scrubus files','.sla'), ('all files','.*') ] )
@@ -203,7 +203,7 @@ class MainApplication(tk.Frame):
         #content = fichier.read()
         #fichier.close()        
 
-    def importActionICS(self):
+    def actionImportICS(self):
         print("import ics")
         filename = askopenfilename(title="Ouvrir votre document",filetypes = [('ics files','.ics'), ('all files','.*') ] )
         fichier = open(filename, "r")
@@ -219,13 +219,13 @@ class MainApplication(tk.Frame):
         self.current = self.current - 1
         self.update()
 
-    def _event_canvas(self, event):
+    def actionCanvas(self, event):
         tup = self.scrollbar_middle.get()
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         if(tup[0] == 0 and tup[1] == 1):
             self.canvas.yview_moveto(0.0)
 
-    def _on_mousewheel(self, event):
+    def actionMouseWeel(self, event):
         if(event.num == 5):
             event.delta = -120;
         elif(event.num == 4):
@@ -236,14 +236,14 @@ class MainApplication(tk.Frame):
             self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         print(event.num)
 
-    def get_list2(self,event):
+    def actionGetModels(self,event):
         # get selected line index
-        index = self.Frame1_listbox.curselection()[0]
+        index = self.Frame1_listbox_models.curselection()[0]
         self.photo=PhotoImage(file=imageCalender[index])
         self.previewCanvas.itemconfigure(self.myimg,image=self.photo)
         self.previewCanvas.image = self.photo
 
-    def get_langage(self,event):
+    def actionGetLanguage(self,event):
         # get selected line index
         self.index = self.Frame2_listbox.curselection()[0]
         months=localization[self.Frame2_listbox.get(self.index)][0]	
@@ -253,11 +253,11 @@ class MainApplication(tk.Frame):
             self.Frame2_listboxMonth.insert(END, i)
 
 
-    def select_month(self,event):
+    def actionSelectMonth(self,event):
         index2 = self.Frame2_listboxMonth.curselection()[0]
         print(localization[self.Frame2_listbox.get(self.index)][0][index2])
 
-    def getColor(self):
+    def actionGetColor(self):
         color = askcolor() 
         print color
 
@@ -277,7 +277,7 @@ class MainApplication(tk.Frame):
 
         self.canvas_frame = Frame(self.canvas,width=600, height=350, bg = 'black', padx=20, pady = 20)
         self.canvas_frame.pack()
-        self.canvas_frame.bind("<Configure>", self._event_canvas)
+        self.canvas_frame.bind("<Configure>", self.actionCanvas)
 
         self.scrollbar_middle=Scrollbar(self.middle,orient = "vertical",command = self.canvas.yview)
         self.canvas.configure(yscrollcommand = self.scrollbar_middle.set)
@@ -286,28 +286,22 @@ class MainApplication(tk.Frame):
         self.canvas.pack(side="left")
         self.canvas.create_window((0,0),window=self.canvas_frame,anchor='nw')
 	if sys.platform == "Windows":
-             self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+             self.canvas.bind_all("<MouseWheel>", self.actionMouseWeel)
 	elif sys.platform == "Linux":
-            self.canvas.bind_all("<Button-4>", self._on_mousewheel)
-            self.canvas.bind_all("<Button-5>", self._on_mousewheel)
+            self.canvas.bind_all("<Button-4>", self.actionMouseWeel)
+            self.canvas.bind_all("<Button-5>", self.actionMouseWeel)
 
-    def make_bottom(self):
-        self.bottom = Frame(self, bg='red')
-        self.bottom.grid(row=2, column=0)
-        self.bottom_button=[Button(self.bottom, text = "prev",command=self.decrement),Button(self.bottom, text = "next",command=self.increment),Button(self.bottom, text = "finish")]
-        for i in range(0,3):
-            self.bottom_button[i].grid(row=0, column=i)
-    def selectFont(self, event):
+    def actionSelectFont(self, event):
         print(self.fontVar.get())
 
 
 
 
-    def selectType(self, event):
-        index = self.Frame1_listbox2.curselection()[0]
+    def actionSelectType(self, event):
+        index = self.Frame1_listbox_types.curselection()[0]
         if index==0:
             return
-        mon_type=self.Frame1_listbox2.get(index)
+        mon_type=self.Frame1_listbox_types.get(index)
         if mon_type==0:
             return
 
@@ -338,64 +332,66 @@ class MainApplication(tk.Frame):
                         available_models.append(model)
         print available_models
 
-        self.Frame1_listbox.delete(0, END)
+        self.Frame1_listbox_models.delete(0, END)
         for i in available_models:
-            self.Frame1_listbox.insert(END, i)
+            self.Frame1_listbox_models.insert(END, i)
 
+    def make_bottom(self):
+        self.bottom = Frame(self, bg='red')
+        self.bottom.grid(row=2, column=0)
+        self.bottom_button=[Button(self.bottom, text = "prev",command=self.decrement),Button(self.bottom, text = "next",command=self.increment),Button(self.bottom, text = "finish")]
+        for i in range(0,3):
+            self.bottom_button[i].grid(row=0, column=i)
 
 
 
 
 
     def make_frames(self):
-        frame3 = Frame(self.canvas_frame, bg = 'black', padx=20, pady = 20)
-
-        Frame3_list2 = Frame(frame3, bg="blue")
-        Frame3_list2.grid(row = 0, column = 0, columnspan = 1,sticky = W+E+N+S) 
-        Label(Frame3_list2, text="Elements",bg="blue").pack(padx=10, pady=10)
-        self.Frame3_listbox = tk.Listbox(Frame3_list2,exportselection=0)
-        self.Frame3_listbox.insert(tk.END,"Days string")
-        self.Frame3_listbox.insert(tk.END,"Weeks string")
-        self.Frame3_listbox.insert(tk.END,"Months string")
-        self.Frame3_listbox.insert(tk.END,"Years string")
-        self.Frame3_listbox.insert(tk.END,"Days number")
-        self.Frame3_listbox.insert(tk.END,"Weeks number")
-        self.Frame3_listbox.insert(tk.END,"Months number")
-        self.Frame3_listbox.insert(tk.END,"Years number")
-        self.Frame3_listbox.bind('<<ListboxSelect>>',)# self.get_list)
-        self.Frame3_listbox.pack()
-
-
-        Frame3_list = Frame(frame3, bg="blue")
-        Frame3_list.grid(row = 0, column = 1, rowspan = 1, columnspan = 1, sticky = W+E+N+S)  
-        Label(Frame3_list, text="Font",bg="blue").pack(padx=10, pady=10)
-        self.fontVar = StringVar()
-        self.Frame3_combo = ttk.Combobox(Frame3_list, textvariable=self.fontVar)
-        try:
-            self.Frame3_combo['values'] = scribus.getFontNames()
-        except :
-            self.Frame3_combo['values'] = ('Arial', 'Arial Bold', 'Arial Black')
-
-        self.Frame3_combo.current(1)
-        self.Frame3_combo.bind("<<ComboboxSelected>>",self.selectFont)
-        self.Frame3_combo.pack()
-        Frame3_size = Frame(frame3, bg="blue")
-        Frame3_size.grid(row = 1, column = 0, rowspan = 1, columnspan = 1, sticky = W+E+N+S)  
-        Frame3_spinbox = Spinbox(Frame3_list, from_=2, to=100)
-        Frame3_spinbox.pack()    
-        Frame3_colorpicker=Button(Frame3_list,text='Font Color', command=self.getColor)
-        Frame3_colorpicker.pack()
-        Frame3_list.grid(row = 0, column = 1, rowspan = 1, columnspan = 2, sticky = W+E+N+S)  
-        Label(Frame3_list, text="Font",bg="blue").pack()
-
-
-
-
-
-
-
-
         ########### ELEMENT MIDDLE FRAME 1
+        frame1 = Frame(self.canvas_frame,bg = 'violet',padx=20, pady = 20)
+        Frame1_frame_models = Frame(frame1, bg="blue")
+        Frame1_frame_models.grid(row = 0, column = 1, columnspan = 1,sticky = W+E+N+S) 
+        Label(Frame1_frame_models, text="Models",bg="blue").pack(padx=10, pady=10)
+        self.Frame1_listbox_models = tk.Listbox(Frame1_frame_models,exportselection=0)
+        self.Frame1_listbox_models.bind('<<ListboxSelect>>', self.actionGetModels)
+        self.Frame1_listbox_models.pack()
+
+
+        Frame1_frame_types = Frame(frame1, bg="red",width=20)       
+        Frame1_frame_types.grid(row = 0, column = 0,columnspan = 1,sticky = W+E+N+S) 
+        Label(Frame1_frame_types, text="Types",bg="red").pack(padx=10, pady=10)
+        self.Frame1_listbox_types = tk.Listbox(Frame1_frame_types,width=20,exportselection=0)
+        self.Frame1_listbox_types.insert(tk.END, "month")
+        self.Frame1_listbox_types.insert(tk.END, "year")
+        self.Frame1_listbox_types.insert(tk.END, "day")
+        self.Frame1_listbox_types.insert(tk.END, "week")
+        self.Frame1_listbox_types.bind('<<ListboxSelect>>', self.actionSelectType)
+        self.Frame1_listbox_types.pack()
+
+
+        Frame1_frame_import = Frame(frame1,bg="red")
+        Frame1_frame_import.grid(row = 3, column = 0, rowspan = 1, columnspan = 1, sticky = W+E+N+S)
+        Label(Frame1_frame_import, text="Models import",bg="red").pack(padx=10, pady=10)
+        self.Frame1_button_import=Button(Frame1_frame_import, text = "import",command=self.actionImportModel)
+        self.Frame1_button_import.pack()
+
+
+        Frame1_vide = Frame(frame1, bg="blue")
+        Frame1_vide.grid(row = 3, column = 1, rowspan = 3, columnspan = 2, sticky = W+E+N+S)
+
+
+        Frame1_preview = Frame(frame1, bg="green")
+        Frame1_preview.grid(row = 0, column = 2, rowspan = 6, columnspan =1, sticky = W+E+N+S)
+        Label(Frame1_preview, text="Preview",bg="green").pack(padx=10, pady=10)
+        self.photo=PhotoImage(file=imageCalender[0])
+        self.previewCanvas = Canvas(Frame1_preview,bg="green",width=200, height=220)
+        self.myimg=self.previewCanvas.create_image(0, 0,anchor=NW, image=self.photo)
+        self.previewCanvas.pack()
+
+
+
+        ########### ELEMENT MIDDLE FRAME 2
         frame2 = Frame(self.canvas_frame,bg = 'violet',padx=20, pady = 20)
         Frame2_list = Frame(frame2, bg="blue")
         Frame2_list.grid(row = 0, column = 0, rowspan = 5, columnspan = 2, sticky = W+E+N+S) 
@@ -405,27 +401,25 @@ class MainApplication(tk.Frame):
         keys.sort()
         for i in keys:
             self.Frame2_listbox.insert(END, i)
-        self.Frame2_listbox.bind('<<ListboxSelect>>', self.get_langage)
+        self.Frame2_listbox.bind('<<ListboxSelect>>', self.actionGetLanguage)
         self.Frame2_listbox.pack()
  
         Frame2_import = Frame(frame2,bg="red")
         Frame2_import.grid(row = 3, column = 2, rowspan = 4, columnspan = 1, sticky = W+E+N+S)
-        self.Frame2_button=Button(Frame2_import, text = "import ICS",command=self.importActionICS)
+        self.Frame2_button=Button(Frame2_import, text = "import ICS",command=self.actionImportICS)
         self.Frame2_button.pack()
         Frame2_option = Frame(frame2,bg="yellow")
         Frame2_option.grid(row = 3, column = 0, rowspan = 3, columnspan = 1, sticky = W+E+N+S)
-        #self.Frame2_button2=Button(Frame2_option, text = "import ICS",command=self.importAction)
-        #self.Frame2_button2.pack()
-
-        self.var1 = IntVar()
-        self.var2 = IntVar()
-        self.var3 = IntVar()
-        self.var4 = IntVar()
-        Frame2_checkbox1 = Checkbutton(Frame2_option, text="Numero de jour", variable=self.var1) #command=self.cb)
-        Frame2_checkbox2 = Checkbutton(Frame2_option, text="Nom de jour entier", variable=self.var2) #command=self.cb)
-        Frame2_checkbox3 = Checkbutton(Frame2_option, text="Afficher mois suivant", variable=self.var3) #command=self.cb)
-        Frame2_checkbox4 = Checkbutton(Frame2_option, text="Afficher mois precedent", variable=self.var4) #command=self.cb)
-
+ 
+ 
+        self.checkoption1 = IntVar()
+        self.checkoption2 = IntVar()
+        self.checkoption3 = IntVar()
+        self.checkoption4 = IntVar()
+        Frame2_checkbox1 = Checkbutton(Frame2_option, text="Numero de jour", variable=self.checkoption1) #command=self.cb)
+        Frame2_checkbox2 = Checkbutton(Frame2_option, text="Nom de jour entier", variable=self.checkoption2) #command=self.cb)
+        Frame2_checkbox3 = Checkbutton(Frame2_option, text="Afficher mois suivant", variable=self.checkoption3) #command=self.cb)
+        Frame2_checkbox4 = Checkbutton(Frame2_option, text="Afficher mois precedent", variable=self.checkoption4) #command=self.cb)
         Frame2_checkbox1.pack()
         Frame2_checkbox2.pack()
         Frame2_checkbox3.pack()
@@ -438,54 +432,47 @@ class MainApplication(tk.Frame):
         Frame2_preview.grid(row = 0, column = 2, rowspan = 3, columnspan = 1, sticky = W+E+N+S)
         Label(Frame2_preview, text="Month",bg="green").pack(padx=10, pady=10)
         self.Frame2_listboxMonth = tk.Listbox(Frame2_preview,selectmode='multiple',exportselection=0)
-        self.Frame2_listboxMonth.bind('<<ListboxSelect>>', self.select_month)
+        self.Frame2_listboxMonth.bind('<<ListboxSelect>>', self.actionSelectMonth)
         self.Frame2_listboxMonth.pack()
 
 
-      
-        ########### ELEMENT MIDDLE FRAME 1
+        ########### ELEMENT MIDDLE FRAME 2
+        frame3 = Frame(self.canvas_frame, bg = 'black', padx=20, pady = 20)
+
+        Frame3_frame_list = Frame(frame3, bg="blue")
+        Frame3_frame_list.grid(row = 0, column = 0, columnspan = 1,sticky = W+E+N+S) 
+        Label(Frame3_frame_list, text="Elements",bg="blue").pack(padx=10, pady=10)
+        self.Frame3_listbox_font = tk.Listbox(Frame3_frame_list,exportselection=0)
+        self.Frame3_listbox_font.insert(tk.END,"Days string")
+        self.Frame3_listbox_font.insert(tk.END,"Weeks string")
+        self.Frame3_listbox_font.insert(tk.END,"Months string")
+        self.Frame3_listbox_font.insert(tk.END,"Years string")
+        self.Frame3_listbox_font.insert(tk.END,"Days number")
+        self.Frame3_listbox_font.insert(tk.END,"Weeks number")
+        self.Frame3_listbox_font.insert(tk.END,"Months number")
+        self.Frame3_listbox_font.insert(tk.END,"Years number")
+        self.Frame3_listbox_font.bind('<<ListboxSelect>>',)# self.get_list)
+        self.Frame3_listbox_font.pack()
 
 
-        frame1 = Frame(self.canvas_frame,bg = 'violet',padx=20, pady = 20)
-        Frame1_list = Frame(frame1, bg="blue")
-        Frame1_list.grid(row = 0, column = 1, columnspan = 1,sticky = W+E+N+S) 
-        Label(Frame1_list, text="Models",bg="blue").pack(padx=10, pady=10)
-        self.Frame1_listbox = tk.Listbox(Frame1_list,exportselection=0)
-        self.Frame1_listbox.bind('<<ListboxSelect>>', self.get_list2)
-        self.Frame1_listbox.pack()
+        Frame3_frame_font = Frame(frame3, bg="blue")
+        Frame3_frame_font.grid(row = 0, column = 1, rowspan = 1, columnspan = 1, sticky = W+E+N+S)  
+        Label(Frame3_frame_font, text="Font",bg="blue").pack(padx=10, pady=10)
+        self.fontVar = StringVar()
+        self.Frame3_combobox_font = ttk.Combobox(Frame3_frame_font, textvariable=self.fontVar)
+        try:
+            self.Frame3_combobox_font['values'] = scribus.getFontNames()
+        except :
+            self.Frame3_combobox_font['values'] = ('Arial', 'Arial Bold', 'Arial Black')
 
-        Frame1_list2 = Frame(frame1, bg="red",width=20)       
-        Frame1_list2.grid(row = 0, column = 0,columnspan = 1,sticky = W+E+N+S) 
-        Label(Frame1_list2, text="Types",bg="red").pack(padx=10, pady=10)
-        self.Frame1_listbox2 = tk.Listbox(Frame1_list2,width=20,exportselection=0)
-        self.Frame1_listbox2.insert(tk.END, "month")
-        self.Frame1_listbox2.insert(tk.END, "year")
-        self.Frame1_listbox2.insert(tk.END, "day")
-        self.Frame1_listbox2.insert(tk.END, "week")
-        self.Frame1_listbox2.bind('<<ListboxSelect>>', self.selectType)
-        self.Frame1_listbox2.pack()
-
-        Frame1_import = Frame(frame1,bg="red")
-        Frame1_import.grid(row = 3, column = 0, rowspan = 1, columnspan = 1, sticky = W+E+N+S)
-        Label(Frame1_import, text="Models import",bg="red").pack(padx=10, pady=10)
-        self.Frame1_button=Button(Frame1_import, text = "import",command=self.importAction)
-        self.Frame1_button.pack()
-
-
-        Frame1_vide = Frame(frame1, bg="blue")
-        Frame1_vide.grid(row = 3, column = 1, rowspan = 3, columnspan = 2, sticky = W+E+N+S)
-
-        Frame1_preview = Frame(frame1, bg="green")
-
-        Frame1_preview.grid(row = 0, column = 2, rowspan = 6, columnspan =1, sticky = W+E+N+S)
-        Label(Frame1_preview, text="Preview",bg="green").pack(padx=10, pady=10)
-        self.photo=PhotoImage(file=imageCalender[0])
-        self.previewCanvas = Canvas(Frame1_preview,bg="green",width=200, height=220)
-        self.myimg=self.previewCanvas.create_image(0, 0,anchor=NW, image=self.photo)
-        self.previewCanvas.pack()
- 
-
-        
+        self.Frame3_combobox_font.current(1)
+        self.Frame3_combobox_font.bind("<<ComboboxSelected>>",self.actionSelectFont)
+        self.Frame3_combobox_font.pack()
+        Frame3_spinbox = Spinbox(Frame3_frame_font, from_=2, to=100)
+        Frame3_spinbox.pack()    
+        Frame3_colorpicker=Button(Frame3_frame_font,text='Font Color', command=self.actionGetColor)
+        Frame3_colorpicker.pack()
+            
         
         self.frames = [frame1, frame2, frame3]
 
