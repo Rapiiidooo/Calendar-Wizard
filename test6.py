@@ -161,7 +161,19 @@ class MainApplication(tk.Frame):
     def update(self):
         print(self.FrameMaster_currentPage)
         self.FrameMaster_allframes[self.FrameMaster_lastPage].pack_forget()
-        
+        if(self.FrameMaster_currentPage == 2 ):
+            type_ele=re.compile('element=\'(.*)\'')
+            tree = etree.parse(self.Frame1_config_modelpath+self.Frame1_config_modelname)
+            keys = tree.getroot()
+            for key in keys:
+                val=key.attrib['KEYWORDS']
+            elements=re.findall(type_ele,val)
+            spilted_elements=re.split(",",elements[0])
+            print(spilted_elements) 
+            self.Frame3_listbox_font.delete(0, END)
+            for i in spilted_elements:
+                self.Frame3_listbox_font.insert(END, i)
+
         if(self.FrameMaster_currentPage <= 0):
             self.FrameMaster_currentPage = 0
             self.bottom_button[0].config(state=DISABLED)
@@ -224,20 +236,23 @@ class MainApplication(tk.Frame):
 
     def actionGetModels(self,event):
         # get selected line index
-        self.Frame1_config_modelselected = self.Frame1_listbox_models.curselection()[0]
-        print(self.Frame1_listbox_models.get(self.Frame1_config_modelselected))
-        self.Frame1_listbox_models.get(self.Frame1_config_modelselected)
-        self.photo=PhotoImage(file=imageCalender[self.Frame1_config_modelselected])
+        self.Frame1_config_modelIndexSelected = self.Frame1_listbox_models.curselection()[0]
+        print(self.Frame1_listbox_models.get(self.Frame1_config_modelIndexSelected))
+        self.Frame1_config_modelname=self.Frame1_listbox_models.get(self.Frame1_config_modelIndexSelected)
+
+
+        self.Frame1_listbox_models.get(self.Frame1_config_modelIndexSelected)
+        self.photo=PhotoImage(file=imageCalender[self.Frame1_config_modelIndexSelected])
         self.previewCanvas.itemconfigure(self.myimg,image=self.photo)
         self.previewCanvas.image = self.photo
 
     def actionGetLanguage(self,event):
         # get selected line index
-        self.Frame2_config_languageindexselected = self.Frame2_listbox.curselection()[0]
-        if self.Frame2_config_languageindexselected == 0:
+        self.Frame2_config_languageIndexSelected = self.Frame2_listbox.curselection()[0]
+        if self.Frame2_config_languageIndexSelected == 0:
             return        
-        months=localization[self.Frame2_listbox.get(self.Frame2_config_languageindexselected)][0]	
-        self.Frame2_config_languagestringselected=self.Frame2_listbox.get(self.Frame2_config_languageindexselected)
+        months=localization[self.Frame2_listbox.get(self.Frame2_config_languageIndexSelected)][0]	
+        self.Frame2_config_languageStringSelected=self.Frame2_listbox.get(self.Frame2_config_languageIndexSelected)
 
         self.Frame2_listbox_month.delete(0, END)
         for i in months:
@@ -245,12 +260,12 @@ class MainApplication(tk.Frame):
 
 
     def actionSelectMonth(self,event):
-        self.Frame2_config_monthindexselected=self.Frame2_listbox_month.curselection()
-        self.Frame2_config_monthstringselected=[]
-        for tous in self.Frame2_config_monthindexselected:
-            self.Frame2_config_monthindexselected = tous
-            self.Frame2_config_monthstringselected.append(localization[self.Frame2_listbox.get(self.Frame2_config_languageindexselected)][0][tous])
-        print(self.Frame2_config_monthstringselected)
+        self.Frame2_config_monthIndexSelected=self.Frame2_listbox_month.curselection()
+        self.Frame2_config_monthStringSelected=[]
+        for tous in self.Frame2_config_monthIndexSelected:
+            self.Frame2_config_monthIndexSelected = tous
+            self.Frame2_config_monthStringSelected.append(localization[self.Frame2_listbox.get(self.Frame2_config_languageIndexSelected)][0][tous])
+        print(self.Frame2_config_monthStringSelected)
         
     def actionGetColor(self):
         color = askcolor() 
@@ -288,18 +303,17 @@ class MainApplication(tk.Frame):
 
     def actionSelectFont(self, event):
         print(self.fontVar.get())
+        
 
 
 
-
+ 
     def actionSelectType(self, event):
-        self.Frame1_config_typeselected = self.Frame1_listbox_types.curselection()[0]
-        if self.Frame1_config_typeselected==0:
+        self.Frame1_config_typeIndexSelected = self.Frame1_listbox_types.curselection()[0]
+        if self.Frame1_config_typeIndexSelected ==0:
             return
-        search_type=self.Frame1_listbox_types.get(self.Frame1_config_typeselected)
-        if search_type==0:
-            return
-
+        search_type=self.Frame1_listbox_types.get(self.Frame1_config_typeIndexSelected)
+        self.Frame1_config_typeStirngSelected=search_type    
         #mon_type='year'
             
         type_cal=re.compile('type=\'.*' + search_type + '.*\'')
@@ -325,7 +339,7 @@ class MainApplication(tk.Frame):
                     if avail:
                         available_models.append(model)
         print available_models
-
+        
         self.Frame1_listbox_models.delete(0, END)
         for i in available_models:
             self.Frame1_listbox_models.insert(END, i)
@@ -432,15 +446,8 @@ class MainApplication(tk.Frame):
         Frame3_frame_list = Frame(Frame3_root, bg="blue")
         Frame3_frame_list.grid(row = 0, column = 0, columnspan = 1,sticky = W+E+N+S) 
         Label(Frame3_frame_list, text="Elements",bg="blue").pack(padx=10, pady=10)
+
         self.Frame3_listbox_font = tk.Listbox(Frame3_frame_list,exportselection=0)
-        self.Frame3_listbox_font.insert(tk.END,"Days string")
-        self.Frame3_listbox_font.insert(tk.END,"Weeks string")
-        self.Frame3_listbox_font.insert(tk.END,"Months string")
-        self.Frame3_listbox_font.insert(tk.END,"Years string")
-        self.Frame3_listbox_font.insert(tk.END,"Days number")
-        self.Frame3_listbox_font.insert(tk.END,"Weeks number")
-        self.Frame3_listbox_font.insert(tk.END,"Months number")
-        self.Frame3_listbox_font.insert(tk.END,"Years number")
         self.Frame3_listbox_font.bind('<<ListboxSelect>>',)# self.get_list)
         self.Frame3_listbox_font.pack()
 
@@ -473,17 +480,18 @@ class MainApplication(tk.Frame):
         self.FrameMaster_currentPage = 0
         self.Frame1_config_modelname=''
         self.Frame1_config_modelpath='./models/'
-        self.Frame1_config_typeselected = IntVar()
-        self.Frame1_config_modelselected = IntVar()
+        self.Frame1_config_typeStirngSelected=''
+        self.Frame1_config_typeIndexSelected = IntVar()
+        self.Frame1_config_modelIndexSelected = IntVar()
         self.Frame2_config_checkoption1 = IntVar()
         self.Frame2_config_checkoption2 = IntVar()
         self.Frame2_config_checkoption3 = IntVar()
         self.Frame2_config_checkoption4 = IntVar()
-        self.Frame2_config_languagestringselected = 'English'
-        self.Frame2_config_languageindexselected = 0
-        self.Frame2_config_monthindexselected = []  
-        self.Frame2_config_monthstringselected = []        
-        self.Frame2_config_fileICS = '';
+        self.Frame2_config_languageStringSelected = 'English'
+        self.Frame2_config_languageIndexSelected = 0
+        self.Frame2_config_monthIndexSelected = []  
+        self.Frame2_config_monthStringSelected = []        
+        self.Frame2_config_fileICS = ''
 
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)

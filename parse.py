@@ -5,6 +5,17 @@ from lxml import etree
 import re
 import glob,os
 
+model='calendar222.sla'
+type_ele=re.compile('element=\'(.*)\'')
+tree = etree.parse(model)
+keys = tree.getroot()
+for key in keys:
+    val=key.attrib['KEYWORDS']
+str1=re.findall(type_ele,val)
+str2=re.split(",",str1[0])
+print(str2) 
+
+
 mon_type='year'
 models_path='.'
     
@@ -31,3 +42,7 @@ for model in os.listdir(models_path):
                 available_models.append(model)
 
 print available_models
+
+    Contact GitHub API Training Shop Blog About 
+
+
