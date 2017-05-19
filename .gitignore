@@ -149,3 +149,5 @@ Supprimerait CalendarWizard_new.py
 Supprimerait makefile
 Supprimerait models/test.sla
 Supprimerait models/test.sla.autosave
+Supprimerait mon_env/
+Supprimerait toto/
