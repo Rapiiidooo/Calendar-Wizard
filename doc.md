@@ -30,8 +30,12 @@ There are a Fonts family panel : For any of these elements you can change the fo
 
 
 /* 
-expliquer le role des templates, dire qu'on utilise des templates :
+expliquer le rôle des templates, dire qu'on utilise des templates :
 
-Les templates que l'on utilise sont des documents scribus vierge, le nom des boites-objets est très important, 
-car notre plugin associe ces boites-objets à des caractéristiques particulière, celle que l'utilisateur aura choisi.  
+Les templates que l'on utilise sont des documents scribus vierge, le nom des boites-objets que l'on attribut est très important, 
+car notre plugin associe ces boîtes-objets à des caractéristiques particulière, celle que l'utilisateur aura choisi.  
 */
+
+
+HOW TO CREATE A NEW MODEL
+
