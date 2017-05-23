@@ -613,15 +613,15 @@ class TkCalendar(tk.Frame):
         self.frame2_config_language_string_selected = self.frame2_listbox.get(
             self.frame2_config_language_index_selected)
         self.lang = self.frame2_config_language_string_selected  # used for action_finnish
-        self.Frame2_listbox_month.delete(0, END)
+        self.frame2_listbox_month.delete(0, END)
         for i in months:
-            self.Frame2_listbox_month.insert(END, i)
+            self.frame2_listbox_month.insert(END, i)
         #except:
         #    print("Language non reconnue")
 
     # get selected month
     def action_select_month(self, event):
-        self.frame2_config_month_index_selected = self.Frame2_listbox_month.curselection()
+        self.frame2_config_month_index_selected = self.frame2_listbox_month.curselection()
         self.frame2_config_month_string_selected = []
         for tous in self.frame2_config_month_index_selected:
             self.frame2_config_month_index_selected = tous
@@ -716,8 +716,8 @@ class TkCalendar(tk.Frame):
         for i in range(0, 4):
             self.bottom_button[i].grid(padx=10, pady=10, row=0, column=i)
 
-    def select_all(self, my_listbox):
-        my_listbox.select_set(0, END)
+    def select_all(self):
+        self.frame2_listbox_month.select_set(0, END)
 
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
@@ -768,53 +768,69 @@ class TkCalendar(tk.Frame):
 
         # ELEMENT MIDDLE FRAME 2
         frame2_root = Frame(self.canvas_frame)
-        frame2_list = Frame(frame2_root)
-        frame2_list.grid(row=0, column=0, rowspan=5, columnspan=2, sticky=W + E + N + S)
+
+        frame2_list = Frame(frame2_root, bg='blue')
+        frame2_list.grid(row=0, rowspan=3, column=0, sticky=W + E + N + S)
         Label(frame2_list, text="Languages").pack(padx=10, pady=10)
-        self.frame2_listbox = tk.Listbox(frame2_list)
+
+        self.scrollbar_listbox_language = Scrollbar(frame2_list, orient=VERTICAL)
+        self.frame2_listbox = tk.Listbox(frame2_list, yscrollcommand=self.scrollbar_listbox_language.set)
+        self.scrollbar_listbox_language.config(command=self.frame2_listbox.yview)
+        self.scrollbar_listbox_language.pack(anchor='n', side=RIGHT, ipady=63)  # place scrollbar near to the listbox
+
         keys = localization.keys()
         keys.sort()
         for i in keys:
             self.frame2_listbox.insert(END, i)
         self.frame2_listbox.bind('<<ListboxSelect>>', self.action_get_language)
         self.frame2_listbox.pack()
-        frame2_frame_import = Frame(frame2_root)
-        frame2_frame_import.grid(row=3, column=2, rowspan=4, columnspan=1, sticky=W + E + N + S)
-        self.frame2_button = Button(frame2_frame_import, text="import ICS", command=self.action_import_ics, padx=30)
-        self.frame2_button.pack()
-        self.frame2_spinbox_year = Spinbox(frame2_frame_import, from_=1600, to=2132, textvariable=self.year_var)
-        self.frame2_spinbox_year.delete(0, 1600)
-        self.frame2_spinbox_year.insert(0, self.year_var)
-        self.frame2_spinbox_year.pack()
 
         frame2_checkbox = Frame(frame2_root)
-        frame2_label = Frame(frame2_root)
-        frame2_label.grid(row=0, column=2, rowspan=5, columnspan=1, pady=40, sticky=W + E + N + S)
-        frame2_checkbox.grid(row=0, column=3, rowspan=5, columnspan=1, padx=10, pady=40, sticky=E + N)
+        test = Frame(frame2_root, bg='red')
+        test.grid(row=0, column=2, pady=20, sticky=W + N + E + S)
 
-        Label(frame2_label, text="Show previous days:").pack(padx=4, pady=4, anchor='e')
-        Label(frame2_label, text="Show next days:").pack(padx=4, pady=4, anchor='e')
-        Label(frame2_label, text="Short day name:").pack(padx=4, pady=4, anchor='e')
-        Label(frame2_label, text="Number of week:").pack(padx=4, pady=4, anchor='e')
-        Label(frame2_label, text='Week begins with:').pack(padx=4, pady=4, anchor='e')
+        frame2_label = Frame(frame2_root, bg='blue')
+        frame2_label.grid(row=1, column=2, padx=10, sticky=W + N + E + S)
+        frame2_checkbox.grid(row=1, column=3, sticky=W + N + E + S)
 
-        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption1).pack(padx=4, pady=4, anchor='w')  # command=self.cb)
-        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption2).pack(padx=4, pady=4, anchor='w')  # command=self.cb)
-        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption3).pack(padx=4, pady=4, anchor='w')  # command=self.cb)
-        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption4).pack(padx=4, pady=4, anchor='w')  # command=self.cb)
+        Label(frame2_label, text="Show previous days:").pack(padx=4, pady=4, anchor='w')
+        Label(frame2_label, text="Show next days:").pack(padx=4, pady=4, anchor='w')
+        Label(frame2_label, text="Short day name:").pack(padx=4, pady=4, anchor='w')
+        Label(frame2_label, text="Number of week:").pack(padx=4, pady=4, anchor='w')
+        Label(frame2_label, text='Week begins with:').pack(padx=4, pady=4, anchor='w')
+        Label(frame2_label, text='Year:').pack(padx=4, pady=20, anchor='w')
+
+        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption1).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption2).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption3).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption4).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
 
         Radiobutton(frame2_checkbox, text='Mon', variable=self.week_var, value=calendar.MONDAY).pack()
         Radiobutton(frame2_checkbox, text='Sun', variable=self.week_var, value=calendar.SUNDAY).pack()
 
-        frame2_preview = Frame(frame2_root)
-        frame2_preview.grid(row=0, column=4, rowspan=3, columnspan=2, sticky=W + E + N + S)
-        Label(frame2_preview, text="Month").pack(padx=10, pady=10)
-        self.Frame2_listbox_month = tk.Listbox(frame2_preview, selectmode='multiple', exportselection=0)
-        self.Frame2_listbox_month.bind('<<ListboxSelect>>', self.action_select_month)
-        self.Frame2_listbox_month.pack()
+        self.frame2_spinbox_year = Spinbox(frame2_checkbox, width=5, from_=1600, to=2132,
+                                           textvariable=self.year_var)
+        self.frame2_spinbox_year.delete(0, 1600)
+        self.frame2_spinbox_year.insert(0, self.year_var)
+        self.frame2_spinbox_year.pack(padx=3, pady=6, anchor='w')
 
-        Button(frame2_preview, text="Select All").pack(padx=20, pady=20)
-        #, select_all = "self.Frame2_listbox_month"
+        frame2_frame_import = Frame(frame2_root, bg='red')
+        frame2_frame_import.grid(row=2, column=2, columnspan=2, sticky=N + E + S + W)
+        self.frame2_button = Button(frame2_frame_import, text="import ICS", command=self.action_import_ics, padx=30, pady=10)
+        self.frame2_button.pack()
+
+        frame2_preview = Frame(frame2_root, bg='blue')
+        frame2_preview.grid(row=0, rowspan=3, column=4, sticky=W + E + N + S)
+        Label(frame2_preview, text="Month").pack(padx=10, pady=10)
+        self.scrollbar_listbox_month = Scrollbar(frame2_preview, orient=VERTICAL)
+        self.frame2_listbox_month = tk.Listbox(frame2_preview, selectmode='multiple', exportselection=0,
+                                               yscrollcommand=self.scrollbar_listbox_month.set)
+        self.frame2_listbox_month.bind('<<ListboxSelect>>', self.action_select_month)
+        self.scrollbar_listbox_month.config(command=self.frame2_listbox_month.yview)
+        self.scrollbar_listbox_month.pack(anchor='ne', side=RIGHT, ipady=62)  # place scrollbar near to the listbox
+        self.frame2_listbox_month.pack()
+        Button(frame2_preview, text="Select All", command=self.select_all).pack(padx=20, pady=20)
+        #, select_all = "self.frame2_listbox_month"
 
 
         # ELEMENT MIDDLE FRAME 3
