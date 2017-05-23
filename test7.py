@@ -7,22 +7,19 @@ from shutil import copyfile
 import ttk
 # Python 2.x Version
 from tkColorChooser import askcolor
+from math import sqrt
 # Python 3.x Version
 # from tkinter.colorchooser import *
 import Tkinter as tk
 import sys
-import calendar
 import datetime
 import re
-import glob, os
+import os
 import calendar
-from math import sqrt
-from sys import exit
-
 import tkMessageBox
 
 try:
-    import scribus
+    from scribus import *
 except ImportError:
     print('This Python script is written for the Scribus scripting interface.')
 
@@ -159,8 +156,8 @@ imageCalender = [
     "format/calendrier-format-mural-double.png",
     "format/calendrier-format-poster.png"]
 
-sizex = 700
-sizey = 500
+sizex = 650
+sizey = 350
 posx = 300
 posy = 200
 
@@ -168,7 +165,7 @@ posy = 200
 class ScCalendar:
     """ Parent class for all calendar types """
 
-    def __init__(self, year, months=[], firstDay=calendar.SUNDAY, drawSauce=True, sepMonths='/', lang='English'):
+    def __init__(self, lang, year, months=[], firstDay=calendar.SUNDAY, drawSauce=True, sepMonths='/'):
         """ Setup basic things """
         # params
         self.drawSauce = drawSauce  # draw supplementary image?
@@ -352,8 +349,8 @@ class ScVerticalCalendar(ScCalendar):
     """ Parent class for vertical
         (classic, vertical event) calendar types """
 
-    def __init__(self, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/', lang='English'):
-        ScCalendar.__init__(self, year, months, first_day, draw_sauce, sep_months, lang)
+    def __init__(self, lang, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/'):
+        ScCalendar.__init__(self, lang, year, months, first_day, draw_sauce, sep_months)
 
     def setup_doc_variables(self):
         """ Compute base metrics here. Page layout is bordered by margins and
@@ -400,8 +397,8 @@ class ScClassicCalendar(ScVerticalCalendar):
     """ Calendar matrix creator itself. I suggest PORTRAIT orientation.
         One month per page."""
 
-    def __init__(self, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/', lang='English'):
-        ScVerticalCalendar.__init__(self, year, months, first_day, draw_sauce, sep_months, lang)
+    def __init__(self, lang, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/'):
+        ScVerticalCalendar.__init__(self, lang, year, months, first_day, draw_sauce, sep_months)
 
     def create_month_calendar(self, month, cal):
         """ Create a page and draw one month calendar on it """
@@ -425,9 +422,9 @@ class ScVerticalEventCalendar(ScVerticalCalendar, ScEventCalendar):
     """ One day = one column calendar. I suggest LANDSCAPE orientation.\
         One week per page."""
 
-    def __init__(self, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/', lang='English'):
-        ScVerticalCalendar.__init__(self, year, months, first_day, draw_sauce, sep_months, lang)
-        ScEventCalendar.__init__(self, year, months, first_day, draw_sauce, sep_months, lang)
+    def __init__(self, lang, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/'):
+        ScVerticalCalendar.__init__(self, lang, year, months, first_day, draw_sauce, sep_months)
+        ScEventCalendar.__init__(self, lang, year, months, first_day, draw_sauce, sep_months)
 
     def print_day(self, j):
         """ Print a given day """
@@ -451,7 +448,15 @@ class ScVerticalEventCalendar(ScVerticalCalendar, ScEventCalendar):
 class TkCalendar(tk.Frame):
     # update the current page of the wizard
     def update(self):
-        print(self.frame_master_current_page)  # show in terminal the number of the current page
+        #print(self.frame_master_current_page)  # show in terminal the number of the current page
+
+        if self.frame_master_current_page == 2:
+            # months
+            if len(self.frame2_config_month_string_selected) == 0:
+                tkMessageBox.showinfo("Error", "At least one month must be selected.")
+                self.action_decrement()
+                return
+
         self.frame_master_allframes[self.frame_master_last_page].pack_forget()  # remove the last current page
 
         # If page == 2
@@ -529,7 +534,6 @@ class TkCalendar(tk.Frame):
         print("Finnish")
         try:
             self.year_var = self.frame2_spinbox_year.get()
-            print (self.year_var)
             year = str(self.year_var)
             if len(year) != 4:
                 raise ValueError
@@ -538,25 +542,19 @@ class TkCalendar(tk.Frame):
             print('err')
             self.status_var.set('Year must be in the "YYYY" format e.g. 2005.')
             return
-        #print(self.year)
-        #print(self.sep_months)
-        #print(self.lang)
-        # months
-        # if len(self.frame2_config_month_string_selected) == 0:
-        # 	print('At least one month must be selected.')
-        # 	self.status_var.set('At least one month must be selected.')
-        # 	return
 
-        #print(self.frame2_config_month_string_selected)
+        # print(self.frame2_config_month_string_selected)
+
         # # draw images etc.
         # if self.imageVar.get() == 0:
         #   draw = False
         # else:
         #   draw = True
         # create calendar (finally)
+
         if self.type_var.get() == 0:
-            cal = ScClassicCalendar(self.year, self.frame2_config_month_string_selected, self.week_var.get(),
-                                    self.sep_months, self.lang)
+            cal = ScClassicCalendar(self.lang, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
+                                    self.sep_months)
         elif self.type_var.get() == 1:
             cal = ScHorizontalEventCalendar(self.year, self.frame2_config_month_string_selected, self.week_var.get(),
                                             self.sep_months, self.lang)
@@ -564,9 +562,8 @@ class TkCalendar(tk.Frame):
             cal = ScVerticalEventCalendar(self.year, self.frame2_config_month_string_selected, self.week_var.get(),
                                           self.sep_months, self.lang)
         # self.master.withdraw()
-        tkMessageBox.showinfo("test", "Debut creation... ")
+        tkMessageBox.showinfo("Action", "Creating Calendar... ")
         err = cal.create_calendar()
-        print("create Calendar DONE")
         if err is not None:
             self.deiconify()
             self.status_var.set(err)
@@ -607,19 +604,20 @@ class TkCalendar(tk.Frame):
     # update the list of months with the right language
     def action_get_language(self, event):
         # get selected line index
-        try:
-            self.frame2_config_language_index_selected = self.frame2_listbox.curselection()[0]
-            if self.frame2_config_language_index_selected == 0:
-                return
-            months = localization[self.frame2_listbox.get(self.frame2_config_language_index_selected)][0]
-            self.frame2_config_language_string_selected = self.frame2_listbox.get(
-                self.frame2_config_language_index_selected)
+        #try:
+        self.frame2_config_language_index_selected = self.frame2_listbox.curselection()[0]
 
-            self.Frame2_listbox_month.delete(0, END)
-            for i in months:
-                self.Frame2_listbox_month.insert(END, i)
-        except:
-            print("Language non reconnue")
+        if self.frame2_config_language_index_selected == None:
+            return
+        months = localization[self.frame2_listbox.get(self.frame2_config_language_index_selected)][0]
+        self.frame2_config_language_string_selected = self.frame2_listbox.get(
+            self.frame2_config_language_index_selected)
+        self.lang = self.frame2_config_language_string_selected  # used for action_finnish
+        self.Frame2_listbox_month.delete(0, END)
+        for i in months:
+            self.Frame2_listbox_month.insert(END, i)
+        #except:
+        #    print("Language non reconnue")
 
     # get selected month
     def action_select_month(self, event):
@@ -627,9 +625,8 @@ class TkCalendar(tk.Frame):
         self.frame2_config_month_string_selected = []
         for tous in self.frame2_config_month_index_selected:
             self.frame2_config_month_index_selected = tous
-            # self.frame2_config_month_string_selected.append(localization[self.frame2_listbox.get(self.frame2_config_language_index_selected)][0][tous])
             self.frame2_config_month_string_selected.append(int(tous))
-        print(self.frame2_config_month_string_selected)
+        #print(self.frame2_config_month_string_selected)
 
     # get color for button "Font Color"
     def action_get_color(self):
@@ -645,14 +642,14 @@ class TkCalendar(tk.Frame):
 
     # define the middle gridPane
     def make_middle(self):
-        self.middle = Frame(self, width=650, height=400, padx=20, pady=20)
+        self.middle = Frame(self, width=sizex-50, height=sizey-50, padx=20, pady=20)
         self.middle.grid(row=1, column=0)
 
-        self.canvas = Canvas(self.middle, width=650, height=400)
+        self.canvas = Canvas(self.middle, width=sizex-50, height=sizey-50)
         self.canvas.pack()
 
-        self.canvas_frame = Frame(self.canvas, width=650, height=400, padx=20, pady=20)
-        self.canvas_frame.pack()
+        self.canvas_frame = Frame(self.canvas, width=sizex-50, height=sizey-50, padx=10, pady=10)
+        self.canvas_frame.pack(padx=10, pady=10)
         self.canvas_frame.bind("<Configure>", self.action_canvas)
 
         self.scrollbar_middle = Scrollbar(self.middle, orient="vertical", command=self.canvas.yview)
@@ -717,39 +714,45 @@ class TkCalendar(tk.Frame):
                               Button(self.bottom, padx=20, text="Finnish", command=self.action_finnish),
                               Button(self.bottom, padx=20, text="Cancel", command=self.quit)]
         for i in range(0, 4):
-            self.bottom_button[i].grid(padx=10, row=0, column=i)
+            self.bottom_button[i].grid(padx=10, pady=10, row=0, column=i)
+
+    def select_all(self, my_listbox):
+        my_listbox.select_set(0, END)
 
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
         frame1_root = Frame(self.canvas_frame, padx=10, pady=10)
-        frame1_frame_models = Frame(frame1_root)
-        frame1_frame_models.grid(row=0, column=1, columnspan=1, sticky=W + E + N + S, padx=10)
-        Label(frame1_frame_models, text="Models").pack(padx=10, pady=10)
-        self.Frame1_listbox_models = tk.Listbox(frame1_frame_models, exportselection=0)
-        self.Frame1_listbox_models.bind('<<ListboxSelect>>', self.action_get_models)
-        self.Frame1_listbox_models.pack()
 
         frame1_frame_types = Frame(frame1_root)
-        frame1_frame_types.grid(row=0, column=0, columnspan=1, sticky=W + E + N + S, padx=10)
+        frame1_frame_types.grid(row=0, column=0, columnspan=1, sticky=W + E + N + S)
         Label(frame1_frame_types, text="Types").pack(padx=10, pady=10)
         self.Frame1_listbox_types = tk.Listbox(frame1_frame_types, width=20, exportselection=0)
-        self.Frame1_listbox_types.insert(tk.END, "month")
-        self.Frame1_listbox_types.insert(tk.END, "year")
-        self.Frame1_listbox_types.insert(tk.END, "day")
-        self.Frame1_listbox_types.insert(tk.END, "week")
+        self.Frame1_listbox_types.insert(tk.END, "Day")
+        self.Frame1_listbox_types.insert(tk.END, "Week")
+        self.Frame1_listbox_types.insert(tk.END, "Month")
+        self.Frame1_listbox_types.insert(tk.END, "Year")
         self.Frame1_listbox_types.bind('<<ListboxSelect>>', self.action_select_type)
         self.Frame1_listbox_types.pack()
 
+        frame1_frame_models = Frame(frame1_root)
+        frame1_frame_models.grid(row=0, column=1, columnspan=1, sticky=W + E + N + S)
+        Label(frame1_frame_models, text="Models").pack(padx=10, pady=10)
+        self.Frame1_listbox_models = tk.Listbox(frame1_frame_models, width=20, exportselection=0)
+        self.Frame1_listbox_models.bind('<<ListboxSelect>>', self.action_get_models)
+        self.Frame1_listbox_models.pack()
+
         frame1_frame_import = Frame(frame1_root)
-        frame1_frame_import.grid(row=3, column=0, rowspan=1, columnspan=1, sticky=W + E + N + S)
+        frame1_frame_import.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=20, pady=20)
         Label(frame1_frame_import, text="Models import").pack(padx=10, pady=10)
         self.Frame1_button_import = Button(frame1_frame_import, text="import .sla", command=self.action_import_model)
         self.Frame1_button_import.pack()
 
-        self.typeClRadio = Radiobutton(frame1_frame_import, text='Classic', variable=self.type_var, value=0).pack()
-        self.typeEvRadio = Radiobutton(frame1_frame_import, text='Event (Horizontal)', variable=self.type_var,
+        frame1_frame_orientation = Frame(frame1_root)
+        frame1_frame_orientation.grid(row=1, column=1, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=30, pady=30)
+        self.typeClRadio = Radiobutton(frame1_frame_orientation, text='Classic', variable=self.type_var, value=0).pack()
+        self.typeEvRadio = Radiobutton(frame1_frame_orientation, text='Event (Horizontal)', variable=self.type_var,
                                        value=1).pack()
-        self.typeVERadio = Radiobutton(frame1_frame_import, text='Event (Vertical)', variable=self.type_var,
+        self.typeVERadio = Radiobutton(frame1_frame_orientation, text='Event (Vertical)', variable=self.type_var,
                                        value=2).pack()
 
         frame1_frame_vide = Frame(frame1_root)
@@ -764,7 +767,7 @@ class TkCalendar(tk.Frame):
         self.previewCanvas.pack()
 
         # ELEMENT MIDDLE FRAME 2
-        frame2_root = Frame(self.canvas_frame, padx=10, pady=10)
+        frame2_root = Frame(self.canvas_frame)
         frame2_list = Frame(frame2_root)
         frame2_list.grid(row=0, column=0, rowspan=5, columnspan=2, sticky=W + E + N + S)
         Label(frame2_list, text="Languages").pack(padx=10, pady=10)
@@ -776,40 +779,43 @@ class TkCalendar(tk.Frame):
         self.frame2_listbox.bind('<<ListboxSelect>>', self.action_get_language)
         self.frame2_listbox.pack()
         frame2_frame_import = Frame(frame2_root)
-        frame2_frame_import.grid(row=3, column=2, rowspan=4, columnspan=1, sticky=W + E + N + S, padx=10, pady=10)
+        frame2_frame_import.grid(row=3, column=2, rowspan=4, columnspan=1, sticky=W + E + N + S)
         self.frame2_button = Button(frame2_frame_import, text="import ICS", command=self.action_import_ics, padx=30)
         self.frame2_button.pack()
-        self.frame2_spinbox_year = Spinbox(frame2_frame_import, from_=1900, to=2132, textvariable=self.year_var)
-        self.frame2_spinbox_year.delete(0, 1900)
+        self.frame2_spinbox_year = Spinbox(frame2_frame_import, from_=1600, to=2132, textvariable=self.year_var)
+        self.frame2_spinbox_year.delete(0, 1600)
         self.frame2_spinbox_year.insert(0, self.year_var)
         self.frame2_spinbox_year.pack()
 
-        frame2_option = Frame(frame2_root)
-        frame2_option.grid(row=3, column=0, rowspan=3, columnspan=1, sticky=W + E + N + S)
+        frame2_checkbox = Frame(frame2_root)
+        frame2_label = Frame(frame2_root)
+        frame2_label.grid(row=0, column=2, rowspan=5, columnspan=1, pady=40, sticky=W + E + N + S)
+        frame2_checkbox.grid(row=0, column=3, rowspan=5, columnspan=1, padx=10, pady=40, sticky=E + N)
 
-        frame2_checkbox1 = Checkbutton(frame2_option, text="Number of week",
-                                       variable=self.frame2_config_checkoption1)  # command=self.cb)
-        frame2_checkbox2 = Checkbutton(frame2_option, text="Full day name",
-                                       variable=self.frame2_config_checkoption2)  # command=self.cb)
-        frame2_checkbox3 = Checkbutton(frame2_option, text="Previous day of current month",
-                                       variable=self.frame2_config_checkoption3)  # command=self.cb)
-        frame2_checkbox4 = Checkbutton(frame2_option, text="Next day of current month",
-                                       variable=self.frame2_config_checkoption4)  # command=self.cb)
-        frame2_checkbox1.pack()
-        frame2_checkbox2.pack()
-        frame2_checkbox3.pack()
-        frame2_checkbox4.pack()
+        Label(frame2_label, text="Show previous days:").pack(padx=4, pady=4, anchor='e')
+        Label(frame2_label, text="Show next days:").pack(padx=4, pady=4, anchor='e')
+        Label(frame2_label, text="Short day name:").pack(padx=4, pady=4, anchor='e')
+        Label(frame2_label, text="Number of week:").pack(padx=4, pady=4, anchor='e')
+        Label(frame2_label, text='Week begins with:').pack(padx=4, pady=4, anchor='e')
 
-        Label(frame2_option, text='Week begins with:').pack()
-        Radiobutton(frame2_option, text='Mon', variable=self.week_var, value=calendar.MONDAY).pack()
-        Radiobutton(frame2_option, text='Sun', variable=self.week_var, value=calendar.SUNDAY).pack()
+        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption1).pack(padx=4, pady=4, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption2).pack(padx=4, pady=4, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption3).pack(padx=4, pady=4, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption4).pack(padx=4, pady=4, anchor='w')  # command=self.cb)
+
+        Radiobutton(frame2_checkbox, text='Mon', variable=self.week_var, value=calendar.MONDAY).pack()
+        Radiobutton(frame2_checkbox, text='Sun', variable=self.week_var, value=calendar.SUNDAY).pack()
 
         frame2_preview = Frame(frame2_root)
-        frame2_preview.grid(row=0, column=2, rowspan=3, columnspan=2, sticky=W + E + N + S)
+        frame2_preview.grid(row=0, column=4, rowspan=3, columnspan=2, sticky=W + E + N + S)
         Label(frame2_preview, text="Month").pack(padx=10, pady=10)
         self.Frame2_listbox_month = tk.Listbox(frame2_preview, selectmode='multiple', exportselection=0)
         self.Frame2_listbox_month.bind('<<ListboxSelect>>', self.action_select_month)
         self.Frame2_listbox_month.pack()
+
+        Button(frame2_preview, text="Select All").pack(padx=20, pady=20)
+        #, select_all = "self.Frame2_listbox_month"
+
 
         # ELEMENT MIDDLE FRAME 3
         frame3_root = Frame(self.canvas_frame, padx=10, pady=10)
@@ -823,7 +829,7 @@ class TkCalendar(tk.Frame):
 
         frame3_frame_font = Frame(frame3_root)
         frame3_frame_font.grid(row=0, column=1, rowspan=1, columnspan=1, sticky=W + E + N + S)
-        Label(frame3_frame_font, text="Font").pack(padx=10, pady=10)
+        Label(frame3_frame_font, text="Font Family").pack(padx=10, pady=10)
         self.fontVar = StringVar()
         self.Frame3_combobox_font = ttk.Combobox(frame3_frame_font, textvariable=self.fontVar)
         try:

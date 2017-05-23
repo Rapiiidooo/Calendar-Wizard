@@ -1,24 +1,6 @@
-TODO: Changement de page erreur
-TclError: cannot use geometry manager grid inside . which already has slaves managed by pack
-
-1) CLEAN CODE
-2) COMMENTS
-3) FINISH INTERFACE
+TODO:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-#fontsample.py
-#    availableFonts = scribus.getFontNames()
+Select All
+l.816
