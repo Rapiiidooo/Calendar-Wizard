@@ -847,7 +847,6 @@ class TkCalendar(tk.Frame):
 
         self.frame_master_allframes = [frame1_root, frame2_root, frame3_root]
 
-
     def quit(self):
         self.destroy()
         self.parent.destroy()
