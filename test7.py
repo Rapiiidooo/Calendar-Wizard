@@ -461,18 +461,18 @@ class TkCalendar(tk.Frame):
 
         # If page == 2
         if self.frame_master_current_page == 2:
-            if self.frame1_config_modelname != '':
+            if self.frame1_config_model_name != '':
                 type_ele = re.compile('element=\'(.*)\'')
-                tree = etree.parse(self.frame1_config_modelpath + self.frame1_config_modelname)
+                tree = etree.parse(self.frame1_config_modelpath + self.frame1_config_model_name)
                 keys = tree.getroot()
                 for key in keys:
                     val = key.attrib['KEYWORDS']
                 elements = re.findall(type_ele, val)
                 spilted_elements = re.split(",", elements[0])
                 print(spilted_elements)
-                self.Frame3_listbox_font.delete(0, END)
+                self.frame3_listbox_font.delete(0, END)
                 for i in spilted_elements:
-                    self.Frame3_listbox_font.insert(END, i)
+                    self.frame3_listbox_font.insert(END, i)
 
         # if page == 1
         if self.frame_master_current_page <= 0:
@@ -496,36 +496,35 @@ class TkCalendar(tk.Frame):
 
     # import file .sla
     def action_import_model(self):
-        print("Import model")
         try:
-            filename = askopenfilename(title="Ouvrir votre document",
+            filename = askopenfilename(title="Open your file",
                                        filetypes=[('scribus files', '.sla'), ('all files', '.*')])
-            # fichier = open(filename, "r")
+            if filename is None:
+                raise ValueError
             copyfile(filename, self.frame1_config_modelpath + os.path.basename(filename))
-        # content = fichier.read()
-        # fichier.close()
-        except:
-            print("No files imported.")
+        except ValueError:
+            self.statusVar.set("Can not import file.")
 
     # import an ICS file
     def action_import_ics(self):
         print("Import ics")
         try:
-            filename = askopenfilename(title="Ouvrir votre document",
+            filename = askopenfilename(title="Open your file",
                                        filetypes=[('ics files', '.ics'), ('all files', '.*')])
-            fichier = open(filename, "r")
-            self.frame2_config_file_i_c_s = fichier.read()
-            fichier.close()
-        except:
-            print("No files imported.")
+            if filename is None:
+                raise ValueError
+            ics_file = open(filename, "r")
+            self.frame2_config_file_i_c_s = ics_file.read()
+            ics_file.close()
+        except ValueError:
+            self.statusVar.set("Can not import file.")
 
-        # goto next page
-
+    # go to next page
     def action_increment(self):
         self.frame_master_current_page = self.frame_master_current_page + 1
         self.update()
 
-    # goto previous page
+    # go to previous page
     def action_decrement(self):
         self.frame_master_current_page = self.frame_master_current_page - 1
         self.update()
@@ -565,7 +564,6 @@ class TkCalendar(tk.Frame):
         tkMessageBox.showinfo("Action", "Creating Calendar... ")
         err = cal.create_calendar()
         if err is not None:
-            self.deiconify()
             self.status_var.set(err)
         else:
             self.quit()
@@ -580,9 +578,9 @@ class TkCalendar(tk.Frame):
     # define the scroll
     def action_mouse_weel(self, event):
         if event.num == 5:
-            event.delta = -120;
+            event.delta = -120
         elif event.num == 4:
-            event.delta = 120;
+            event.delta = 120
         print(datetime.datetime.now())
         tup = self.scrollbar_middle.get()
         if tup[0] != 0 or tup[1] != 1:
@@ -592,11 +590,11 @@ class TkCalendar(tk.Frame):
     # update preview with the selected model
     def action_get_models(self, event):
         # get selected line index
-        self.frame1_config_model_index_selected = self.Frame1_listbox_models.curselection()[0]
-        print(self.Frame1_listbox_models.get(self.frame1_config_model_index_selected))
-        self.frame1_config_modelname = self.Frame1_listbox_models.get(self.frame1_config_model_index_selected)
+        self.frame1_config_model_index_selected = self.frame1_listbox_models.curselection()[0]
+        print(self.frame1_listbox_models.get(self.frame1_config_model_index_selected))
+        self.frame1_config_model_name = self.frame1_listbox_models.get(self.frame1_config_model_index_selected)
 
-        self.Frame1_listbox_models.get(self.frame1_config_model_index_selected)
+        self.frame1_listbox_models.get(self.frame1_config_model_index_selected)
         self.photo = PhotoImage(file=imageCalender[self.frame1_config_model_index_selected])
         self.previewCanvas.itemconfigure(self.myimg, image=self.photo)
         self.previewCanvas.image = self.photo
@@ -604,20 +602,20 @@ class TkCalendar(tk.Frame):
     # update the list of months with the right language
     def action_get_language(self, event):
         # get selected line index
-        #try:
-        self.frame2_config_language_index_selected = self.frame2_listbox.curselection()[0]
+        try:
+            self.frame2_config_language_index_selected = self.frame2_listbox_language.curselection()[0]
 
-        if self.frame2_config_language_index_selected == None:
-            return
-        months = localization[self.frame2_listbox.get(self.frame2_config_language_index_selected)][0]
-        self.frame2_config_language_string_selected = self.frame2_listbox.get(
-            self.frame2_config_language_index_selected)
-        self.lang = self.frame2_config_language_string_selected  # used for action_finnish
-        self.frame2_listbox_month.delete(0, END)
-        for i in months:
-            self.frame2_listbox_month.insert(END, i)
-        #except:
-        #    print("Language non reconnue")
+            if self.frame2_config_language_index_selected == None:
+                return
+            months = localization[self.frame2_listbox_language.get(self.frame2_config_language_index_selected)][0]
+            self.frame2_config_language_string_selected = self.frame2_listbox_language.get(
+                self.frame2_config_language_index_selected)
+            self.lang = self.frame2_config_language_string_selected  # used for action_finnish
+            self.frame2_listbox_month.delete(0, END)
+            for i in months:
+                self.frame2_listbox_month.insert(END, i)
+        except:
+            print("Language non reconnue")
 
     # get selected month
     def action_select_month(self, event):
@@ -626,7 +624,6 @@ class TkCalendar(tk.Frame):
         for tous in self.frame2_config_month_index_selected:
             self.frame2_config_month_index_selected = tous
             self.frame2_config_month_string_selected.append(int(tous))
-        #print(self.frame2_config_month_string_selected)
 
     # get color for button "Font Color"
     def action_get_color(self):
@@ -671,16 +668,11 @@ class TkCalendar(tk.Frame):
 
     def action_select_type(self, event):
         self.frame1_config_type_index_selected = self.Frame1_listbox_types.curselection()[0]
-        if self.frame1_config_type_index_selected == 0:
-            return
         search_type = self.Frame1_listbox_types.get(self.frame1_config_type_index_selected)
-        self.frame1_config_type_stirng_selected = search_type
-        # mon_type='year'
-
+        self.frame1_config_type_string_selected = search_type
         type_cal = re.compile('type=\'.*' + search_type + '.*\'')
 
         # On cherche dans le repertoire avec les modeles
-
         available_models = []
 
         #  On parcours tous les documents qui se terminent par .sla dans le
@@ -701,9 +693,9 @@ class TkCalendar(tk.Frame):
                         available_models.append(model)
         print available_models
 
-        self.Frame1_listbox_models.delete(0, END)
+        self.frame1_listbox_models.delete(0, END)
         for i in available_models:
-            self.Frame1_listbox_models.insert(END, i)
+            self.frame1_listbox_models.insert(END, i)
 
     # show button Previous, Next, and finnish
     def make_bottom(self):
@@ -716,8 +708,16 @@ class TkCalendar(tk.Frame):
         for i in range(0, 4):
             self.bottom_button[i].grid(padx=10, pady=10, row=0, column=i)
 
-    def select_all(self):
+    def select_all_month(self):
         self.frame2_listbox_month.select_set(0, END)
+        self.action_select_month(None)
+
+    def select_all_elements(self):
+        self.frame3_listbox_font.select_set(0, END)
+
+    def unselect_all_month(self):
+        self.frame2_listbox_month.select_set(0, END)
+        self.action_select_month(None)
 
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
@@ -737,9 +737,9 @@ class TkCalendar(tk.Frame):
         frame1_frame_models = Frame(frame1_root)
         frame1_frame_models.grid(row=0, column=1, columnspan=1, sticky=W + E + N + S)
         Label(frame1_frame_models, text="Models").pack(padx=10, pady=10)
-        self.Frame1_listbox_models = tk.Listbox(frame1_frame_models, width=20, exportselection=0)
-        self.Frame1_listbox_models.bind('<<ListboxSelect>>', self.action_get_models)
-        self.Frame1_listbox_models.pack()
+        self.frame1_listbox_models = tk.Listbox(frame1_frame_models, width=20, exportselection=0)
+        self.frame1_listbox_models.bind('<<ListboxSelect>>', self.action_get_models)
+        self.frame1_listbox_models.pack()
 
         frame1_frame_import = Frame(frame1_root)
         frame1_frame_import.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=20, pady=20)
@@ -769,25 +769,25 @@ class TkCalendar(tk.Frame):
         # ELEMENT MIDDLE FRAME 2
         frame2_root = Frame(self.canvas_frame)
 
-        frame2_list = Frame(frame2_root, bg='blue')
-        frame2_list.grid(row=0, rowspan=3, column=0, sticky=W + E + N + S)
-        Label(frame2_list, text="Languages").pack(padx=10, pady=10)
+        frame2_list_language = Frame(frame2_root, bg='blue')
+        frame2_list_language.grid(row=0, rowspan=3, column=0, sticky=W + E + N + S)
+        Label(frame2_list_language, text="Languages").pack(padx=10, pady=10)
 
-        self.scrollbar_listbox_language = Scrollbar(frame2_list, orient=VERTICAL)
-        self.frame2_listbox = tk.Listbox(frame2_list, yscrollcommand=self.scrollbar_listbox_language.set)
-        self.scrollbar_listbox_language.config(command=self.frame2_listbox.yview)
-        self.scrollbar_listbox_language.pack(anchor='n', side=RIGHT, ipady=63)  # place scrollbar near to the listbox
+        scrollbar_listbox_language = Scrollbar(frame2_list_language, orient=VERTICAL)
+        self.frame2_listbox_language = tk.Listbox(frame2_list_language, yscrollcommand=scrollbar_listbox_language.set)
+        scrollbar_listbox_language.config(command=self.frame2_listbox_language.yview)
+        scrollbar_listbox_language.pack(anchor='n', side=RIGHT, ipady=63)  # place scrollbar near to the listbox
 
         keys = localization.keys()
         keys.sort()
         for i in keys:
-            self.frame2_listbox.insert(END, i)
-        self.frame2_listbox.bind('<<ListboxSelect>>', self.action_get_language)
-        self.frame2_listbox.pack()
+            self.frame2_listbox_language.insert(END, i)
+        self.frame2_listbox_language.bind('<<ListboxSelect>>', self.action_get_language)
+        self.frame2_listbox_language.pack()
 
         frame2_checkbox = Frame(frame2_root)
-        test = Frame(frame2_root, bg='red')
-        test.grid(row=0, column=2, pady=20, sticky=W + N + E + S)
+        frame2_vide = Frame(frame2_root, bg='red')
+        frame2_vide.grid(row=0, column=2, pady=20, sticky=W + N + E + S)
 
         frame2_label = Frame(frame2_root, bg='blue')
         frame2_label.grid(row=1, column=2, padx=10, sticky=W + N + E + S)
@@ -829,37 +829,58 @@ class TkCalendar(tk.Frame):
         self.scrollbar_listbox_month.config(command=self.frame2_listbox_month.yview)
         self.scrollbar_listbox_month.pack(anchor='ne', side=RIGHT, ipady=62)  # place scrollbar near to the listbox
         self.frame2_listbox_month.pack()
-        Button(frame2_preview, text="Select All", command=self.select_all).pack(padx=20, pady=20)
-        #, select_all = "self.frame2_listbox_month"
-
+        Button(frame2_preview, text="Select All", command=self.select_all_month).pack(padx=10, pady=10)
+        Button(frame2_preview, text="Unselect All", command=self.unselect_all_month).pack(padx=5, pady=5)
 
         # ELEMENT MIDDLE FRAME 3
         frame3_root = Frame(self.canvas_frame, padx=10, pady=10)
 
         frame3_frame_list = Frame(frame3_root)
-        frame3_frame_list.grid(row=0, column=0, columnspan=1, sticky=W + E + N + S)
-        Label(frame3_frame_list, text="Elements").pack(padx=10, pady=10)
-        self.Frame3_listbox_font = tk.Listbox(frame3_frame_list, exportselection=0)
-        self.Frame3_listbox_font.bind('<<ListboxSelect>>', )  # self.get_list)
-        self.Frame3_listbox_font.pack()
+        frame3_frame_list.grid(row=0, column=0, rowspan=3, sticky=W + E + N + S)
+        Label(frame3_frame_list, text="Elements").pack(padx=20, pady=20)
+        self.frame3_listbox_font = tk.Listbox(frame3_frame_list, exportselection=0)
+        self.frame3_listbox_font.bind('<<ListboxSelect>>')
+        self.frame3_listbox_font.pack()
+        Button(frame3_frame_list, text='Uniform Font', command=self.select_all_elements).pack(pady=20,
+                                                                                                  anchor='center')
 
-        frame3_frame_font = Frame(frame3_root)
-        frame3_frame_font.grid(row=0, column=1, rowspan=1, columnspan=1, sticky=W + E + N + S)
-        Label(frame3_frame_font, text="Font Family").pack(padx=10, pady=10)
+        frame3_frame_font_title = Frame(frame3_root, bg='blue')
+        frame3_frame_font_label = Frame(frame3_root, bg='cyan')
+        frame3_frame_font_combobox = Frame(frame3_root, bg='red')
+        frame3_frame_font_title.grid(row=0, column=1, columnspan=2, sticky=W + E + N + S)
+        frame3_frame_font_label.grid(row=1, column=1, sticky=W + E + N + S)
+        frame3_frame_font_combobox.grid(row=1, column=2, sticky=W + E + N + S)
+
+        Label(frame3_frame_font_title, text="Font Family").pack(padx=20, pady=20, anchor='center')
+        Label(frame3_frame_font_label, text="Family:").pack(padx=15, pady=10, anchor='w')
+        Label(frame3_frame_font_label, text="Style:").pack(padx=15, pady=10, anchor='w')
+        Label(frame3_frame_font_label, text="Size:").pack(padx=15, pady=10, anchor='w')
+        Label(frame3_frame_font_label, text="Color:").pack(padx=15, pady=10, anchor='w')
+
         self.fontVar = StringVar()
-        self.Frame3_combobox_font = ttk.Combobox(frame3_frame_font, textvariable=self.fontVar)
+        self.fontStyleVar = StringVar()
+        frame3_combobox_font = ttk.Combobox(frame3_frame_font_combobox, textvariable=self.fontVar)
         try:
-            self.Frame3_combobox_font['values'] = scribus.getFontNames()
+            frame3_combobox_font['values'] = scribus.getFontNames()
         except:
-            self.Frame3_combobox_font['values'] = ('Arial', 'Arial Bold', 'Arial Black')
+            frame3_combobox_font['values'] = ('Arial', 'Comic', 'Times New Roman')
 
-        self.Frame3_combobox_font.current(1)
-        self.Frame3_combobox_font.bind("<<ComboboxSelected>>", self.action_select_font)
-        self.Frame3_combobox_font.pack()
-        frame3_spinbox = Spinbox(frame3_frame_font, from_=2, to=100)
-        frame3_spinbox.pack()
-        frame3_colorpicker = Button(frame3_frame_font, text='Font Color', command=self.action_get_color)
-        frame3_colorpicker.pack()
+        frame3_combobox_font.current(1)
+        frame3_combobox_font.bind("<<ComboboxSelected>>", self.action_select_font)
+        frame3_combobox_font.pack(pady=10, anchor='w')
+
+        frame3_combobox_font_style = ttk.Combobox(frame3_frame_font_combobox, textvariable=self.fontStyleVar)
+        try:
+            frame3_combobox_font_style['values'] = scribus.getFontStyle()
+        except:
+            frame3_combobox_font_style['values'] = ('Bold', 'Italic')
+
+        frame3_combobox_font_style.current(1)
+        frame3_combobox_font_style.bind("<<ComboboxSelected>>", self.action_select_font)
+        frame3_combobox_font_style.pack(pady=10, anchor='w')
+
+        Spinbox(frame3_frame_font_combobox, from_=2, to=300).pack(pady=10, anchor='w')
+        Button(frame3_frame_font_combobox, text='Font Color', command=self.action_get_color).pack(pady=10, anchor='center')
 
         self.frame_master_allframes = [frame1_root, frame2_root, frame3_root]
 
@@ -876,9 +897,9 @@ class TkCalendar(tk.Frame):
         self.frame_master_last_page = 0
         self.frame_master_max_page = 3
         self.frame_master_current_page = 0
-        self.frame1_config_modelname = ''
+        self.frame1_config_model_name = ''
         self.frame1_config_modelpath = './models/'
-        self.frame1_config_type_stirng_selected = ''
+        self.frame1_config_type_string_selected = ''
         self.frame1_config_type_index_selected = IntVar()
         self.frame1_config_model_index_selected = IntVar()
         self.frame2_config_checkoption1 = IntVar()
