@@ -150,24 +150,26 @@ localization = {
 
 # Image of calendar model
 imageCalender = [
-    "format/calendrier-format-bureau.png",
-    "format/calendrier-format-magnetique.png",
-    "format/calendrier-format-mural.png",
-    "format/calendrier-format-mural-double.png",
-    "format/calendrier-format-poster.png"]
+    "format/format-day.png",
+    "format/format-week.png",
+    "format/format-week-month.png",
+    "format/format-month.png",
+    "format/format-year.png"]
 
 sizex = 650
 sizey = 350
 posx = 300
 posy = 200
 
-
 class ScCalendar:
     """ Parent class for all calendar types """
 
-    def __init__(self, lang, year, months=[], firstDay=calendar.SUNDAY, drawSauce=True, sepMonths='/'):
+    def __init__(self, prev_day_name, next_day_name, short_day_name, lang, year, months=[], firstDay=calendar.SUNDAY, drawSauce=True, sepMonths='/'):
         """ Setup basic things """
         # params
+        self.short_day_name = short_day_name
+        self.prev_day_name = prev_day_name
+        self.next_day_name = next_day_name
         self.drawSauce = drawSauce  # draw supplementary image?
         self.year = year
         self.months = months
@@ -179,6 +181,7 @@ class ScCalendar:
             dl.insert(0, self.dayOrder[6])
             self.dayOrder = dl
         self.mycal = calendar.Calendar(firstDay)
+
         self.layerImg = 'Calendar image'
         self.layerCal = 'Calendar'
         self.pStyleDate = "Date"  # paragraph styles
@@ -264,16 +267,16 @@ class ScEventCalendar(ScCalendar):
     """ Parent class for event
         (horizontal event, vertical event) calendar types """
 
-    def __init__(self, year, months=[], firstDay=calendar.SUNDAY, drawSauce=True, sepMonths='/', lang='English'):
-        ScCalendar.__init__(self, year, months, firstDay, drawSauce, sepMonths, lang)
+    def __init__(self, prev_day_name, next_day_name, short_day_name, year, months=[], firstDay=calendar.SUNDAY, drawSauce=True, sepMonths='/', lang='English'):
+        ScCalendar.__init__(self, prev_day_name, next_day_name, short_day_name, year, months, firstDay, drawSauce, sepMonths, lang)
 
     def print_month(self, cal, month, week):
         """ Print the month name(s) """
         if week[6].day < 7:
-            if (week == cal[len(cal) - 1]):
+            if week == cal[len(cal) - 1]:
                 self.create_header(
                     localization[self.lang][0][month] + self.sepMonths + localization[self.lang][0][(month + 1) % 12])
-            elif ((month - 1) not in self.months):
+            elif month - 1 not in self.months:
                 self.create_header(
                     localization[self.lang][0][(month - 1) % 12] + self.sepMonths + localization[self.lang][0][month])
         else:
@@ -300,8 +303,8 @@ class ScHorizontalEventCalendar(ScEventCalendar):
     """ One day = one row calendar. I suggest LANDSCAPE orientation.\
         One week per page."""
 
-    def __init__(self, year, months=[], firstDay=calendar.SUNDAY, drawSauce=True, sepMonths='/', lang='English'):
-        ScEventCalendar.__init__(self, year, months, firstDay, drawSauce, sepMonths, lang)
+    def __init__(self, prev_day_name, next_day_name, short_day_name, year, months=[], firstDay=calendar.SUNDAY, drawSauce=True, sepMonths='/', lang='English'):
+        ScEventCalendar.__init__(self, prev_day_name, next_day_name, short_day_name, year, months, firstDay, drawSauce, sepMonths, lang)
 
     def setup_doc_variables(self):
         """ Compute base metrics here. Page layout is bordered by margins and
@@ -349,8 +352,8 @@ class ScVerticalCalendar(ScCalendar):
     """ Parent class for vertical
         (classic, vertical event) calendar types """
 
-    def __init__(self, lang, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/'):
-        ScCalendar.__init__(self, lang, year, months, first_day, draw_sauce, sep_months)
+    def __init__(self, prev_day_name, next_day_name, short_day_name, lang, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/'):
+        ScCalendar.__init__(self, prev_day_name, next_day_name, short_day_name, lang, year, months, first_day, draw_sauce, sep_months)
 
     def setup_doc_variables(self):
         """ Compute base metrics here. Page layout is bordered by margins and
@@ -375,7 +378,10 @@ class ScVerticalCalendar(ScCalendar):
             cel = createText(self.marginl + row_cnt * self.col_size,
                              self.cal_height + self.row_size,
                              self.col_size, self.row_size)
-            setText(j, cel)
+            if self.short_day_name is 1: #Si checkbox short day cochee alors jour raccourcis
+                setText(j[:3] + ".", cel)
+            else:
+                setText(j, cel)
             setStyle(self.pStyleWeekday, cel)
             row_cnt += 1
         closeMasterPage()
@@ -397,14 +403,16 @@ class ScClassicCalendar(ScVerticalCalendar):
     """ Calendar matrix creator itself. I suggest PORTRAIT orientation.
         One month per page."""
 
-    def __init__(self, lang, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/'):
-        ScVerticalCalendar.__init__(self, lang, year, months, first_day, draw_sauce, sep_months)
+    def __init__(self, prev_day_name, next_day_name, short_day_name, lang, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/'):
+        ScVerticalCalendar.__init__(self, prev_day_name, next_day_name, short_day_name, lang, year, months, first_day, draw_sauce, sep_months)
 
     def create_month_calendar(self, month, cal):
         """ Create a page and draw one month calendar on it """
         self.create_layout()
         self.create_header(localization[self.lang][0][month])
         row_cnt = 2
+
+        # creer les box pour les jours du mois et les remplies
         for week in cal:
             col_cnt = 0
             for day in week:
@@ -412,6 +420,12 @@ class ScClassicCalendar(ScVerticalCalendar):
                                  self.cal_height + row_cnt * self.row_size,
                                  self.col_size, self.row_size)
                 col_cnt += 1
+                if self.prev_day_name is 1 and day.month < month + 1:
+                    setText(str(day.day), cel)
+                    setStyle(self.pStyleDate, cel)
+                if self.next_day_name is 1 and day.month > month + 1:
+                    setText(str(day.day), cel)
+                    setStyle(self.pStyleDate, cel)
                 if day.month == month + 1:
                     setText(str(day.day), cel)
                     setStyle(self.pStyleDate, cel)
@@ -422,9 +436,9 @@ class ScVerticalEventCalendar(ScVerticalCalendar, ScEventCalendar):
     """ One day = one column calendar. I suggest LANDSCAPE orientation.\
         One week per page."""
 
-    def __init__(self, lang, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/'):
-        ScVerticalCalendar.__init__(self, lang, year, months, first_day, draw_sauce, sep_months)
-        ScEventCalendar.__init__(self, lang, year, months, first_day, draw_sauce, sep_months)
+    def __init__(self, prev_day_name, next_day_name, short_day_name, lang, year, months=[], first_day=calendar.SUNDAY, draw_sauce=True, sep_months='/'):
+        ScVerticalCalendar.__init__(self, prev_day_name, next_day_name, short_day_name, lang, year, months, first_day, draw_sauce, sep_months)
+        ScEventCalendar.__init__(self, prev_day_name, next_day_name, short_day_name, lang, year, months, first_day, draw_sauce, sep_months)
 
     def print_day(self, j):
         """ Print a given day """
@@ -530,7 +544,6 @@ class TkCalendar(tk.Frame):
         self.update()
 
     def action_finnish(self):
-        print("Finnish")
         try:
             self.year_var = self.frame2_spinbox_year.get()
             year = str(self.year_var)
@@ -542,23 +555,22 @@ class TkCalendar(tk.Frame):
             self.status_var.set('Year must be in the "YYYY" format e.g. 2005.')
             return
 
-        # print(self.frame2_config_month_string_selected)
-
         # # draw images etc.
         # if self.imageVar.get() == 0:
         #   draw = False
         # else:
         #   draw = True
-        # create calendar (finally)
 
+        # create calendar (finally)
+        print self.short_day_name
         if self.type_var.get() == 0:
-            cal = ScClassicCalendar(self.lang, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
+            cal = ScClassicCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.lang, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
                                     self.sep_months)
         elif self.type_var.get() == 1:
-            cal = ScHorizontalEventCalendar(self.year, self.frame2_config_month_string_selected, self.week_var.get(),
+            cal = ScHorizontalEventCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
                                             self.sep_months, self.lang)
         else:
-            cal = ScVerticalEventCalendar(self.year, self.frame2_config_month_string_selected, self.week_var.get(),
+            cal = ScVerticalEventCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
                                           self.sep_months, self.lang)
         # self.master.withdraw()
         tkMessageBox.showinfo("Action", "Creating Calendar... ")
@@ -590,32 +602,31 @@ class TkCalendar(tk.Frame):
     # update preview with the selected model
     def action_get_models(self, event):
         # get selected line index
-        self.frame1_config_model_index_selected = self.frame1_listbox_models.curselection()[0]
-        print(self.frame1_listbox_models.get(self.frame1_config_model_index_selected))
-        self.frame1_config_model_name = self.frame1_listbox_models.get(self.frame1_config_model_index_selected)
+        self.model_index_selected = self.frame1_listbox_models.curselection()[0]
+        self.frame1_config_model_name = self.frame1_listbox_models.get(self.model_index_selected)
+        #[6:-4] correspond 6: model- et :-4 .sla
+        model_name = self.frame1_config_model_name[6:-4]
 
-        self.frame1_listbox_models.get(self.frame1_config_model_index_selected)
-        self.photo = PhotoImage(file=imageCalender[self.frame1_config_model_index_selected])
-        self.previewCanvas.itemconfigure(self.myimg, image=self.photo)
-        self.previewCanvas.image = self.photo
+        for i in imageCalender:
+            if i[14:-4] == model_name:
+                self.photo = PhotoImage(file=i)
+                self.previewCanvas.itemconfigure(self.photo_img, image=self.photo, anchor=NW)
+                self.previewCanvas.image = self.photo
 
     # update the list of months with the right language
     def action_get_language(self, event):
         # get selected line index
-        try:
-            self.frame2_config_language_index_selected = self.frame2_listbox_language.curselection()[0]
+        self.frame2_config_language_index_selected = self.frame2_listbox_language.curselection()[0]
 
-            if self.frame2_config_language_index_selected == None:
-                return
-            months = localization[self.frame2_listbox_language.get(self.frame2_config_language_index_selected)][0]
-            self.frame2_config_language_string_selected = self.frame2_listbox_language.get(
-                self.frame2_config_language_index_selected)
-            self.lang = self.frame2_config_language_string_selected  # used for action_finnish
-            self.frame2_listbox_month.delete(0, END)
-            for i in months:
-                self.frame2_listbox_month.insert(END, i)
-        except:
-            print("Language non reconnue")
+        if self.frame2_config_language_index_selected is None:
+            return
+        months = localization[self.frame2_listbox_language.get(self.frame2_config_language_index_selected)][0]
+        self.frame2_config_language_string_selected = self.frame2_listbox_language.get(
+            self.frame2_config_language_index_selected)
+        self.lang = self.frame2_config_language_string_selected  # used for action_finnish
+        self.frame2_listbox_month.delete(0, END)
+        for i in months:
+            self.frame2_listbox_month.insert(END, i)
 
     # get selected month
     def action_select_month(self, event):
@@ -667,8 +678,8 @@ class TkCalendar(tk.Frame):
         print(self.fontVar.get())
 
     def action_select_type(self, event):
-        self.frame1_config_type_index_selected = self.Frame1_listbox_types.curselection()[0]
-        search_type = self.Frame1_listbox_types.get(self.frame1_config_type_index_selected)
+        self.frame1_config_type_index_selected = self.frame1_listbox_types.curselection()[0]
+        search_type = self.frame1_listbox_types.get(self.frame1_config_type_index_selected)
         self.frame1_config_type_string_selected = search_type
         type_cal = re.compile('type=\'.*' + search_type + '.*\'')
 
@@ -716,8 +727,20 @@ class TkCalendar(tk.Frame):
         self.frame3_listbox_font.select_set(0, END)
 
     def unselect_all_month(self):
-        self.frame2_listbox_month.select_set(0, END)
+        self.frame2_listbox_month.selection_clear(0, END)
         self.action_select_month(None)
+
+    def get_short_day(self):
+        self.short_day_name = self.checkoption_short_day.get()
+
+    def get_prev_day(self):
+        self.prev_day_name = self.checkoption_prev_day.get()
+
+    def get_next_day(self):
+        self.next_day_name = self.checkoption_next_day.get()
+
+    def get_week_number(self):
+        self.week_number = self.checkoption_week_number.get()
 
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
@@ -726,13 +749,13 @@ class TkCalendar(tk.Frame):
         frame1_frame_types = Frame(frame1_root)
         frame1_frame_types.grid(row=0, column=0, columnspan=1, sticky=W + E + N + S)
         Label(frame1_frame_types, text="Types").pack(padx=10, pady=10)
-        self.Frame1_listbox_types = tk.Listbox(frame1_frame_types, width=20, exportselection=0)
-        self.Frame1_listbox_types.insert(tk.END, "Day")
-        self.Frame1_listbox_types.insert(tk.END, "Week")
-        self.Frame1_listbox_types.insert(tk.END, "Month")
-        self.Frame1_listbox_types.insert(tk.END, "Year")
-        self.Frame1_listbox_types.bind('<<ListboxSelect>>', self.action_select_type)
-        self.Frame1_listbox_types.pack()
+        self.frame1_listbox_types = tk.Listbox(frame1_frame_types, width=20, exportselection=0)
+        self.frame1_listbox_types.insert(tk.END, "Day")
+        self.frame1_listbox_types.insert(tk.END, "Week")
+        self.frame1_listbox_types.insert(tk.END, "Month")
+        self.frame1_listbox_types.insert(tk.END, "Year")
+        self.frame1_listbox_types.bind('<<ListboxSelect>>', self.action_select_type)
+        self.frame1_listbox_types.pack()
 
         frame1_frame_models = Frame(frame1_root)
         frame1_frame_models.grid(row=0, column=1, columnspan=1, sticky=W + E + N + S)
@@ -761,9 +784,10 @@ class TkCalendar(tk.Frame):
         frame1_frame_preview = Frame(frame1_root)
         frame1_frame_preview.grid(row=0, column=2, rowspan=6, columnspan=1, padx=20, sticky=W + E + N + S)
         Label(frame1_frame_preview, text="Preview").pack(padx=10, pady=10)
-        self.photo = PhotoImage(file=imageCalender[0])
-        self.previewCanvas = Canvas(frame1_frame_preview, width=150, height=220)
-        self.myimg = self.previewCanvas.create_image(0, 0, anchor=NW, image=self.photo)
+
+        self.photo = PhotoImage(file=imageCalender[3])
+        self.previewCanvas = Canvas(frame1_frame_preview, width=180, height=240)
+        self.photo_img = self.previewCanvas.create_image(0, 0, anchor=NW, image=self.photo)
         self.previewCanvas.pack()
 
         # ELEMENT MIDDLE FRAME 2
@@ -800,10 +824,10 @@ class TkCalendar(tk.Frame):
         Label(frame2_label, text='Week begins with:').pack(padx=4, pady=4, anchor='w')
         Label(frame2_label, text='Year:').pack(padx=4, pady=20, anchor='w')
 
-        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption1).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
-        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption2).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
-        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption3).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
-        Checkbutton(frame2_checkbox, variable=self.frame2_config_checkoption4).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.checkoption_prev_day, command=self.get_prev_day).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.checkoption_next_day, command=self.get_next_day).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.checkoption_short_day, command=self.get_short_day).pack(padx=3, pady=3, anchor='w')
+        Checkbutton(frame2_checkbox, variable=self.checkoption_week_number, command=self.get_week_number).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
 
         Radiobutton(frame2_checkbox, text='Mon', variable=self.week_var, value=calendar.MONDAY).pack()
         Radiobutton(frame2_checkbox, text='Sun', variable=self.week_var, value=calendar.SUNDAY).pack()
@@ -901,11 +925,11 @@ class TkCalendar(tk.Frame):
         self.frame1_config_modelpath = './models/'
         self.frame1_config_type_string_selected = ''
         self.frame1_config_type_index_selected = IntVar()
-        self.frame1_config_model_index_selected = IntVar()
-        self.frame2_config_checkoption1 = IntVar()
-        self.frame2_config_checkoption2 = IntVar()
-        self.frame2_config_checkoption3 = IntVar()
-        self.frame2_config_checkoption4 = IntVar()
+        self.model_index_selected = IntVar()
+        self.checkoption_prev_day = IntVar()
+        self.checkoption_next_day = IntVar()
+        self.checkoption_short_day = IntVar()
+        self.checkoption_week_number = IntVar()
         self.frame2_config_language_string_selected = 'English'
         self.frame2_config_language_index_selected = 0
         self.frame2_config_month_index_selected = []
@@ -926,6 +950,10 @@ class TkCalendar(tk.Frame):
         self.sep_months = '/'
         self.lang = 'English'
         self.week_var = IntVar()
+        self.short_day_name = BooleanVar()
+        self.prev_day_name = BooleanVar ()
+        self.next_day_name = BooleanVar ()
+        self.week_number = BooleanVar()
 
         self.p_style_date = "Date"  # paragraph styles
         self.p_style_weekday = "Weekday"
