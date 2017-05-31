@@ -483,7 +483,7 @@ class TkCalendar(tk.Frame):
                     val = key.attrib['KEYWORDS']
                 elements = re.findall(type_ele, val)
                 spilted_elements = re.split(",", elements[0])
-                print(spilted_elements)
+                #print(spilted_elements)
                 self.frame3_listbox_font.delete(0, END)
                 for i in spilted_elements:
                     self.frame3_listbox_font.insert(END, i)
@@ -521,7 +521,7 @@ class TkCalendar(tk.Frame):
 
     # import an ICS file
     def action_import_ics(self):
-        print("Import ics")
+        #print("Import ics")
         try:
             filename = askopenfilename(title="Open your file",
                                        filetypes=[('ics files', '.ics'), ('all files', '.*')])
@@ -551,7 +551,6 @@ class TkCalendar(tk.Frame):
                 raise ValueError
             self.year = int(year)
         except ValueError:
-            print('err')
             self.status_var.set('Year must be in the "YYYY" format e.g. 2005.')
             return
 
@@ -562,7 +561,6 @@ class TkCalendar(tk.Frame):
         #   draw = True
 
         # create calendar (finally)
-        print self.short_day_name
         if self.type_var.get() == 0:
             cal = ScClassicCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.lang, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
                                     self.sep_months)
@@ -702,7 +700,7 @@ class TkCalendar(tk.Frame):
                     avail = re.findall(type_cal, val)
                     if avail:
                         available_models.append(model)
-        print available_models
+        #print available_models
 
         self.frame1_listbox_models.delete(0, END)
         for i in available_models:
@@ -793,7 +791,7 @@ class TkCalendar(tk.Frame):
         # ELEMENT MIDDLE FRAME 2
         frame2_root = Frame(self.canvas_frame)
 
-        frame2_list_language = Frame(frame2_root, bg='blue')
+        frame2_list_language = Frame(frame2_root)
         frame2_list_language.grid(row=0, rowspan=3, column=0, sticky=W + E + N + S)
         Label(frame2_list_language, text="Languages").pack(padx=10, pady=10)
 
@@ -810,10 +808,10 @@ class TkCalendar(tk.Frame):
         self.frame2_listbox_language.pack()
 
         frame2_checkbox = Frame(frame2_root)
-        frame2_vide = Frame(frame2_root, bg='red')
+        frame2_vide = Frame(frame2_root)
         frame2_vide.grid(row=0, column=2, pady=20, sticky=W + N + E + S)
 
-        frame2_label = Frame(frame2_root, bg='blue')
+        frame2_label = Frame(frame2_root)
         frame2_label.grid(row=1, column=2, padx=10, sticky=W + N + E + S)
         frame2_checkbox.grid(row=1, column=3, sticky=W + N + E + S)
 
@@ -838,12 +836,12 @@ class TkCalendar(tk.Frame):
         self.frame2_spinbox_year.insert(0, self.year_var)
         self.frame2_spinbox_year.pack(padx=3, pady=6, anchor='w')
 
-        frame2_frame_import = Frame(frame2_root, bg='red')
+        frame2_frame_import = Frame(frame2_root)
         frame2_frame_import.grid(row=2, column=2, columnspan=2, sticky=N + E + S + W)
         self.frame2_button = Button(frame2_frame_import, text="import ICS", command=self.action_import_ics, padx=30, pady=10)
         self.frame2_button.pack()
 
-        frame2_preview = Frame(frame2_root, bg='blue')
+        frame2_preview = Frame(frame2_root)
         frame2_preview.grid(row=0, rowspan=3, column=4, sticky=W + E + N + S)
         Label(frame2_preview, text="Month").pack(padx=10, pady=10)
         self.scrollbar_listbox_month = Scrollbar(frame2_preview, orient=VERTICAL)
@@ -858,6 +856,7 @@ class TkCalendar(tk.Frame):
 
         # ELEMENT MIDDLE FRAME 3
         frame3_root = Frame(self.canvas_frame, padx=10, pady=10)
+        frame3_root.rowconfigure(1, weight=1)
 
         frame3_frame_list = Frame(frame3_root)
         frame3_frame_list.grid(row=0, column=0, rowspan=3, sticky=W + E + N + S)
@@ -868,18 +867,18 @@ class TkCalendar(tk.Frame):
         Button(frame3_frame_list, text='Uniform Font', command=self.select_all_elements).pack(pady=20,
                                                                                                   anchor='center')
 
-        frame3_frame_font_title = Frame(frame3_root, bg='blue')
-        frame3_frame_font_label = Frame(frame3_root, bg='cyan')
-        frame3_frame_font_combobox = Frame(frame3_root, bg='red')
-        frame3_frame_font_title.grid(row=0, column=1, columnspan=2, sticky=W + E + N + S)
-        frame3_frame_font_label.grid(row=1, column=1, sticky=W + E + N + S)
+        frame3_frame_font_title = Frame(frame3_root)
+        frame3_frame_font_label = Frame(frame3_root)
+        frame3_frame_font_combobox = Frame(frame3_root)
+        frame3_frame_font_title.grid(row=0, column=1, columnspan=2, sticky=W + E + N)
+        frame3_frame_font_label.grid(row=1, column=1, sticky=N + W + E + S)
         frame3_frame_font_combobox.grid(row=1, column=2, sticky=W + E + N + S)
 
-        Label(frame3_frame_font_title, text="Font Family").pack(padx=20, pady=20, anchor='center')
-        Label(frame3_frame_font_label, text="Family:").pack(padx=15, pady=10, anchor='w')
-        Label(frame3_frame_font_label, text="Style:").pack(padx=15, pady=10, anchor='w')
-        Label(frame3_frame_font_label, text="Size:").pack(padx=15, pady=10, anchor='w')
-        Label(frame3_frame_font_label, text="Color:").pack(padx=15, pady=10, anchor='w')
+        Label(frame3_frame_font_title, text="Font Family").pack(padx=20, pady=20)
+        Label(frame3_frame_font_label, text="Family:").pack(padx=15, pady=10, anchor='nw')
+        Label(frame3_frame_font_label, text="Style:").pack(padx=15, pady=10, anchor='nw')
+        Label(frame3_frame_font_label, text="Size:").pack(padx=15, pady=10, anchor='nw')
+        Label(frame3_frame_font_label, text="Color:").pack(padx=15, pady=18, anchor='nw')
 
         self.fontVar = StringVar()
         self.fontStyleVar = StringVar()
@@ -979,8 +978,7 @@ def main():
     print('Running script...')
     # progressReset()
     root = tk.Tk()
-    app = TkCalendar(root).pack(side="top", fill="both", expand=True)
-
+    TkCalendar(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
 
 
