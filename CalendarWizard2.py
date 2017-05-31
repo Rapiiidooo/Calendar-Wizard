@@ -459,6 +459,16 @@ class ScVerticalEventCalendar(ScVerticalCalendar, ScEventCalendar):
         setStyle(self.pStyleWeekNo, week_cel)
 
 
+class BoxObject:
+    """ BoxObject represent some attribut from PAGEOBJECT from scribus file. """
+    def __init__(self, xpos, ypos, width, height, anname):
+        self.xpos = xpos
+        self.ypos = ypos
+        self.width = width
+        self.height = height
+        self.anname = anname
+
+
 class TkCalendar(tk.Frame):
     # update the current page of the wizard
     def update(self):
@@ -521,7 +531,6 @@ class TkCalendar(tk.Frame):
 
     # import an ICS file
     def action_import_ics(self):
-        #print("Import ics")
         try:
             filename = askopenfilename(title="Open your file",
                                        filetypes=[('ics files', '.ics'), ('all files', '.*')])
@@ -554,12 +563,6 @@ class TkCalendar(tk.Frame):
             self.status_var.set('Year must be in the "YYYY" format e.g. 2005.')
             return
 
-        # # draw images etc.
-        # if self.imageVar.get() == 0:
-        #   draw = False
-        # else:
-        #   draw = True
-
         # create calendar (finally)
         if self.type_var.get() == 0:
             cal = ScClassicCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.lang, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
@@ -570,7 +573,6 @@ class TkCalendar(tk.Frame):
         else:
             cal = ScVerticalEventCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
                                           self.sep_months, self.lang)
-        # self.master.withdraw()
         tkMessageBox.showinfo("Action", "Creating Calendar... ")
         err = cal.create_calendar()
         if err is not None:
@@ -602,7 +604,7 @@ class TkCalendar(tk.Frame):
         # get selected line index
         self.model_index_selected = self.frame1_listbox_models.curselection()[0]
         self.frame1_config_model_name = self.frame1_listbox_models.get(self.model_index_selected)
-        #[6:-4] correspond 6: model- et :-4 .sla
+        # [6:-4] meaning 6: model- et :-4 .sla
         model_name = self.frame1_config_model_name[6:-4]
 
         for i in imageCalender:
@@ -680,7 +682,6 @@ class TkCalendar(tk.Frame):
         search_type = self.frame1_listbox_types.get(self.frame1_config_type_index_selected)
         self.frame1_config_type_string_selected = search_type
         type_cal = re.compile('type=\'.*' + search_type + '.*\'')
-
         # On cherche dans le repertoire avec les modeles
         available_models = []
 
@@ -694,7 +695,7 @@ class TkCalendar(tk.Frame):
                 keys = tree.getroot()
                 for key in keys:
                     val = key.attrib['KEYWORDS']
-
+                    print(val)
                     #  Si on trouve un type de calendrier dans les KEYWORDS du document
                     #  on recupere ce modele pour l'afficher dans l'etape suivante
                     avail = re.findall(type_cal, val)
@@ -740,6 +741,119 @@ class TkCalendar(tk.Frame):
     def get_week_number(self):
         self.week_number = self.checkoption_week_number.get()
 
+    def setup_doc_variables(self):
+        """ Compute base metrics here. Page layout is bordered by margins and
+        virtually divided by golden mean 'cut' in the bottom. The calendar is
+        in the bottom part - top is occupied with empty image frame. """
+
+        self.dayOrder = localization[self.lang][1]
+
+        self.layerImg = 'Calendar image'
+        self.layerCal = 'Calendar'
+
+        self.masterPage = "Weekdays"
+        # settings
+        self.firstPage = True  # create only 2nd 3rd ... pages. No 1st one.
+
+
+        page = getPageSize()
+        self.pagex = page[0]
+        self.pagey = page[1]
+        marg = getPageMargins()
+        # See http://docs.scribus.net/index.php?lang=en&page=scripterapi-page#-getPageMargins
+        self.margint = marg[0]
+        self.marginl = marg[1]
+        self.marginr = marg[2]
+        self.marginb = marg[3]
+        self.width = self.pagex - self.marginl - self.marginr
+        self.height = self.pagey - self.margint - self.marginb
+
+        self.gmean = self.height - self.golden_mean(self.height) + self.margint
+        # calendar size
+        self.cal_height = self.height - self.gmean + self.margint
+        # rows and cols
+        self.row_size = self.gmean / 8
+        self.col_size = self.width / 7
+
+    def create_layout(self):
+        """ Create the page and optional bells and whistles around """
+        self.create_page()
+        #setActiveLayer(self.layerCal)
+
+    def create_page(self):
+        """ Wrapper to the new page with layers """
+        if self.firstPage:
+            self.firstPage = False
+            newPage(-1)  # create a new page using the master_page
+            deletePage(1)  # now it's safe to delete the first page
+            gotoPage(1)
+            return
+        newPage(-1)
+
+    def create_header(self, monthName):
+        """ Draw calendar header: Month name """
+        cel = createText(self.gmean + self.marginl, self.margint,
+                         self.width - self.gmean, self.rowSize)
+        setText(monthName, cel)
+        setStyle(self.pStyleMonth, cel)
+
+    def my_test(self):
+        if self.frame1_config_model_name == '':
+            self.frame1_config_model_name = 'test.sla'
+
+        box_container = []
+        # parse le fichier selectionne
+        tree = etree.parse(self.frame1_config_modelpath + self.frame1_config_model_name)
+        # ecrit dans box_container les objets du model
+        # les objets recoivent les attributs des PAGEOBJECT tel que la taille, la position et le nom
+        for balise in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT/PAGEOBJECT"):
+            new = BoxObject(balise.get("XPOS"), balise.get("YPOS"), balise.get("WIDTH"),
+                                           balise.get("HEIGHT"), balise.get("ANNAME"))
+            box_container.append(new)
+#enumerate
+        try:
+            if not newDocDialog():
+                print 'Create a new document first, please'
+                return
+            self.pStyleDate = "Date"  # paragraph styles
+            self.pStyleWeekday = "Weekday"
+            self.pStyleMonth = "Month"
+            self.pStyleWeekNo = "WeekNo"
+            createParagraphStyle(name=self.pStyleDate, alignment=ALIGN_RIGHT)
+            createParagraphStyle(name=self.pStyleWeekday, alignment=ALIGN_RIGHT)
+            createParagraphStyle(name=self.pStyleMonth)
+            createParagraphStyle(name=self.pStyleWeekNo, alignment=ALIGN_RIGHT)
+
+            # createText(x, y, largeur, hauteur)
+            # createImage(x, y, largeur, hauteur)
+            setUnit(UNIT_POINTS)
+            print "voila"
+            print box_container[0].xpos
+            cel = createText(float(box_container[0].xpos), float(box_container[0].ypos), float(box_container[0].width),
+                             float(box_container[0].height))
+            print "voila2"
+            print box_container[0].xpos
+            setText(str(1), cel)
+            print "voila3"
+            print box_container[0].xpos
+            setStyle(self.pStyleDate, cel)
+            print "voila4"
+            print box_container[0].xpos
+
+
+            newPage(-1)
+            cel = createText(40, 40, 100, 100)
+            setText(str(1), cel)
+            setStyle(self.pStyleDate, cel)
+            img2 = createImage(140, 140, 100, 100)
+        except:
+            self.quit()
+        try:
+            self.quit()
+        except:
+            pass
+        return
+
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
         frame1_root = Frame(self.canvas_frame, padx=10, pady=10)
@@ -770,6 +884,9 @@ class TkCalendar(tk.Frame):
 
         frame1_frame_orientation = Frame(frame1_root)
         frame1_frame_orientation.grid(row=1, column=1, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=30, pady=30)
+
+        Button(frame1_frame_orientation, text="MYTEST", command=self.my_test).pack(ipady=15)
+
         self.typeClRadio = Radiobutton(frame1_frame_orientation, text='Classic', variable=self.type_var, value=0).pack()
         self.typeEvRadio = Radiobutton(frame1_frame_orientation, text='Event (Horizontal)', variable=self.type_var,
                                        value=1).pack()

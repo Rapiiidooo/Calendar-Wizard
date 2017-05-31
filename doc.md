@@ -39,3 +39,41 @@ car notre plugin associe ces boîtes-objets à des caractéristiques particuliè
 
 HOW TO CREATE A NEW MODEL
 
+
+Particular name :
+{
+	year model :
+	{
+		image = image_box
+		boite de légende = caption_box
+	}
+	month model :
+	{
+		image = image_box
+		boite du mois en cours = month_box
+		boite des jours de la semaine = week_box
+		boite des numéros de jours = days_box
+		boite des numéros de semaine = num_week_box
+		//boite de légende = caption_box
+
+		boite du mois suivant = next_month_box
+		image = next_image_box
+		boite des jours de la semaine = next_week_box
+		boite des numéros de jours = next_days_box
+		boite des numéros de semaine = next_num_week_box
+
+		boite du mois precedent = prev_month_box
+		image = prev_image_box
+		boite des jours de la semaine = prev_week_box
+		boite des numéros de jours = prev_days_box
+		boite des numéros de semaine = prev_num_week_box
+	}
+	week model :
+	{
+		image = image_box
+	}
+	day model :
+	{
+		image = image_box
+	}
+}
