@@ -461,12 +461,56 @@ class ScVerticalEventCalendar(ScVerticalCalendar, ScEventCalendar):
 
 class BoxObject:
     """ BoxObject represent some attribut from PAGEOBJECT from scribus file. """
-    def __init__(self, xpos, ypos, width, height, anname):
+    def __init__(self, xpos, ypos, width, height, anname, img=False):
         self.xpos = xpos
         self.ypos = ypos
         self.width = width
         self.height = height
         self.anname = anname
+        self.img = img
+
+
+class Document:
+    """ Document contains all attribute useful about master page, margin, etc."""
+    def __init__(self, path_file):
+        self.path_file = path_file
+
+        self.pagex = 0.0
+        self.pagey = 0.0
+        self.border_left = 0.0
+        self.border_right = 0.0
+        self.border_top = 0.0
+        self.border_bottom = 0.0
+        self.size = "A4"
+        self.orientation = BooleanVar()
+
+        self.box_container = []
+
+        self.doc_parsing()
+
+    def doc_parsing(self):
+        # parse le fichier selectionne
+        tree = etree.parse(self.path_file)
+        # ecrit dans box_container les objets du model
+        # les objets recoivent les attributs des PAGEOBJECT tel que la taille, la position et le nom
+        for balise in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT/PAGEOBJECT"):
+            if balise.get("ANNAME") == "image_box":
+                new = BoxObject(balise.get("XPOS"), balise.get("YPOS"), balise.get("WIDTH"), balise.get("HEIGHT"),
+                                balise.get("ANNAME"), True)
+            else:
+                new = BoxObject(balise.get("XPOS"), balise.get("YPOS"), balise.get("WIDTH"), balise.get("HEIGHT"),
+                                balise.get("ANNAME"))
+            self.box_container.append(new)
+
+        for balise in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT/MASTERPAGE"):
+            self.pagex = balise.get("PAGEXPOS")
+            self.pagey = balise.get("PAGEYPOS")
+            self.orientation = balise.get("Orientation")
+            self.border_left = balise.get("BORDERLEFT")
+            self.border_right = balise.get("BORDERRIGHT")
+            self.border_top = balise.get("BORDERTOP")
+            self.border_bottom = balise.get("BORDERBOTTOM")
+            self.size = str(balise.get("Size"))
 
 
 class TkCalendar(tk.Frame):
@@ -801,18 +845,22 @@ class TkCalendar(tk.Frame):
         if self.frame1_config_model_name == '':
             self.frame1_config_model_name = 'test.sla'
 
-        box_container = []
-        # parse le fichier selectionne
-        tree = etree.parse(self.frame1_config_modelpath + self.frame1_config_model_name)
-        # ecrit dans box_container les objets du model
-        # les objets recoivent les attributs des PAGEOBJECT tel que la taille, la position et le nom
-        for balise in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT/PAGEOBJECT"):
-            new = BoxObject(balise.get("XPOS"), balise.get("YPOS"), balise.get("WIDTH"),
-                                           balise.get("HEIGHT"), balise.get("ANNAME"))
-            box_container.append(new)
-#enumerate
+        my_document = Document(self.frame1_config_modelpath + self.frame1_config_model_name)
+        print my_document.size
+        print my_document.border_left
+        print my_document.border_right
+        print my_document.border_top
+        print my_document.border_bottom
+        print my_document.orientation
+
+        test = "PAPER_" + my_document.size
+
+# reverif enumerate
         try:
-            if not newDocDialog():
+            if not newDocument(eval(test),
+                    (float(my_document.border_left), float(my_document.border_right),
+                     float(my_document.border_top), float(my_document.border_bottom)),
+                    int(my_document.orientation), 1, UNIT_POINTS, NOFACINGPAGES, FIRSTPAGELEFT, 1):
                 print 'Create a new document first, please'
                 return
             self.pStyleDate = "Date"  # paragraph styles
@@ -826,26 +874,25 @@ class TkCalendar(tk.Frame):
 
             # createText(x, y, largeur, hauteur)
             # createImage(x, y, largeur, hauteur)
-            setUnit(UNIT_POINTS)
-            print "voila"
-            print box_container[0].xpos
-            cel = createText(float(box_container[0].xpos), float(box_container[0].ypos), float(box_container[0].width),
-                             float(box_container[0].height))
-            print "voila2"
-            print box_container[0].xpos
-            setText(str(1), cel)
-            print "voila3"
-            print box_container[0].xpos
-            setStyle(self.pStyleDate, cel)
-            print "voila4"
-            print box_container[0].xpos
+            for i in my_document.box_container:
+                if i.img is False:
+                    cel = createText(float(i.xpos) - float(my_document.pagex),
+                                     float(i.ypos) - float(my_document.pagey),
+                                     float(i.width),
+                                     float(i.height), str(i.anname))
+                    setText(str(i.anname), cel)
+                    setStyle(self.pStyleDate, cel)
+                else:
+                    createImage(float(i.xpos) - float(my_document.pagex),
+                                float(i.ypos) - float(my_document.pagey),
+                                float(i.width),
+                                float(i.height), str(i.anname))
 
-
-            newPage(-1)
-            cel = createText(40, 40, 100, 100)
-            setText(str(1), cel)
-            setStyle(self.pStyleDate, cel)
-            img2 = createImage(140, 140, 100, 100)
+            #newPage(-1)
+            #cel = createText(40, 40, 100, 100)
+            #setText(str(1), cel)
+            #setStyle(self.pStyleDate, cel)
+            #img2 = createImage(140, 140, 100, 100)
         except:
             self.quit()
         try:
