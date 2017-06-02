@@ -483,6 +483,15 @@ class Document:
         self.border_bottom = 0.0
         self.size = "A4"
         self.orientation = BooleanVar()
+        self.nb_days = 7
+        self.nb_week = 4
+
+        self.lang = 'English'
+        self.day_order = localization[self.lang][1]
+        # if firstDay == calendar.SUNDAY:
+        #    dl = self.day_order[:6]
+        #    dl.insert(0, self.day_order[6])
+        #    self.day_order = dl
 
         self.box_container = []
 
@@ -785,73 +794,12 @@ class TkCalendar(tk.Frame):
     def get_week_number(self):
         self.week_number = self.checkoption_week_number.get()
 
-    def setup_doc_variables(self):
-        """ Compute base metrics here. Page layout is bordered by margins and
-        virtually divided by golden mean 'cut' in the bottom. The calendar is
-        in the bottom part - top is occupied with empty image frame. """
-
-        self.dayOrder = localization[self.lang][1]
-
-        self.layerImg = 'Calendar image'
-        self.layerCal = 'Calendar'
-
-        self.masterPage = "Weekdays"
-        # settings
-        self.firstPage = True  # create only 2nd 3rd ... pages. No 1st one.
-
-
-        page = getPageSize()
-        self.pagex = page[0]
-        self.pagey = page[1]
-        marg = getPageMargins()
-        # See http://docs.scribus.net/index.php?lang=en&page=scripterapi-page#-getPageMargins
-        self.margint = marg[0]
-        self.marginl = marg[1]
-        self.marginr = marg[2]
-        self.marginb = marg[3]
-        self.width = self.pagex - self.marginl - self.marginr
-        self.height = self.pagey - self.margint - self.marginb
-
-        self.gmean = self.height - self.golden_mean(self.height) + self.margint
-        # calendar size
-        self.cal_height = self.height - self.gmean + self.margint
-        # rows and cols
-        self.row_size = self.gmean / 8
-        self.col_size = self.width / 7
-
-    def create_layout(self):
-        """ Create the page and optional bells and whistles around """
-        self.create_page()
-        #setActiveLayer(self.layerCal)
-
-    def create_page(self):
-        """ Wrapper to the new page with layers """
-        if self.firstPage:
-            self.firstPage = False
-            newPage(-1)  # create a new page using the master_page
-            deletePage(1)  # now it's safe to delete the first page
-            gotoPage(1)
-            return
-        newPage(-1)
-
-    def create_header(self, monthName):
-        """ Draw calendar header: Month name """
-        cel = createText(self.gmean + self.marginl, self.margint,
-                         self.width - self.gmean, self.rowSize)
-        setText(monthName, cel)
-        setStyle(self.pStyleMonth, cel)
-
     def my_test(self):
         if self.frame1_config_model_name == '':
-            self.frame1_config_model_name = 'test.sla'
+            self.frame1_config_model_name = 'model-month-LANDSCAPE.sla'
+            #self.frame1_config_model_name = 'test.sla'
 
         my_document = Document(self.frame1_config_modelpath + self.frame1_config_model_name)
-        print my_document.size
-        print my_document.border_left
-        print my_document.border_right
-        print my_document.border_top
-        print my_document.border_bottom
-        print my_document.orientation
 
         test = "PAPER_" + my_document.size
 
@@ -876,12 +824,32 @@ class TkCalendar(tk.Frame):
             # createImage(x, y, largeur, hauteur)
             for i in my_document.box_container:
                 if i.img is False:
-                    cel = createText(float(i.xpos) - float(my_document.pagex),
-                                     float(i.ypos) - float(my_document.pagey),
-                                     float(i.width),
-                                     float(i.height), str(i.anname))
-                    setText(str(i.anname), cel)
-                    setStyle(self.pStyleDate, cel)
+                    if i.anname == "week_box" or i.anname == "next_week_box":
+                        for j, name in enumerate(self.day_order):
+                            cel = createText((j * float(i.width) / my_document.nb_days) + float(i.xpos) - float(my_document.pagex),
+                                             float(i.ypos) - float(my_document.pagey),
+                                             float(i.width) / my_document.nb_days,
+                                             float(i.height), str(i.anname) + str(j))
+                            setText(str(name), cel)
+                            setStyle(self.pStyleDate, cel)
+                    elif i.anname == "days_box" or i.anname == "next_days_box":
+                        n = 0
+                        for j in range(0, my_document.nb_week):
+                            for h in range(0, my_document.nb_days):
+                                cel = createText((h * float(i.width) / my_document.nb_days) + float(i.xpos) - float(my_document.pagex),
+                                                 (j * float(i.height) / my_document.nb_week) + float(i.ypos) - float(my_document.pagey),
+                                                 float(i.width) / my_document.nb_days,
+                                                 float(i.height) / my_document.nb_week, str(i.anname) + str(n))
+                                setText(str(1), cel)
+                                setStyle(self.pStyleDate, cel)
+                                n += 1
+                    else:
+                        cel = createText(float(i.xpos) - float(my_document.pagex),
+                                         float(i.ypos) - float(my_document.pagey),
+                                         float(i.width),
+                                         float(i.height), str(i.anname))
+                        setText(str(1), cel)
+                        setStyle(self.pStyleDate, cel)
                 else:
                     createImage(float(i.xpos) - float(my_document.pagex),
                                 float(i.ypos) - float(my_document.pagey),
@@ -934,11 +902,6 @@ class TkCalendar(tk.Frame):
 
         Button(frame1_frame_orientation, text="MYTEST", command=self.my_test).pack(ipady=15)
 
-        self.typeClRadio = Radiobutton(frame1_frame_orientation, text='Classic', variable=self.type_var, value=0).pack()
-        self.typeEvRadio = Radiobutton(frame1_frame_orientation, text='Event (Horizontal)', variable=self.type_var,
-                                       value=1).pack()
-        self.typeVERadio = Radiobutton(frame1_frame_orientation, text='Event (Vertical)', variable=self.type_var,
-                                       value=2).pack()
 
         frame1_frame_vide = Frame(frame1_root)
         frame1_frame_vide.grid(row=3, column=1, rowspan=3, columnspan=2, sticky=W + E + N + S)
@@ -1088,6 +1051,7 @@ class TkCalendar(tk.Frame):
         self.frame1_config_modelpath = './models/'
         self.frame1_config_type_string_selected = ''
         self.frame1_config_type_index_selected = IntVar()
+        self.frame1_listbox_types = tk.Listbox()
         self.model_index_selected = IntVar()
         self.checkoption_prev_day = IntVar()
         self.checkoption_next_day = IntVar()
