@@ -19,6 +19,7 @@ import calendar
 import tkMessageBox
 
 try:
+    import scribus
     from scribus import *
 except ImportError:
     print('This Python script is written for the Scribus scripting interface.')
@@ -272,6 +273,7 @@ class ScEventCalendar(ScCalendar):
 
     def print_month(self, cal, month, week):
         """ Print the month name(s) """
+
         if week[6].day < 7:
             if week == cal[len(cal) - 1]:
                 self.create_header(
@@ -284,6 +286,7 @@ class ScEventCalendar(ScCalendar):
 
     def create_month_calendar(self, month, cal):
         """ Draw one week calendar per page """
+
         for week in cal:
             # Avoid duplicate week around the turn of the months:
             # Only include week:
@@ -408,6 +411,7 @@ class ScClassicCalendar(ScVerticalCalendar):
 
     def create_month_calendar(self, month, cal):
         """ Create a page and draw one month calendar on it """
+
         self.create_layout()
         self.create_header(localization[self.lang][0][month])
         row_cnt = 2
@@ -472,8 +476,11 @@ class BoxObject:
 
 class Document:
     """ Document contains all attribute useful about master page, margin, etc."""
-    def __init__(self, path_file):
+    def __init__(self, path_file, lang):
         self.path_file = path_file
+
+        self.lang = lang
+        self.day_order = localization[self.lang][1]
 
         self.pagex = 0.0
         self.pagey = 0.0
@@ -481,17 +488,13 @@ class Document:
         self.border_right = 0.0
         self.border_top = 0.0
         self.border_bottom = 0.0
-        self.size = "A4"
-        self.orientation = BooleanVar()
-        self.nb_days = 7
-        self.nb_week = 4
+        self.size = ''
+        self.orientation = IntVar()
 
-        self.lang = 'English'
-        self.day_order = localization[self.lang][1]
-        # if firstDay == calendar.SUNDAY:
-        #    dl = self.day_order[:6]
-        #    dl.insert(0, self.day_order[6])
-        #    self.day_order = dl
+        self.nb_day_usual_week = 7
+        self.begin_day = 0
+        self.nb_days = 0
+        self.nb_week = 0
 
         self.box_container = []
 
@@ -521,6 +524,25 @@ class Document:
             self.border_bottom = balise.get("BORDERBOTTOM")
             self.size = str(balise.get("Size"))
 
+    def set_month(self, year, month):
+        print "set_month"
+        # Returns weekday of first day of the month and number of days in month, for the specified year and month
+        print year
+        print month
+        (self.begin_day, self.nb_days) = calendar.monthrange(year, month)
+        print self.begin_day
+        print self.nb_days
+        # Calcule le nombre de semaine du mois courant
+        self.nb_week = 1
+        spend_days = 0
+        i = self.begin_day
+        while spend_days < self.nb_days:
+            if i >= 7:
+                i = 0
+                self.nb_week += 1
+            spend_days += 1
+            i += 1
+        print self.nb_week
 
 class TkCalendar(tk.Frame):
     # update the current page of the wizard
@@ -546,7 +568,7 @@ class TkCalendar(tk.Frame):
                     val = key.attrib['KEYWORDS']
                 elements = re.findall(type_ele, val)
                 spilted_elements = re.split(",", elements[0])
-                #print(spilted_elements)
+                # print(spilted_elements)
                 self.frame3_listbox_font.delete(0, END)
                 for i in spilted_elements:
                     self.frame3_listbox_font.insert(END, i)
@@ -618,13 +640,15 @@ class TkCalendar(tk.Frame):
 
         # create calendar (finally)
         if self.type_var.get() == 0:
-            cal = ScClassicCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.lang, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
-                                    self.sep_months)
+            cal = ScClassicCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.lang, self.year,
+                                    self.frame2_config_month_string_selected, self.week_var.get(), self.sep_months)
         elif self.type_var.get() == 1:
-            cal = ScHorizontalEventCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
+            cal = ScHorizontalEventCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.year,
+                                            self.frame2_config_month_string_selected, self.week_var.get(),
                                             self.sep_months, self.lang)
         else:
-            cal = ScVerticalEventCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.year, self.frame2_config_month_string_selected, self.week_var.get(),
+            cal = ScVerticalEventCalendar(self.prev_day_name, self.next_day_name, self.short_day_name, self.year,
+                                          self.frame2_config_month_string_selected, self.week_var.get(),
                                           self.sep_months, self.lang)
         tkMessageBox.showinfo("Action", "Creating Calendar... ")
         err = cal.create_calendar()
@@ -688,6 +712,7 @@ class TkCalendar(tk.Frame):
         for tous in self.frame2_config_month_index_selected:
             self.frame2_config_month_index_selected = tous
             self.frame2_config_month_string_selected.append(int(tous))
+        # print self.frame2_config_month_string_selected
 
     # get color for button "Font Color"
     def action_get_color(self):
@@ -754,7 +779,7 @@ class TkCalendar(tk.Frame):
                     avail = re.findall(type_cal, val)
                     if avail:
                         available_models.append(model)
-        #print available_models
+        # print available_models
 
         self.frame1_listbox_models.delete(0, END)
         for i in available_models:
@@ -795,20 +820,24 @@ class TkCalendar(tk.Frame):
         self.week_number = self.checkoption_week_number.get()
 
     def my_test(self):
+        # a virer apres test
         if self.frame1_config_model_name == '':
-            self.frame1_config_model_name = 'model-month-LANDSCAPE.sla'
-            #self.frame1_config_model_name = 'test.sla'
+            # self.frame1_config_model_name = 'model-month-LANDSCAPE.sla'
+            self.frame1_config_model_name = 'test.sla'
 
-        my_document = Document(self.frame1_config_modelpath + self.frame1_config_model_name)
+        my_document = Document(self.frame1_config_modelpath + self.frame1_config_model_name, self.lang)
 
-        test = "PAPER_" + my_document.size
+        (self.month_begin_day, self.number_of_month_days) = calendar.monthrange(self.year_var, 1)
 
-# reverif enumerate
+        size = "PAPER_" + my_document.size
+
+        #print my_document.nb_week
+        #my_document.set_month(self.year_var, 10)
+        print my_document.nb_week
         try:
-            if not newDocument(eval(test),
-                    (float(my_document.border_left), float(my_document.border_right),
-                     float(my_document.border_top), float(my_document.border_bottom)),
-                    int(my_document.orientation), 1, UNIT_POINTS, NOFACINGPAGES, FIRSTPAGELEFT, 1):
+            if not newDocument(eval(size), (float(my_document.border_left), float(my_document.border_right),
+                                            float(my_document.border_top), float(my_document.border_bottom)),
+                               int(my_document.orientation), 1, UNIT_POINTS, NOFACINGPAGES, FIRSTPAGELEFT, 1):
                 print 'Create a new document first, please'
                 return
             self.pStyleDate = "Date"  # paragraph styles
@@ -822,45 +851,84 @@ class TkCalendar(tk.Frame):
 
             # createText(x, y, largeur, hauteur)
             # createImage(x, y, largeur, hauteur)
-            for i in my_document.box_container:
-                if i.img is False:
-                    if i.anname == "week_box" or i.anname == "next_week_box":
-                        for j, name in enumerate(self.day_order):
-                            cel = createText((j * float(i.width) / my_document.nb_days) + float(i.xpos) - float(my_document.pagex),
-                                             float(i.ypos) - float(my_document.pagey),
-                                             float(i.width) / my_document.nb_days,
-                                             float(i.height), str(i.anname) + str(j))
-                            setText(str(name), cel)
-                            setStyle(self.pStyleDate, cel)
-                    elif i.anname == "days_box" or i.anname == "next_days_box":
-                        n = 0
-                        for j in range(0, my_document.nb_week):
-                            for h in range(0, my_document.nb_days):
-                                cel = createText((h * float(i.width) / my_document.nb_days) + float(i.xpos) - float(my_document.pagex),
-                                                 (j * float(i.height) / my_document.nb_week) + float(i.ypos) - float(my_document.pagey),
-                                                 float(i.width) / my_document.nb_days,
-                                                 float(i.height) / my_document.nb_week, str(i.anname) + str(n))
-                                setText(str(1), cel)
+            # re-draw from the model
+            for month in self.frame2_config_month_string_selected:
+                newPage(-1)
+                my_document.set_month(self.year_var, month+1)
+                for i in my_document.box_container:
+                    if i.img is False:
+                        # draw and fill all week_box
+                        if i.anname == "week_box" or i.anname == "next_week_box":
+                            for j, name in enumerate(my_document.day_order):
+                                cel = createText((j * float(i.width) / my_document.nb_day_usual_week) + float(i.xpos) - float(my_document.pagex),
+                                                 float(i.ypos) - float(my_document.pagey),
+                                                 float(i.width) / my_document.nb_day_usual_week,
+                                                 float(i.height), str(i.anname) + str(j))
+                                setText(str(name), cel)
                                 setStyle(self.pStyleDate, cel)
-                                n += 1
+                        # draw and fill all days_box
+                        elif i.anname == "days_box" or i.anname == "next_days_box":
+                            n = 0
+                            for j in range(0, my_document.nb_week):
+                                for h in range(0, my_document.nb_day_usual_week):
+                                    cel = createText((h * float(i.width) / my_document.nb_day_usual_week) + float(i.xpos) - float(my_document.pagex),
+                                                     (j * float(i.height) / my_document.nb_week) + float(i.ypos) - float(my_document.pagey),
+                                                     float(i.width) / my_document.nb_day_usual_week,
+                                                     float(i.height) / my_document.nb_week, str(i.anname) + str(n))
+                                    try:
+                                        if self.month_begin_day >= n <= self.number_of_month_days:
+                                            setText(str(n+1), cel)
+                                        else:
+                                            setText(str(1), cel)
+                                    except:
+                                        print "erreur days_box"
+                                        pass
+                                    setStyle(self.pStyleDate, cel)
+                                    n += 1
+                        elif i.anname == "month_box":
+                            cel = createText(float(i.xpos) - float(my_document.pagex),
+                                             float(i.ypos) - float(my_document.pagey),
+                                             float(i.width),
+                                             float(i.height), str(i.anname))
+                            setText(localization[self.lang][0][month], cel)
+                            setStyle(self.pStyleDate, cel)
+                        # draw and fill name_week_box
+                        elif i.anname == "name_week_box":
+                            cel = createText(float(i.xpos) - float(my_document.pagex),
+                                             float(i.ypos) - float(my_document.pagey),
+                                             float(i.width),
+                                             float(i.height), str(i.anname))
+                            setText("#", cel)
+                            setStyle(self.pStyleDate, cel)
+                        # draw and fill all num_week_box
+                        elif i.anname == "num_week_box":
+                            for j in range(0, my_document.nb_week):
+                                cel = createText(float(i.xpos) - float(my_document.pagex),
+                                                 (j * float(i.height) / my_document.nb_week) + float(i.ypos) - float(my_document.pagey),
+                                                 float(i.width),
+                                                 float(i.height) / my_document.nb_week, str(i.anname))
+                                # imprime le numéro de la semaine sur l'année
+                                try:
+                                    setText(str(datetime.date(self.year_var, month+1, j*7+2).isocalendar()[1]), cel)
+                                except:
+                                    print "erreur num_week_box"
+                                    pass
+                                setStyle(self.pStyleDate, cel)
+                        else:
+                            cel = createText(float(i.xpos) - float(my_document.pagex),
+                                             float(i.ypos) - float(my_document.pagey),
+                                             float(i.width),
+                                             float(i.height), str(i.anname))
+                            setText(str(1), cel)
+                            setStyle(self.pStyleDate, cel)
                     else:
-                        cel = createText(float(i.xpos) - float(my_document.pagex),
-                                         float(i.ypos) - float(my_document.pagey),
-                                         float(i.width),
-                                         float(i.height), str(i.anname))
-                        setText(str(1), cel)
-                        setStyle(self.pStyleDate, cel)
-                else:
-                    createImage(float(i.xpos) - float(my_document.pagex),
-                                float(i.ypos) - float(my_document.pagey),
-                                float(i.width),
-                                float(i.height), str(i.anname))
+                        createImage(float(i.xpos) - float(my_document.pagex),
+                                    float(i.ypos) - float(my_document.pagey),
+                                    float(i.width),
+                                    float(i.height), str(i.anname))
+            # delete first empty page
+            deletePage(1)
 
-            #newPage(-1)
-            #cel = createText(40, 40, 100, 100)
-            #setText(str(1), cel)
-            #setStyle(self.pStyleDate, cel)
-            #img2 = createImage(140, 140, 100, 100)
         except:
             self.quit()
         try:
@@ -894,13 +962,20 @@ class TkCalendar(tk.Frame):
         frame1_frame_import = Frame(frame1_root)
         frame1_frame_import.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=20, pady=20)
         Label(frame1_frame_import, text="Models import").pack(padx=10, pady=10)
-        self.Frame1_button_import = Button(frame1_frame_import, text="import .sla", command=self.action_import_model)
-        self.Frame1_button_import.pack()
+        self.frame1_button_import = Button(frame1_frame_import, text="import .sla", command=self.action_import_model)
+        self.frame1_button_import.pack()
 
         frame1_frame_orientation = Frame(frame1_root)
         frame1_frame_orientation.grid(row=1, column=1, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=30, pady=30)
 
         Button(frame1_frame_orientation, text="MYTEST", command=self.my_test).pack(ipady=15)
+
+        Label(frame1_frame_orientation, text="Size").pack(padx=10, pady=10)
+        frame1_combobox_size = ttk.Combobox(frame1_frame_orientation, textvariable=self.size, width=15)
+        frame1_combobox_size['values'] = ('A1', 'A2', 'A3', 'A4')
+        frame1_combobox_size.current(1)
+        frame1_combobox_size.bind("<<ComboboxSelected>>", self.action_select_font)
+        frame1_combobox_size.pack(pady=10, anchor='w')
 
 
         frame1_frame_vide = Frame(frame1_root)
@@ -1078,8 +1153,8 @@ class TkCalendar(tk.Frame):
         self.lang = 'English'
         self.week_var = IntVar()
         self.short_day_name = BooleanVar()
-        self.prev_day_name = BooleanVar ()
-        self.next_day_name = BooleanVar ()
+        self.prev_day_name = BooleanVar()
+        self.next_day_name = BooleanVar()
         self.week_number = BooleanVar()
 
         self.p_style_date = "Date"  # paragraph styles
@@ -1089,7 +1164,6 @@ class TkCalendar(tk.Frame):
         self.layer_img = 'Calendar image'
         self.layer_cal = 'Calendar'
         self.master_page = "Weekdays"
-        self.day_order = localization[self.lang][1]
 
         self.make_top()
         self.make_middle()
