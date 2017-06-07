@@ -164,7 +164,7 @@ posx = 300
 posy = 200
 
 class BoxObject:
-    """ BoxObject represent some attribut from PAGEOBJECT from scribus file. """
+    """ BoxObject represent some attribute from PAGEOBJECT from scribus file. """
     def __init__(self, xpos, ypos, width, height, anname, img=False):
         self.xpos = xpos
         self.ypos = ypos
@@ -237,7 +237,6 @@ class Document:
                 self.nb_week += 1
             spend_days += 1
             i += 1
-        print self.nb_week
 
 
 class TkCalendar(tk.Frame):
@@ -342,19 +341,22 @@ class TkCalendar(tk.Frame):
             self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
         print(event.num)
 
+    def init_img(self):
+        self.img_path = "format/"
+
     # update preview with the selected model
     def action_get_models(self, event):
         # get selected line index
         self.model_index_selected = self.frame1_listbox_models.curselection()[0]
         self.frame1_config_model_name = self.frame1_listbox_models.get(self.model_index_selected)
-        # [6:-4] meaning 6: model- et :-4 .sla
-        model_name = self.frame1_config_model_name[6:-4]
+        model_name = self.frame1_config_model_name[0:-4]
 
-        for i in imageCalender:
-            if i[14:-4] == model_name:
-                self.photo = PhotoImage(file=i)
-                self.previewCanvas.itemconfigure(self.photo_img, image=self.photo, anchor=NW)
-                self.previewCanvas.image = self.photo
+        try:
+            self.photo = PhotoImage(file="format/" + model_name + ".png")
+            self.previewCanvas.itemconfigure(self.photo_img, image=self.photo, anchor=NW)
+            self.previewCanvas.image = self.photo
+        except:
+            print "Can not update image from model"
 
     # update the list of months with the right language
     def action_get_language(self, event):
@@ -439,7 +441,6 @@ class TkCalendar(tk.Frame):
                 keys = tree.getroot()
                 for key in keys:
                     val = key.attrib['KEYWORDS']
-                    print(val)
                     #  Si on trouve un type de calendrier dans les KEYWORDS du document
                     #  on recupere ce modele pour l'afficher dans l'etape suivante
                     avail = re.findall(type_cal, val)
@@ -488,8 +489,8 @@ class TkCalendar(tk.Frame):
     def action_finnish(self):
         # a virer apres test
         if self.frame1_config_model_name == '':
-            self.frame1_config_model_name = 'model-month-LANDSCAPE.sla'
-            #self.frame1_config_model_name = 'test.sla'
+            self.frame1_config_model_name = 'month-LANDSCAPE.sla'
+            #self.frame1_config_model_name = 'month.sla'
 
         my_document = Document(self.frame1_config_modelpath + self.frame1_config_model_name, self.lang)
 
@@ -513,13 +514,31 @@ class TkCalendar(tk.Frame):
             # createText(x, y, largeur, hauteur)
             # createImage(x, y, largeur, hauteur)
             # re-draw from the model
-
+            print self.year_var
             for month in self.frame2_config_month_string_selected:
+                month_variable = month
                 newPage(-1)
-                my_document.set_month(self.year_var, month+1) # init le nombre de semaine et de jour du mois
-                cal = self.mycal.monthdatescalendar(self.year_var, month + 1)
                 for i in my_document.box_container:
                     if i.img is False:
+
+                        # init le nombre de semaine et de jour du mois
+                        if i.anname[0:4] == "next":
+                            month_variable += 1
+                            my_document.set_month(self.year_var, month_variable + 1)
+                            cal = self.mycal.monthdatescalendar(self.year_var, month_variable + 1)
+                        elif i.anname[0:4] == "prev":
+                            month_variable -= 1
+                            if month_variable < 0:
+                                year = self.year_var - 1
+                                my_document.set_month(year, month_variable+12)
+                                cal = self.mycal.monthdatescalendar(self.year_var, month_variable+12)
+                            else:
+                                my_document.set_month(self.year_var, month_variable)
+                                cal = self.mycal.monthdatescalendar(self.year_var, month_variable)
+                        else:
+                            my_document.set_month(self.year_var, month_variable + 1)
+                            cal = self.mycal.monthdatescalendar(self.year_var, month_variable + 1)
+
                         # draw and fill all week_box
                         if i.anname == "week_box" or i.anname == "next_week_box":
                             for j, name in enumerate(my_document.day_order):
@@ -539,27 +558,26 @@ class TkCalendar(tk.Frame):
                                                      (j * float(i.height) / my_document.nb_week) + float(i.ypos) - float(my_document.pagey),
                                                      float(i.width) / my_document.nb_day_usual_week,
                                                      float(i.height) / my_document.nb_week, str(i.anname) + str(h))
-                                    if self.prev_day_name is 1 and day.month < month + 1:
+                                    if self.prev_day_name is 1 and day.month < month_variable + 1:
                                         setText(str(day.day), cel)
                                         setStyle(self.pStyleDate, cel)
-                                    if self.next_day_name is 1 and day.month > month + 1:
+                                    if self.next_day_name is 1 and day.month > month_variable + 1:
                                         setText(str(day.day), cel)
                                         setStyle(self.pStyleDate, cel)
-                                    if day.month == month + 1:
+                                    if day.month == month_variable + 1:
                                         setText(str(day.day), cel)
                                         setStyle(self.pStyleDate, cel)
                                     h += 1
                                 h = 0
-
-                        elif i.anname == "month_box":
+                        elif i.anname == "month_box" or i.anname == "next_month_box":
                             cel = createText(float(i.xpos) - float(my_document.pagex),
                                              float(i.ypos) - float(my_document.pagey),
                                              float(i.width),
                                              float(i.height), str(i.anname))
-                            setText(localization[self.lang][0][month], cel)
+                            setText(localization[self.lang][0][month_variable], cel)
                             setStyle(self.pStyleDate, cel)
                         # draw and fill name_week_box
-                        elif i.anname == "name_week_box":
+                        elif i.anname == "name_week_box" or i.anname == "next_name_week_box":
                             cel = createText(float(i.xpos) - float(my_document.pagex),
                                              float(i.ypos) - float(my_document.pagey),
                                              float(i.width),
@@ -567,7 +585,7 @@ class TkCalendar(tk.Frame):
                             setText("#", cel)
                             setStyle(self.pStyleDate, cel)
                         # draw and fill all num_week_box
-                        elif i.anname == "num_week_box":
+                        elif i.anname == "num_week_box" or i.anname == "next_num_week_box":
                             for j, week in enumerate(cal):
                                 cel = createText(float(i.xpos) - float(my_document.pagex),
                                                  (j * float(i.height) / my_document.nb_week) + float(i.ypos) - float(my_document.pagey),
@@ -599,9 +617,12 @@ class TkCalendar(tk.Frame):
             pass
         return
 
+    def get_year(self):
+        self.year_var = int(self.frame2_spinbox_year.get())
+
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
-        frame1_root = Frame(self.canvas_frame, padx=10, pady=10)
+        frame1_root = Frame(self.canvas_frame)
 
         frame1_frame_types = Frame(frame1_root)
         frame1_frame_types.grid(row=0, column=0, columnspan=1, sticky=W + E + N + S)
@@ -622,16 +643,16 @@ class TkCalendar(tk.Frame):
         self.frame1_listbox_models.pack()
 
         frame1_frame_import = Frame(frame1_root)
-        frame1_frame_import.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=20, pady=20)
-        Label(frame1_frame_import, text="Models import").pack(padx=5, pady=5)
+        frame1_frame_import.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=15, pady=15)
+        Label(frame1_frame_import, text="Models import").pack(ipady=5)
         self.frame1_button_import = Button(frame1_frame_import, text="import .sla", command=self.action_import_model)
         self.frame1_button_import.pack()
 
         frame1_frame_orientation = Frame(frame1_root)
-        frame1_frame_orientation.grid(row=1, column=1, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=20, pady=20)
+        frame1_frame_orientation.grid(row=1, column=1, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=15, pady=15)
 
 
-        Label(frame1_frame_orientation, text="Size").pack(padx=5, pady=5)
+        Label(frame1_frame_orientation, text="Size").pack(ipady=5)
         frame1_combobox_size = ttk.Combobox(frame1_frame_orientation, textvariable=self.size, width=15)
         frame1_combobox_size['values'] = ('A1', 'A2', 'A3', 'A4')
         frame1_combobox_size.current(1)
@@ -646,8 +667,8 @@ class TkCalendar(tk.Frame):
         frame1_frame_preview.grid(row=0, column=2, rowspan=6, columnspan=1, padx=20, sticky=W + E + N + S)
         Label(frame1_frame_preview, text="Preview").pack(padx=10, pady=10)
 
-        self.photo = PhotoImage(file=imageCalender[3])
-        self.previewCanvas = Canvas(frame1_frame_preview, width=180, height=240)
+        self.photo = PhotoImage(file="format/month.png")
+        self.previewCanvas = Canvas(frame1_frame_preview, width=200, height=200)
         self.photo_img = self.previewCanvas.create_image(0, 0, anchor=NW, image=self.photo)
         self.previewCanvas.pack()
 
@@ -693,8 +714,8 @@ class TkCalendar(tk.Frame):
         Radiobutton(frame2_checkbox, text='Mon', variable=self.week_var, value=calendar.MONDAY).pack()
         Radiobutton(frame2_checkbox, text='Sun', variable=self.week_var, value=calendar.SUNDAY).pack()
 
-        self.frame2_spinbox_year = Spinbox(frame2_checkbox, width=5, from_=1600, to=2132,
-                                           textvariable=self.year_var)
+        self.frame2_spinbox_year = Spinbox(frame2_checkbox, width=5, from_=0, to=2132, wrap=True,
+                                           textvariable=self.year_var, command=self.get_year)
         self.frame2_spinbox_year.delete(0, 1600)
         self.frame2_spinbox_year.insert(0, self.year_var)
         self.frame2_spinbox_year.pack(padx=3, pady=6, anchor='w')
@@ -718,12 +739,12 @@ class TkCalendar(tk.Frame):
         Button(frame2_preview, text="Unselect All", command=self.unselect_all_month).pack(padx=5, pady=5)
 
         # ELEMENT MIDDLE FRAME 3
-        frame3_root = Frame(self.canvas_frame, padx=10, pady=10)
+        frame3_root = Frame(self.canvas_frame)
         frame3_root.rowconfigure(1, weight=1)
 
         frame3_frame_list = Frame(frame3_root)
         frame3_frame_list.grid(row=0, column=0, rowspan=3, sticky=W + E + N + S)
-        Label(frame3_frame_list, text="Elements").pack(padx=20, pady=20)
+        Label(frame3_frame_list, text="Elements").pack(padx=10, pady=10)
         self.frame3_listbox_font = tk.Listbox(frame3_frame_list, exportselection=0)
         self.frame3_listbox_font.bind('<<ListboxSelect>>')
         self.frame3_listbox_font.pack()
