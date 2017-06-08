@@ -149,14 +149,9 @@ localization = {
          ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag']]
 }
 
-# Image of calendar model
-imageCalender = [
-    "format/format-day.png",
-    "format/format-week.png",
-    "format/format-week-month.png",
-    "format/format-month.png",
-    "format/format-month-LANDSCAPE.png",
-    "format/format-year.png"]
+size_document = ('A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6',
+                 'B7', 'B8', 'B9', 'B10', 'C5E', 'COMM10E', 'DLE', 'EXECUTIVE', 'FOLIO', 'LEDGER', 'LEGAL', 'LETTER',
+                 'TABLOID')
 
 sizex = 650
 sizey = 350
@@ -176,19 +171,28 @@ class BoxObject:
 
 class Document:
     """ Document contains all attribute useful about master page, margin, etc."""
-    def __init__(self, path_file, lang):
+    def __init__(self, path_file, lang, first_day, size):
         self.path_file = path_file
 
         self.lang = lang
         self.day_order = localization[self.lang][1]
 
+        if first_day == calendar.SUNDAY:
+            dl = self.day_order[:6]
+            dl.insert(0, self.day_order[6])
+            self.day_order = dl
+        self.mycal = calendar.Calendar(first_day)
+
         self.pagex = 0.0
         self.pagey = 0.0
+        self.page_width = 0.0
+        self.page_height = 0.0
         self.border_left = 0.0
         self.border_right = 0.0
         self.border_top = 0.0
         self.border_bottom = 0.0
-        self.size = ''
+        self.size = "PAPER_" + size
+
         self.orientation = IntVar()
 
         self.nb_day_usual_week = 7
@@ -217,12 +221,14 @@ class Document:
         for balise in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT/MASTERPAGE"):
             self.pagex = balise.get("PAGEXPOS")
             self.pagey = balise.get("PAGEYPOS")
+            self.page_width = balise.get("PAGEWIDTH")
+            self.page_height = balise.get("PAGEHEIGHT")
             self.orientation = balise.get("Orientation")
             self.border_left = balise.get("BORDERLEFT")
             self.border_right = balise.get("BORDERRIGHT")
             self.border_top = balise.get("BORDERTOP")
             self.border_bottom = balise.get("BORDERBOTTOM")
-            self.size = str(balise.get("Size"))
+            #self.size = str(balise.get("Size"))
 
     def set_month(self, year, month):
         # Returns weekday of first day of the month and number of days in month, for the specified year and month
@@ -421,7 +427,11 @@ class TkCalendar(tk.Frame):
 
     # action when clicking on a Font button in Page 3
     def action_select_font(self, event):
-        print(self.fontVar.get())
+        print self.fontVar.get()
+
+    # useless
+    def action_select_size(self, event):
+        print self.size.get()
 
     def action_select_type(self, event):
         self.frame1_config_type_index_selected = self.frame1_listbox_types.curselection()[0]
@@ -475,7 +485,13 @@ class TkCalendar(tk.Frame):
         self.action_select_month(None)
 
     def get_short_day(self):
-        self.short_day_name = self.checkoption_short_day.get()
+        self.short_day_name = bool(self.checkoption_short_day.get())
+
+    def get_next_short_day(self):
+        self.next_short_day_name = bool(self.checkoption_next_short_day.get())
+
+    def get_prev_short_day(self):
+        self.prev_short_day_name = bool(self.checkoption_prev_short_day.get())
 
     def get_prev_day(self):
         self.prev_day_name = self.checkoption_prev_day.get()
@@ -483,25 +499,25 @@ class TkCalendar(tk.Frame):
     def get_next_day(self):
         self.next_day_name = self.checkoption_next_day.get()
 
-    def get_week_number(self):
-        self.week_number = self.checkoption_week_number.get()
-
     def action_finnish(self):
         # a virer apres test
         if self.frame1_config_model_name == '':
             self.frame1_config_model_name = 'month-LANDSCAPE.sla'
             #self.frame1_config_model_name = 'month.sla'
 
-        my_document = Document(self.frame1_config_modelpath + self.frame1_config_model_name, self.lang)
-
-        size = "PAPER_" + my_document.size
+        my_document = Document(self.frame1_config_modelpath + self.frame1_config_model_name, self.lang, self.week_var.get(), self.size.get())
 
         try:
-            if not newDocument(eval(size), (float(my_document.border_left), float(my_document.border_right),
+            if not newDocument(eval(my_document.size), (float(my_document.border_left), float(my_document.border_right),
                                             float(my_document.border_top), float(my_document.border_bottom)),
                                int(my_document.orientation), 1, UNIT_POINTS, NOFACINGPAGES, FIRSTPAGELEFT, 1):
                 print 'Create a new document first, please'
                 return
+
+            new_page_size_height, new_page_size_width = getPageSize()
+            print "test"
+            print new_page_size_height
+            print new_page_size_width
             self.pStyleDate = "Date"  # paragraph styles
             self.pStyleWeekday = "Weekday"
             self.pStyleMonth = "Month"
@@ -514,39 +530,59 @@ class TkCalendar(tk.Frame):
             # createText(x, y, largeur, hauteur)
             # createImage(x, y, largeur, hauteur)
             # re-draw from the model
-            print self.year_var
+
+            # resize all box with proportion of new document:
+            print "height :" + my_document.page_height
+            print "widht : " + my_document.page_width
+            print "height2 :" + new_page_size_height
+            print "widht2 : " + new_page_size_width
+            if my_document.page_height != new_page_size_height and my_document.page_width != new_page_size_width:
+                print "Changed"
+                for i in my_document.box_container:
+                    i.xpos = (new_page_size_width * i.xpos) / my_document.page_width
+                    i.ypos = (new_page_size_height * i.ypos) / my_document.page_height
+                    i.width = (i.width * new_page_size_width) / my_document.page_width
+                    i.height = (i.height * new_page_size_height) / my_document.page_height
+
+            progressTotal(len(self.frame2_config_month_string_selected))
+            run = 0
             for month in self.frame2_config_month_string_selected:
-                month_variable = month
                 newPage(-1)
                 for i in my_document.box_container:
+                    month_variable = month
                     if i.img is False:
-
                         # init le nombre de semaine et de jour du mois
                         if i.anname[0:4] == "next":
                             month_variable += 1
                             my_document.set_month(self.year_var, month_variable + 1)
-                            cal = self.mycal.monthdatescalendar(self.year_var, month_variable + 1)
+                            cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable + 1)
                         elif i.anname[0:4] == "prev":
                             month_variable -= 1
                             if month_variable < 0:
                                 year = self.year_var - 1
                                 my_document.set_month(year, month_variable+12)
-                                cal = self.mycal.monthdatescalendar(self.year_var, month_variable+12)
+                                cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable+12)
                             else:
                                 my_document.set_month(self.year_var, month_variable)
-                                cal = self.mycal.monthdatescalendar(self.year_var, month_variable)
+                                cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable)
                         else:
                             my_document.set_month(self.year_var, month_variable + 1)
-                            cal = self.mycal.monthdatescalendar(self.year_var, month_variable + 1)
+                            cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable + 1)
 
-                        # draw and fill all week_box
+                        # draw and fill all days strings
                         if i.anname == "week_box" or i.anname == "next_week_box":
                             for j, name in enumerate(my_document.day_order):
-                                cel = createText((j * float(i.width) / my_document.nb_day_usual_week) + float(i.xpos) - float(my_document.pagex),
+                                cel = createText((j * float(i.width) / my_document.nb_day_usual_week) + float(i.xpos) -
+                                                 float(my_document.pagex),
                                                  float(i.ypos) - float(my_document.pagey),
                                                  float(i.width) / my_document.nb_day_usual_week,
                                                  float(i.height), str(i.anname) + str(j))
-                                setText(str(name), cel)
+                                if self.short_day_name is True and i.anname == "week_box" or \
+                                   self.next_short_day_name is True and i.anname == "next_week_box" or \
+                                   self.prev_short_day_name is True and i.anname == "prev_week_box":
+                                    setText(str(name[0:3] + '.'), cel)
+                                else:
+                                    setText(str(name), cel)
                                 setStyle(self.pStyleDate, cel)
                         # draw and fill all days_box
                         elif i.anname == "days_box" or i.anname == "next_days_box":
@@ -606,6 +642,8 @@ class TkCalendar(tk.Frame):
                                     float(i.ypos) - float(my_document.pagey),
                                     float(i.width),
                                     float(i.height), str(i.anname))
+                progressSet(run)
+                run += 1
             # delete first empty page
             deletePage(1)
 
@@ -651,14 +689,13 @@ class TkCalendar(tk.Frame):
         frame1_frame_orientation = Frame(frame1_root)
         frame1_frame_orientation.grid(row=1, column=1, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=15, pady=15)
 
-
         Label(frame1_frame_orientation, text="Size").pack(ipady=5)
         frame1_combobox_size = ttk.Combobox(frame1_frame_orientation, textvariable=self.size, width=15)
-        frame1_combobox_size['values'] = ('A1', 'A2', 'A3', 'A4')
-        frame1_combobox_size.current(1)
-        frame1_combobox_size.bind("<<ComboboxSelected>>", self.action_select_font)
-        frame1_combobox_size.pack(pady=5, anchor='w')
 
+        frame1_combobox_size['values'] = size_document
+        frame1_combobox_size.current(4)
+        #frame1_combobox_size.bind("<<ComboboxSelected>>", self.action_select_size)
+        frame1_combobox_size.pack(pady=5, anchor='w')
 
         frame1_frame_vide = Frame(frame1_root)
         frame1_frame_vide.grid(row=3, column=1, rowspan=3, columnspan=2, sticky=W + E + N + S)
@@ -675,7 +712,7 @@ class TkCalendar(tk.Frame):
         # ELEMENT MIDDLE FRAME 2
         frame2_root = Frame(self.canvas_frame)
 
-        frame2_list_language = Frame(frame2_root)
+        frame2_list_language = Frame(frame2_root, bg='green')
         frame2_list_language.grid(row=0, rowspan=3, column=0, sticky=W + E + N + S)
         Label(frame2_list_language, text="Languages").pack(padx=10, pady=10)
 
@@ -691,25 +728,30 @@ class TkCalendar(tk.Frame):
         self.frame2_listbox_language.bind('<<ListboxSelect>>', self.action_get_language)
         self.frame2_listbox_language.pack()
 
-        frame2_checkbox = Frame(frame2_root)
-        frame2_vide = Frame(frame2_root)
+        self.frame2_button = Button(frame2_list_language, text="import ICS", command=self.action_import_ics, padx=30, pady=10)
+        self.frame2_button.pack(pady=20)
+
+        frame2_checkbox = Frame(frame2_root, bg='yellow')
+        frame2_vide = Frame(frame2_root, bg = 'cyan')
         frame2_vide.grid(row=0, column=2, pady=20, sticky=W + N + E + S)
 
-        frame2_label = Frame(frame2_root)
+        frame2_label = Frame(frame2_root, bg='blue')
         frame2_label.grid(row=1, column=2, padx=10, sticky=W + N + E + S)
         frame2_checkbox.grid(row=1, column=3, sticky=W + N + E + S)
 
         Label(frame2_label, text="Show previous days:").pack(padx=4, pady=4, anchor='w')
         Label(frame2_label, text="Show next days:").pack(padx=4, pady=4, anchor='w')
         Label(frame2_label, text="Short day name:").pack(padx=4, pady=4, anchor='w')
-        Label(frame2_label, text="Number of week:").pack(padx=4, pady=4, anchor='w')
+        Label(frame2_label, text="Next short day name:").pack(padx=4, pady=4, anchor='w')
+        Label(frame2_label, text="Prev short day name:").pack(padx=4, pady=4, anchor='w')
         Label(frame2_label, text='Week begins with:').pack(padx=4, pady=4, anchor='w')
         Label(frame2_label, text='Year:').pack(padx=4, pady=20, anchor='w')
 
         Checkbutton(frame2_checkbox, variable=self.checkoption_prev_day, command=self.get_prev_day).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
         Checkbutton(frame2_checkbox, variable=self.checkoption_next_day, command=self.get_next_day).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
         Checkbutton(frame2_checkbox, variable=self.checkoption_short_day, command=self.get_short_day).pack(padx=3, pady=3, anchor='w')
-        Checkbutton(frame2_checkbox, variable=self.checkoption_week_number, command=self.get_week_number).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.checkoption_next_short_day, command=self.get_next_short_day).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
+        Checkbutton(frame2_checkbox, variable=self.checkoption_prev_short_day, command=self.get_prev_short_day).pack(padx=3, pady=3, anchor='w')  # command=self.cb)
 
         Radiobutton(frame2_checkbox, text='Mon', variable=self.week_var, value=calendar.MONDAY).pack()
         Radiobutton(frame2_checkbox, text='Sun', variable=self.week_var, value=calendar.SUNDAY).pack()
@@ -720,12 +762,7 @@ class TkCalendar(tk.Frame):
         self.frame2_spinbox_year.insert(0, self.year_var)
         self.frame2_spinbox_year.pack(padx=3, pady=6, anchor='w')
 
-        frame2_frame_import = Frame(frame2_root)
-        frame2_frame_import.grid(row=2, column=2, columnspan=2, sticky=N + E + S + W)
-        self.frame2_button = Button(frame2_frame_import, text="import ICS", command=self.action_import_ics, padx=30, pady=10)
-        self.frame2_button.pack()
-
-        frame2_preview = Frame(frame2_root)
+        frame2_preview = Frame(frame2_root, bg='red')
         frame2_preview.grid(row=0, rowspan=3, column=4, sticky=W + E + N + S)
         Label(frame2_preview, text="Month").pack(padx=10, pady=10)
         self.scrollbar_listbox_month = Scrollbar(frame2_preview, orient=VERTICAL)
@@ -749,7 +786,7 @@ class TkCalendar(tk.Frame):
         self.frame3_listbox_font.bind('<<ListboxSelect>>')
         self.frame3_listbox_font.pack()
         Button(frame3_frame_list, text='Uniform Font', command=self.select_all_elements).pack(pady=20,
-                                                                                                  anchor='center')
+                                                                                              anchor='center')
 
         frame3_frame_font_title = Frame(frame3_root)
         frame3_frame_font_label = Frame(frame3_root)
@@ -813,19 +850,13 @@ class TkCalendar(tk.Frame):
         self.checkoption_prev_day = IntVar()
         self.checkoption_next_day = IntVar()
         self.checkoption_short_day = IntVar()
-        self.checkoption_week_number = IntVar()
+        self.checkoption_next_short_day = IntVar()
+        self.checkoption_prev_short_day = IntVar()
         self.frame2_config_language_string_selected = 'English'
         self.frame2_config_language_index_selected = 0
         self.frame2_config_month_index_selected = []
         self.frame2_config_month_string_selected = []
         self.frame2_config_file_i_c_s = ''
-
-
-        #if firstDay == calendar.SUNDAY:
-        #    dl = self.dayOrder[:6]
-        #    dl.insert(0, self.dayOrder[6])
-        #    self.dayOrder = dl
-        self.mycal = calendar.Calendar(calendar.MONDAY)
 
         self.now = datetime.datetime.now()
         self.year_var = StringVar()
@@ -836,12 +867,14 @@ class TkCalendar(tk.Frame):
         self.type_var = IntVar()
         self.year_var = self.now.year
         self.months = []
-        self.first_day = calendar.SUNDAY
         self.draw_sauce = True
         self.sep_months = '/'
         self.lang = 'English'
-        self.week_var = IntVar()
+        self.week_var = IntVar ()
+        self.first_day = calendar.SUNDAY
         self.short_day_name = BooleanVar()
+        self.next_short_day_name = BooleanVar()
+        self.prev_short_day_name = BooleanVar()
         self.prev_day_name = BooleanVar()
         self.next_day_name = BooleanVar()
         self.week_number = BooleanVar()
@@ -853,6 +886,8 @@ class TkCalendar(tk.Frame):
         self.layer_img = 'Calendar image'
         self.layer_cal = 'Calendar'
         self.master_page = "Weekdays"
+
+        self.size = StringVar()
 
         self.make_top()
         self.make_middle()
@@ -867,7 +902,10 @@ def main():
     """ Application/Dialog loop with Scribus sauce around """
     # try:
     print('Running script...')
-    # progressReset()
+    try:
+        progressReset()
+    except:
+        pass
     root = tk.Tk()
     TkCalendar(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
