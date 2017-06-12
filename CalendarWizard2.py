@@ -149,9 +149,15 @@ localization = {
          ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag']]
 }
 
-size_document = ('A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6',
-                 'B7', 'B8', 'B9', 'B10', 'C5E', 'COMM10E', 'DLE', 'EXECUTIVE', 'FOLIO', 'LEDGER', 'LEGAL', 'LETTER',
-                 'TABLOID')
+size_document = {
+    'A0': [2383.94, 3370.39], 'A1': [1683.78, 2383.94], 'A2': [1190.55, 1683.78], 'A3': [841.89, 1190.55],
+    'A4': [595.28, 841.89], 'A5': [419.53, 595.28], 'A6': [297.64, 419.53], 'A7': [209.76, 297.64],
+    'A8': [147.40, 209.76], 'A9': [104.88, 147.40], 'B0': [2834.65, 4008.19], 'B1': [2004.09, 2834.65],
+    'B2': [1417.32, 2004.09], 'B3': [1000.63, 1417.32], 'B4': [708.66, 1000.63], 'B5': [498.90, 708.66],
+    'B6': [354.33, 498.90], 'B7': [249.45, 354.33], 'B8': [175.75, 249.45], 'B9': [124.72, 175.75],
+    'B10': [87.87, 124.72], 'COMM10E': [297.00, 684.00], 'DLE': [311.81, 623.62], 'LEGAL': [612.00, 1008.00],
+    'LETTER': [612.00, 792.00]
+}
 
 sizex = 650
 sizey = 350
@@ -191,7 +197,7 @@ class Document:
         self.border_right = 0.0
         self.border_top = 0.0
         self.border_bottom = 0.0
-        self.size = "PAPER_" + size
+        self.size = size
 
         self.orientation = IntVar()
 
@@ -209,26 +215,27 @@ class Document:
         tree = etree.parse(self.path_file)
         # ecrit dans box_container les objets du model
         # les objets recoivent les attributs des PAGEOBJECT tel que la taille, la position et le nom
+        for balise in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT/MASTERPAGE"):
+            self.pagex = float(balise.get("PAGEXPOS"))
+            self.pagey = float(balise.get("PAGEYPOS"))
+            self.page_width = float(balise.get("PAGEWIDTH"))
+            self.page_height = float(balise.get("PAGEHEIGHT"))
+            self.orientation = balise.get("Orientation")
+            self.border_left = float(balise.get("BORDERLEFT"))
+            self.border_right = float(balise.get("BORDERRIGHT"))
+            self.border_top = float(balise.get("BORDERTOP"))
+            self.border_bottom = float(balise.get("BORDERBOTTOM"))
+            #self.size = str(balise.get("Size"))
+
         for balise in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT/PAGEOBJECT"):
             if balise.get("ANNAME") == "image_box":
-                new = BoxObject(balise.get("XPOS"), balise.get("YPOS"), balise.get("WIDTH"), balise.get("HEIGHT"),
-                                balise.get("ANNAME"), True)
+                new = BoxObject(float(balise.get("XPOS")) - self.pagex, float(balise.get("YPOS")) - self.pagey,
+                                float(balise.get("WIDTH")), float(balise.get("HEIGHT")), balise.get("ANNAME"), True)
             else:
-                new = BoxObject(balise.get("XPOS"), balise.get("YPOS"), balise.get("WIDTH"), balise.get("HEIGHT"),
-                                balise.get("ANNAME"))
+                new = BoxObject(float(balise.get("XPOS")) - self.pagex, float(balise.get("YPOS")) - self.pagey,
+                                float(balise.get("WIDTH")), float(balise.get("HEIGHT")), balise.get("ANNAME"))
             self.box_container.append(new)
 
-        for balise in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT/MASTERPAGE"):
-            self.pagex = balise.get("PAGEXPOS")
-            self.pagey = balise.get("PAGEYPOS")
-            self.page_width = balise.get("PAGEWIDTH")
-            self.page_height = balise.get("PAGEHEIGHT")
-            self.orientation = balise.get("Orientation")
-            self.border_left = balise.get("BORDERLEFT")
-            self.border_right = balise.get("BORDERRIGHT")
-            self.border_top = balise.get("BORDERTOP")
-            self.border_bottom = balise.get("BORDERBOTTOM")
-            #self.size = str(balise.get("Size"))
 
     def set_month(self, year, month):
         # Returns weekday of first day of the month and number of days in month, for the specified year and month
@@ -252,6 +259,9 @@ class TkCalendar(tk.Frame):
 
         if self.frame_master_current_page == 2:
             # months
+            # a suprimer
+            self.frame2_listbox_language.select_set(9)
+            self.action_get_language(None)
             if len(self.frame2_config_month_string_selected) == 0:
                 tkMessageBox.showinfo("Error", "At least one month must be selected.")
                 self.action_decrement()
@@ -378,6 +388,10 @@ class TkCalendar(tk.Frame):
         self.frame2_listbox_month.delete(0, END)
         for i in months:
             self.frame2_listbox_month.insert(END, i)
+
+        # a suprimer après test
+        self.frame2_listbox_month.select_set(8, 9)
+        self.action_select_month(None)
 
     # get selected month
     def action_select_month(self, event):
@@ -507,17 +521,31 @@ class TkCalendar(tk.Frame):
 
         my_document = Document(self.frame1_config_modelpath + self.frame1_config_model_name, self.lang, self.week_var.get(), self.size.get())
 
+        # resize all box with proportion of new document:
+        if int(my_document.orientation) == 1:
+            new_page_size_height, new_page_size_width = size_document[my_document.size]
+        else:
+            new_page_size_width, new_page_size_height = size_document[my_document.size]
+
+        if my_document.page_height != new_page_size_height and my_document.page_width != new_page_size_width:
+            for i in my_document.box_container:
+                i.xpos = (new_page_size_width * i.xpos) / my_document.page_width
+                i.ypos = (new_page_size_height * i.ypos) / my_document.page_height
+                i.width = (i.width * new_page_size_width) / my_document.page_width
+                i.height = (i.height * new_page_size_height) / my_document.page_height
+            my_document.border_right = (new_page_size_width * my_document.border_right) / my_document.page_width
+            my_document.border_bottom = (new_page_size_height * my_document.border_bottom) / my_document.page_height
+            my_document.border_left = (new_page_size_width * my_document.border_left) / my_document.page_width
+            my_document.border_top = (new_page_size_height * my_document.border_top) / my_document.page_height
+
         try:
-            if not newDocument(eval(my_document.size), (float(my_document.border_left), float(my_document.border_right),
-                                            float(my_document.border_top), float(my_document.border_bottom)),
-                               int(my_document.orientation), 1, UNIT_POINTS, NOFACINGPAGES, FIRSTPAGELEFT, 1):
+            if not newDocument((size_document[my_document.size][0], size_document[my_document.size][1]),
+                               (my_document.border_left, my_document.border_right, my_document.border_top,
+                                my_document.border_bottom), int(my_document.orientation), 1, UNIT_POINTS, NOFACINGPAGES,
+                                FIRSTPAGELEFT, 1):
                 print 'Create a new document first, please'
                 return
 
-            new_page_size_height, new_page_size_width = getPageSize()
-            print "test"
-            print new_page_size_height
-            print new_page_size_width
             self.pStyleDate = "Date"  # paragraph styles
             self.pStyleWeekday = "Weekday"
             self.pStyleMonth = "Month"
@@ -530,19 +558,6 @@ class TkCalendar(tk.Frame):
             # createText(x, y, largeur, hauteur)
             # createImage(x, y, largeur, hauteur)
             # re-draw from the model
-
-            # resize all box with proportion of new document:
-            print "height :" + my_document.page_height
-            print "widht : " + my_document.page_width
-            print "height2 :" + new_page_size_height
-            print "widht2 : " + new_page_size_width
-            if my_document.page_height != new_page_size_height and my_document.page_width != new_page_size_width:
-                print "Changed"
-                for i in my_document.box_container:
-                    i.xpos = (new_page_size_width * i.xpos) / my_document.page_width
-                    i.ypos = (new_page_size_height * i.ypos) / my_document.page_height
-                    i.width = (i.width * new_page_size_width) / my_document.page_width
-                    i.height = (i.height * new_page_size_height) / my_document.page_height
 
             progressTotal(len(self.frame2_config_month_string_selected))
             run = 0
@@ -572,11 +587,9 @@ class TkCalendar(tk.Frame):
                         # draw and fill all days strings
                         if i.anname == "week_box" or i.anname == "next_week_box":
                             for j, name in enumerate(my_document.day_order):
-                                cel = createText((j * float(i.width) / my_document.nb_day_usual_week) + float(i.xpos) -
-                                                 float(my_document.pagex),
-                                                 float(i.ypos) - float(my_document.pagey),
-                                                 float(i.width) / my_document.nb_day_usual_week,
-                                                 float(i.height), str(i.anname) + str(j))
+                                cel = createText((j * i.width / my_document.nb_day_usual_week) + i.xpos, i.ypos,
+                                                 i.width / my_document.nb_day_usual_week, i.height,
+                                                 str(i.anname) + str(j))
                                 if self.short_day_name is True and i.anname == "week_box" or \
                                    self.next_short_day_name is True and i.anname == "next_week_box" or \
                                    self.prev_short_day_name is True and i.anname == "prev_week_box":
@@ -587,13 +600,12 @@ class TkCalendar(tk.Frame):
                         # draw and fill all days_box
                         elif i.anname == "days_box" or i.anname == "next_days_box":
                             h = 0
-                            # creer les box pour les jours du mois et les remplies
                             for j, week in enumerate(cal):
                                 for day in week:
-                                    cel = createText((h * float(i.width) / my_document.nb_day_usual_week) + float(i.xpos) - float(my_document.pagex),
-                                                     (j * float(i.height) / my_document.nb_week) + float(i.ypos) - float(my_document.pagey),
-                                                     float(i.width) / my_document.nb_day_usual_week,
-                                                     float(i.height) / my_document.nb_week, str(i.anname) + str(h))
+                                    cel = createText(h * i.width / my_document.nb_day_usual_week + i.xpos,
+                                                     j * i.height / my_document.nb_week + i.ypos,
+                                                     i.width / my_document.nb_day_usual_week,
+                                                     i.height / my_document.nb_week, str(i.anname) + str(h))
                                     if self.prev_day_name is 1 and day.month < month_variable + 1:
                                         setText(str(day.day), cel)
                                         setStyle(self.pStyleDate, cel)
@@ -606,54 +618,45 @@ class TkCalendar(tk.Frame):
                                     h += 1
                                 h = 0
                         elif i.anname == "month_box" or i.anname == "next_month_box":
-                            cel = createText(float(i.xpos) - float(my_document.pagex),
-                                             float(i.ypos) - float(my_document.pagey),
-                                             float(i.width),
-                                             float(i.height), str(i.anname))
+                            cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname))
                             setText(localization[self.lang][0][month_variable], cel)
                             setStyle(self.pStyleDate, cel)
                         # draw and fill name_week_box
                         elif i.anname == "name_week_box" or i.anname == "next_name_week_box":
-                            cel = createText(float(i.xpos) - float(my_document.pagex),
-                                             float(i.ypos) - float(my_document.pagey),
-                                             float(i.width),
-                                             float(i.height), str(i.anname))
+                            cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname))
                             setText("#", cel)
                             setStyle(self.pStyleDate, cel)
                         # draw and fill all num_week_box
                         elif i.anname == "num_week_box" or i.anname == "next_num_week_box":
                             for j, week in enumerate(cal):
-                                cel = createText(float(i.xpos) - float(my_document.pagex),
-                                                 (j * float(i.height) / my_document.nb_week) + float(i.ypos) - float(my_document.pagey),
-                                                 float(i.width),
-                                                 float(i.height) / my_document.nb_week, str(i.anname))
+                                cel = createText(i.xpos, j * i.height / my_document.nb_week + i.ypos, i.width,
+                                                 i.height / my_document.nb_week, str(i.anname))
                                 # imprime le numéro de la semaine sur l'année
-                                setText(str(datetime.date(self.year_var, week[0].month, week[0].day).isocalendar()[1]), cel)
+                                setText(str(datetime.date(self.year_var, week[0].month, week[0].day).isocalendar()[1]),
+                                        cel)
                                 setStyle(self.pStyleDate, cel)
                         else:
-                            cel = createText(float(i.xpos) - float(my_document.pagex),
-                                             float(i.ypos) - float(my_document.pagey),
-                                             float(i.width),
-                                             float(i.height), str(i.anname))
+                            cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname))
                             setText(str(1), cel)
                             setStyle(self.pStyleDate, cel)
                     else:
-                        createImage(float(i.xpos) - float(my_document.pagex),
-                                    float(i.ypos) - float(my_document.pagey),
-                                    float(i.width),
-                                    float(i.height), str(i.anname))
-                progressSet(run)
+                        createImage(i.xpos, i.ypos, i.width, i.height, str(i.anname))
                 run += 1
+                progressSet(run)
             # delete first empty page
             deletePage(1)
 
-        except:
+        except Exception as e:
+            print e
             self.quit()
         try:
             self.quit()
         except:
             pass
         return
+
+    def my_test(self):
+        print size_document[self.size.get()][1]
 
     def get_year(self):
         self.year_var = int(self.frame2_spinbox_year.get())
@@ -686,15 +689,21 @@ class TkCalendar(tk.Frame):
         self.frame1_button_import = Button(frame1_frame_import, text="import .sla", command=self.action_import_model)
         self.frame1_button_import.pack()
 
+        Button(frame1_frame_import, text="my_test", command=self.my_test).pack()
+
         frame1_frame_orientation = Frame(frame1_root)
         frame1_frame_orientation.grid(row=1, column=1, rowspan=1, columnspan=1, sticky=W + E + N + S, padx=15, pady=15)
 
         Label(frame1_frame_orientation, text="Size").pack(ipady=5)
         frame1_combobox_size = ttk.Combobox(frame1_frame_orientation, textvariable=self.size, width=15)
 
-        frame1_combobox_size['values'] = size_document
+        keys = size_document.keys()
+        keys.sort()
+        size_keys = []
+        for i in keys:
+            size_keys.append(i)
+        frame1_combobox_size['values'] = size_keys
         frame1_combobox_size.current(4)
-        #frame1_combobox_size.bind("<<ComboboxSelected>>", self.action_select_size)
         frame1_combobox_size.pack(pady=5, anchor='w')
 
         frame1_frame_vide = Frame(frame1_root)
@@ -732,7 +741,7 @@ class TkCalendar(tk.Frame):
         self.frame2_button.pack(pady=20)
 
         frame2_checkbox = Frame(frame2_root, bg='yellow')
-        frame2_vide = Frame(frame2_root, bg = 'cyan')
+        frame2_vide = Frame(frame2_root, bg='cyan')
         frame2_vide.grid(row=0, column=2, pady=20, sticky=W + N + E + S)
 
         frame2_label = Frame(frame2_root, bg='blue')
