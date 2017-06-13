@@ -901,9 +901,8 @@ class TkCalendar(Tk.Frame):
         self.week_number = BooleanVar()
         self.font_var = StringVar()
         self.font_style_var = StringVar()
-        
 
-        # variable for scribus styles
+        # variable for scribus setStyles
         self.p_style_date = "Date"  # paragraph styles
         self.p_style_weekday = "Weekday"
         self.p_style_month = "Month"
