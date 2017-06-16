@@ -265,10 +265,12 @@ class TkCalendar(Tk.Frame):
         # print(self.frame_master_current_page)  # show in terminal the number of the current page
 
         if self.frame_master_current_page == 1:
-            # months
-            # a suprimer
+            # a supprimer
             self.frame2_listbox_language.select_set(9)
             self.action_get_language(None)
+
+        if self.frame_master_current_page == 2:
+            # months
             if len(self.frame2_config_month_string_selected) == 0:
                 tkMessageBox.showinfo("Error", "At least one month must be selected.")
                 self.action_decrement()
@@ -291,13 +293,14 @@ class TkCalendar(Tk.Frame):
                 for i in self.frame3_listbox_font_elements:
                     self.frame3_listbox_font.insert(END, i)
             # print self.frame3_listbox_font_elements
-            for i, val in enumerate(self.frame3_listbox_font_elements):
-                self.font_list[val] = []
-                self.font_list[val].append(self.font_var.get())
-                self.font_list[val].append(self.font_style_var.get())
-                self.font_list[val].append(self.font_size)
-                self.font_list[val].append(self.font_color.get())
-            # print self.font_list
+                for i, val in enumerate(self.frame3_listbox_font_elements):
+                    self.font_list[val] = []
+                    self.font_list[val].append(self.font_var.get())
+                    self.font_list[val].append(self.font_size)
+                    self.font_list[val].append(self.font_color.get())
+                # print self.font_list
+                self.frame3_listbox_font.select_set(0)
+                self.on_font_select(None)
 
         # if page == 1
         if self.frame_master_current_page <= 0:
@@ -389,7 +392,11 @@ class TkCalendar(Tk.Frame):
     # update the list of months with the right language
     def action_get_language(self, event):
         # get selected line index
-        self.frame2_config_language_index_selected = self.frame2_listbox_language.curselection()[0]
+        self.frame2_config_language_index_selected = None
+        try:
+            self.frame2_config_language_index_selected = self.frame2_listbox_language.curselection()[0]
+        except:
+            pass
 
         if self.frame2_config_language_index_selected is None:
             return
@@ -697,16 +704,45 @@ class TkCalendar(Tk.Frame):
         self.font_size = int(self.frame3_spinbox_size.get())
 
     def action_attrib(self):
+        # insert dans self.font_list toutes les valeurs de police que l'utilisateurs a choisi pour tel element
         try:
             for i in self.frame3_listbox_font.curselection():
                 self.font_list[self.frame3_listbox_font_elements[i]] = []
                 self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_var.get())
-                self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_style_var.get())
                 self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_size)
                 self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_color.get())
         except:
             print "no"
         print self.font_list
+
+    def on_font_select(self, event):
+        # refresh le Text de font preview d'après les fonts family box
+        self.frame3_frame_font_text.configure(font=(self.font_var.get(), self.font_size), foreground=self.font_color.get())
+
+    def on_font_select_listbox(self, event):
+        if self.frame1_config_model_name != '':
+            if self.frame3_listbox_font.curselection()[0] >= 0:
+                # refresh le label de font preview avec les fonts attribuer precedement
+                i = self.frame3_listbox_font.curselection()[0]
+                # verifie le style de font
+                if "Regular" in self.font_list[self.frame3_listbox_font_elements[i]][0]:
+                    self.frame3_frame_font_text.configure(
+                        font=(self.font_list[self.frame3_listbox_font_elements[i]][0][0:-8],
+                              self.font_list[self.frame3_listbox_font_elements[i]][1]),
+                        foreground=self.font_list[self.frame3_listbox_font_elements[i]][2])
+                if "Bold" in self.font_list[self.frame3_listbox_font_elements[i]][0]:
+                    self.frame3_frame_font_text.configure(
+                        font=(self.font_list[self.frame3_listbox_font_elements[i]][0][0:-5],
+                              self.font_list[self.frame3_listbox_font_elements[i]][1], 'bold'),
+                        foreground=self.font_list[self.frame3_listbox_font_elements[i]][2])
+                # refresh les fonts family box d'après les valeurs attribuer
+                self.frame3_combobox_font.set(self.font_list[self.frame3_listbox_font_elements[i]][0])
+                self.frame3_spinbox_size.delete(0, self.font_size)
+                self.frame3_spinbox_size.insert(0, self.font_list[self.frame3_listbox_font_elements[i]][1])
+                self.frame3_combobox_color.set(self.font_list[self.frame3_listbox_font_elements[i]][2])
+            else:
+                self.frame3_frame_font_text.configure(font=(self.font_var.get(), self.font_size),
+                                                      foreground=self.font_color.get())
 
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
@@ -841,51 +877,44 @@ class TkCalendar(Tk.Frame):
         frame3_root = Frame(self.canvas_frame)
         frame3_root.rowconfigure(1, weight=1)
 
-        frame3_frame_list = Frame(frame3_root)
+        frame3_frame_list = Frame(frame3_root, bg='blue')
         frame3_frame_list.grid(row=0, column=0, rowspan=3, sticky=W + E + N + S)
         Label(frame3_frame_list, text="Elements").pack(padx=10, pady=10)
-        self.frame3_listbox_font = Listbox(frame3_frame_list, selectmode='multiple', exportselection=0)
-        self.frame3_listbox_font.bind('<<ListboxSelect>>')
+        self.frame3_listbox_font = Listbox(frame3_frame_list, exportselection=0)
+        self.frame3_listbox_font.bind('<<ListboxSelect>>', self.on_font_select_listbox)
         self.frame3_listbox_font.pack()
         Button(frame3_frame_list, text='Uniform Font', command=self.select_all_elements).pack(pady=20, anchor='center')
 
-        frame3_frame_font_title = Frame(frame3_root)
-        frame3_frame_font_label = Frame(frame3_root)
-        frame3_frame_font_combobox = Frame(frame3_root)
-        frame3_frame_font_title.grid(row=0, column=1, columnspan=2, sticky=W + E + N)
+        frame3_frame_font_title_font = Frame(frame3_root, bg='cyan')
+        frame3_frame_font_title_preview = Frame(frame3_root, bg='green')
+        frame3_frame_font_label = Frame(frame3_root, bg='red')
+        frame3_frame_font_combobox = Frame(frame3_root, bg='yellow')
+        frame3_frame_font_title_font.grid(row=0, column=1, columnspan=2, sticky=W + E + N)
+        frame3_frame_font_title_preview.grid(row=0, column=3, rowspan=3, sticky=W + E + N)
         frame3_frame_font_label.grid(row=1, column=1, sticky=N + W + E + S)
         frame3_frame_font_combobox.grid(row=1, column=2, sticky=W + E + N + S)
 
-        Label(frame3_frame_font_title, text="Font Family").pack(padx=20, pady=20)
-        Label(frame3_frame_font_label, text="Family:").pack(padx=15, pady=10, anchor='nw')
-        Label(frame3_frame_font_label, text="Style:").pack(padx=15, pady=10, anchor='nw')
+        Label(frame3_frame_font_title_preview, text="Preview").pack(padx=20, pady=20)
+        Label(frame3_frame_font_title_font, text="Font Family").pack(padx=20, pady=20)
+        Label(frame3_frame_font_label, text="Font:").pack(padx=15, pady=10, anchor='nw')
         Label(frame3_frame_font_label, text="Size:").pack(padx=15, pady=10, anchor='nw')
         Label(frame3_frame_font_label, text="Color:").pack(padx=15, pady=10, anchor='nw')
 
-        frame3_combobox_font = ttk.Combobox(frame3_frame_font_combobox, textvariable=self.font_var)
+        self.frame3_combobox_font = ttk.Combobox(frame3_frame_font_combobox, textvariable=self.font_var)
         try:
-            frame3_combobox_font['values'] = scribus.getFontNames()
+            self.frame3_combobox_font['values'] = scribus.getFontNames()
         except:
-            frame3_combobox_font['values'] = ('Arial', 'Comic', 'Times New Roman')
+            self.frame3_combobox_font['values'] = ('Arial Regular', 'Arial Bold', 'Comic Regular', 'Times New Roman')
 
-        frame3_combobox_font.current(0)
-        frame3_combobox_font.bind("<<ComboboxSelected>>")
-        frame3_combobox_font.pack(pady=10, anchor='w')
-
-        frame3_combobox_font_style = ttk.Combobox(frame3_frame_font_combobox, textvariable=self.font_style_var)
-        try:
-            frame3_combobox_font_style['values'] = scribus.getFontStyle()
-        except:
-            frame3_combobox_font_style['values'] = ('Bold', 'Italic')
-
-        frame3_combobox_font_style.current(1)
-        frame3_combobox_font_style.bind("<<ComboboxSelected>>")
-        frame3_combobox_font_style.pack(pady=10, anchor='w')
+        self.frame3_combobox_font.current(0)
+        self.frame3_combobox_font.bind("<<ComboboxSelected>>", self.on_font_select)
+        self.frame3_combobox_font.pack(pady=10, anchor='w')
 
         self.frame3_spinbox_size = Spinbox(frame3_frame_font_combobox, wrap=True, from_=2, to=512,
                                            textvariable=self.font_size, command=self.get_font_size)
         self.frame3_spinbox_size.delete(0, 2)
         self.frame3_spinbox_size.insert(0, self.font_size)
+        self.frame3_spinbox_size.bind('<ButtonPress>', self.on_font_select)
         self.frame3_spinbox_size.pack(pady=10, anchor='w')
 
         self.frame3_combobox_color = ttk.Combobox(frame3_frame_font_combobox, textvariable=self.font_color)
@@ -894,11 +923,15 @@ class TkCalendar(Tk.Frame):
         except:
             self.frame3_combobox_color['values'] = ('Black', 'Red', 'Yellow')
         self.frame3_combobox_color.current(0)
-        self.frame3_combobox_color.bind("<<ComboboxSelected>>")
+        self.frame3_combobox_color.bind("<<ComboboxSelected>>", self.on_font_select)
         self.frame3_combobox_color.pack(pady=10, anchor='center')
 
         Button(frame3_frame_font_combobox, text='Attribute Font', command=self.action_attrib).pack(pady=10,
                                                                                                    anchor='center')
+
+        self.frame3_frame_font_text = Text(frame3_frame_font_title_preview, height=40/self.font_size, width=150/self.font_size)
+        self.frame3_frame_font_text.insert(END, 'Aa\nBb\nCc')
+        self.frame3_frame_font_text.pack(padx=10, pady=15)
 
         self.frame_master_all_frames = [frame1_root, frame2_root, frame3_root]
 
@@ -929,6 +962,7 @@ class TkCalendar(Tk.Frame):
         self.frame1_button_import = Button()
         self.frame2_spinbox_year = Spinbox()
         self.frame3_spinbox_size = Spinbox()
+        self.frame3_combobox_color = ttk.Combobox()
         self.bottom_button = []
         self.frame_master_all_frames = []
         self.frame_master_last_page = 0
@@ -951,6 +985,7 @@ class TkCalendar(Tk.Frame):
         self.frame2_config_month_string_selected = []
         self.frame3_listbox_font_elements = []
         self.frame2_config_file_i_c_s = ''
+        self.frame3_frame_font_text = Text()
         self.photo = PhotoImage()
 
         # variable about the calendar information
@@ -969,7 +1004,6 @@ class TkCalendar(Tk.Frame):
         self.next_day_name = BooleanVar()
         self.week_number = BooleanVar()
         self.font_var = StringVar()
-        self.font_style_var = StringVar()
         self.font_color = StringVar()
         self.font_size = 12
         self.font_list = {}
@@ -1002,6 +1036,7 @@ def main():
     except:
         pass
     root = Tk.Tk()
+    root.resizable(width=False, height=False)
     TkCalendar(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
 
