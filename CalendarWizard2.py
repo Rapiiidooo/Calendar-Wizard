@@ -167,7 +167,7 @@ def show_error(err):
 
 class BoxObject:
     """ BoxObject represent some attribute from PAGEOBJECT from scribus file. """
-    def __init__(self, xpos, ypos, width, height, anname, img=False, font='', font_style='', font_size='', color=''):
+    def __init__(self, xpos, ypos, width, height, anname, img=False, font='', font_size='', color=''):
         self.xpos = xpos
         self.ypos = ypos
         self.width = width
@@ -175,13 +175,12 @@ class BoxObject:
         self.anname = anname
         self.img = img
         self.font = font
-        self.font_style = font_style
         self.font_size = font_size
         self.color = color
+        self.path_img = ''
 
-    def attrib_font(self, font, font_style, font_size, color):
+    def attrib_font(self, font, font_size, color):
         self.font = font
-        self.font_style = font_style
         self.font_size = font_size
         self.color = color
 
@@ -384,8 +383,8 @@ class TkCalendar(Tk.Frame):
 
         try:
             self.photo = PhotoImage(file="format/" + model_name + ".png")
-            self.previewCanvas.itemconfigure(self.photo_img, image=self.photo, anchor=NW)
-            self.previewCanvas.image = self.photo
+            self.preview_canvas.itemconfigure(self.photo_img, image=self.photo, anchor=NW)
+            self.preview_canvas.image = self.photo
         except Exception as e:
             show_error("Can not update image from model. Err :" + str(e))
 
@@ -519,6 +518,7 @@ class TkCalendar(Tk.Frame):
         self.next_day_name = self.check_option_next_day.get()
 
     def action_finnish(self):
+        print "test"
         # a virer apres test
         if self.frame1_config_model_name == '':
             self.frame1_config_model_name = 'month-LANDSCAPE.sla'
@@ -547,11 +547,16 @@ class TkCalendar(Tk.Frame):
             my_document.border_top = (new_page_size_height * my_document.border_top) / my_document.page_height
 
         # Attrib all font to right container
-        for i in my_document.box_container:
-            i.attrib_font(self.font_list[i.anname][0],
-                          self.font_list[i.anname][1],
-                          self.font_list[i.anname][2],
-                          self.font_list[i.anname][3])
+        try:
+            for i in my_document.box_container:
+                if i.anname == 'image_box':
+                    pass
+                else:
+                    i.attrib_font(self.font_list[i.anname][0],
+                                  self.font_list[i.anname][1],
+                                  self.font_list[i.anname][2])
+        except Exception as e:
+            show_error("Box name not found in KEYWORD. " + str(e))
 
         try:
             # Create the Scribus New Document with right proportions
@@ -680,6 +685,8 @@ class TkCalendar(Tk.Frame):
                                 setTextColor(i.color, str(i.anname) + str(run))
                     else:
                         createImage(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                        if i.path_img != "":
+                            loadImage(i.path_img, str(i.anname) + str(run))
                 run += 1
                 progressSet(run)
             # delete first empty page
@@ -715,25 +722,70 @@ class TkCalendar(Tk.Frame):
             print "no"
         print self.font_list
 
+    def get_style_from_font_string(self, str):
+        # traitement de la police, transfere le style dans s
+        self.font = str
+        s = ""
+        if " Regular" in self.font:
+            s += "Regular"
+            self.font = self.font.replace(" Regular", "")
+        if " Bold" in self.font:
+            s += " Bold"
+            self.font = self.font.replace(" Bold", "")
+        if " Italic" in self.font:
+            s += " Italic"
+            self.font = self.font.replace(" Italic", "")
+        if " Oblique" in self.font:
+            s += " Oblique"
+            self.font = self.font.replace(" Oblique", "")
+        return s
+
     def on_font_select(self, event):
         # refresh le Text de font preview d'après les fonts family box
-        self.frame3_frame_font_text.configure(font=(self.font_var.get(), self.font_size), foreground=self.font_color.get())
+        s = self.get_style_from_font_string(self.font_var.get())
+        if "Regular" in s:
+            self.frame3_frame_font_text.configure(font=(self.font[0:-8], self.font_size),
+                                                  foreground=self.font_color.get())
+        else:
+            self.frame3_frame_font_text.configure(font=(self.font, self.font_size, s.lower()),
+                                                  foreground=self.font_color.get())
+
+    def unshow_frame3_image(self):
+        self.frame3_frame_font_title_font.grid(row=0, column=1, columnspan=2, sticky=W + E + N)
+        self.frame3_frame_font_title_preview.grid(row=0, column=3, rowspan=3, sticky=W + E + N)
+        self.frame3_frame_font_label.grid(row=1, column=1, sticky=N + W + E + S)
+        self.frame3_frame_font_combobox.grid(row=1, column=2, sticky=W + E + N + S)
+        self.frame3_frame_img_button.grid_forget()
+        self.frame3_frame_img_preview.grid_forget()
+
+    def show_frame3_image(self):
+        self.frame3_frame_font_title_font.grid_forget()
+        self.frame3_frame_font_title_preview.grid_forget()
+        self.frame3_frame_font_label.grid_forget()
+        self.frame3_frame_font_combobox.grid_forget()
+        self.frame3_frame_img_button.grid(row=0, column=1, rowspan=2, sticky=W + E + N + S)
+        self.frame3_frame_img_preview.grid(row=0, column=2, rowspan=2, sticky=W + E + N + S)
 
     def on_font_select_listbox(self, event):
         if self.frame1_config_model_name != '':
             if self.frame3_listbox_font.curselection()[0] >= 0:
                 # refresh le label de font preview avec les fonts attribuer precedement
                 i = self.frame3_listbox_font.curselection()[0]
+
+                if "image_box" in self.frame3_listbox_font_elements[i]:
+                    self.show_frame3_image()
+                else:
+                    self.unshow_frame3_image()
+
+                s = self.get_style_from_font_string(self.font_list[self.frame3_listbox_font_elements[i]][0])
                 # verifie le style de font
                 if "Regular" in self.font_list[self.frame3_listbox_font_elements[i]][0]:
                     self.frame3_frame_font_text.configure(
-                        font=(self.font_list[self.frame3_listbox_font_elements[i]][0][0:-8],
-                              self.font_list[self.frame3_listbox_font_elements[i]][1]),
+                        font=(self.font, self.font_list[self.frame3_listbox_font_elements[i]][1]),
                         foreground=self.font_list[self.frame3_listbox_font_elements[i]][2])
-                if "Bold" in self.font_list[self.frame3_listbox_font_elements[i]][0]:
+                else:
                     self.frame3_frame_font_text.configure(
-                        font=(self.font_list[self.frame3_listbox_font_elements[i]][0][0:-5],
-                              self.font_list[self.frame3_listbox_font_elements[i]][1], 'bold'),
+                        font=(self.font, self.font_list[self.frame3_listbox_font_elements[i]][1], s),
                         foreground=self.font_list[self.frame3_listbox_font_elements[i]][2])
                 # refresh les fonts family box d'après les valeurs attribuer
                 self.frame3_combobox_font.set(self.font_list[self.frame3_listbox_font_elements[i]][0])
@@ -743,6 +795,20 @@ class TkCalendar(Tk.Frame):
             else:
                 self.frame3_frame_font_text.configure(font=(self.font_var.get(), self.font_size),
                                                       foreground=self.font_color.get())
+
+    def get_image(self):
+        try:
+            filename = askopenfilename(title="Open your image",
+                                       filetypes=[('Image File', '.jpg'), ('Image File', '.jpeg'),
+                                                  ('Image File', '.png'), ('Image File', '.bmp'), ('all files', '.*')])
+            if filename is None:
+                filename = "croix.png"
+            self.photo_frame3 = PhotoImage(file=filename)
+            self.preview_canvas_frame3.itemconfigure(self.photo_img_frame3, image=self.photo_frame3, anchor=NW)
+            self.preview_canvas_frame3.image = self.photo_frame3
+        except Exception as e:
+            show_error("An error has encountered while opening image. Err :" + str(e))
+
 
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
@@ -797,9 +863,9 @@ class TkCalendar(Tk.Frame):
         Label(frame1_frame_preview, text="Preview").pack(padx=10, pady=10)
 
         self.photo = PhotoImage(file="format/month.png")
-        self.previewCanvas = Canvas(frame1_frame_preview, width=200, height=200)
-        self.photo_img = self.previewCanvas.create_image(0, 0, anchor=NW, image=self.photo)
-        self.previewCanvas.pack()
+        self.preview_canvas = Canvas(frame1_frame_preview, width=200, height=200)
+        self.photo_img = self.preview_canvas.create_image(0, 0, anchor=NW, image=self.photo)
+        self.preview_canvas.pack()
 
         # ELEMENT MIDDLE FRAME 2
         frame2_root = Frame(self.canvas_frame)
@@ -877,7 +943,7 @@ class TkCalendar(Tk.Frame):
         frame3_root = Frame(self.canvas_frame)
         frame3_root.rowconfigure(1, weight=1)
 
-        frame3_frame_list = Frame(frame3_root, bg='blue')
+        frame3_frame_list = Frame(frame3_root)
         frame3_frame_list.grid(row=0, column=0, rowspan=3, sticky=W + E + N + S)
         Label(frame3_frame_list, text="Elements").pack(padx=10, pady=10)
         self.frame3_listbox_font = Listbox(frame3_frame_list, exportselection=0)
@@ -885,39 +951,49 @@ class TkCalendar(Tk.Frame):
         self.frame3_listbox_font.pack()
         Button(frame3_frame_list, text='Uniform Font', command=self.select_all_elements).pack(pady=20, anchor='center')
 
-        frame3_frame_font_title_font = Frame(frame3_root, bg='cyan')
-        frame3_frame_font_title_preview = Frame(frame3_root, bg='green')
-        frame3_frame_font_label = Frame(frame3_root, bg='red')
-        frame3_frame_font_combobox = Frame(frame3_root, bg='yellow')
-        frame3_frame_font_title_font.grid(row=0, column=1, columnspan=2, sticky=W + E + N)
-        frame3_frame_font_title_preview.grid(row=0, column=3, rowspan=3, sticky=W + E + N)
-        frame3_frame_font_label.grid(row=1, column=1, sticky=N + W + E + S)
-        frame3_frame_font_combobox.grid(row=1, column=2, sticky=W + E + N + S)
+        self.frame3_frame_font_title_font = Frame(frame3_root)
+        self.frame3_frame_font_title_preview = Frame(frame3_root)
+        self.frame3_frame_font_label = Frame(frame3_root)
+        self.frame3_frame_font_combobox = Frame(frame3_root)
+        self.frame3_frame_img_button = Frame(frame3_root)
+        self.frame3_frame_img_preview = Frame(frame3_root)
+        self.frame3_frame_font_title_font.grid(row=0, column=1, columnspan=2, sticky=W + E + N)
+        self.frame3_frame_font_title_preview.grid(row=0, column=3, rowspan=3, sticky=W + E + N)
+        self.frame3_frame_font_label.grid(row=1, column=1, sticky=N + W + E + S)
+        self.frame3_frame_font_combobox.grid(row=1, column=2, sticky=W + E + N + S)
+        # self.frame3_frame_img_button.grid(row=0, column=1, rowspan=2, sticky=W + E + N + S)
+        # self.frame3_frame_img_preview.grid(row=0, column=2, rowspan=2, sticky=W + E + N + S)
 
-        Label(frame3_frame_font_title_preview, text="Preview").pack(padx=20, pady=20)
-        Label(frame3_frame_font_title_font, text="Font Family").pack(padx=20, pady=20)
-        Label(frame3_frame_font_label, text="Font:").pack(padx=15, pady=10, anchor='nw')
-        Label(frame3_frame_font_label, text="Size:").pack(padx=15, pady=10, anchor='nw')
-        Label(frame3_frame_font_label, text="Color:").pack(padx=15, pady=10, anchor='nw')
+        Button(self.frame3_frame_img_button, text='Choose Image', command=self.get_image).pack(padx=30, pady=110)
+        self.photo_frame3 = PhotoImage(file="croix.png")
+        self.preview_canvas_frame3 = Canvas(self.frame3_frame_img_preview, width=200, height=150)
+        self.photo_img_frame3 = self.preview_canvas_frame3.create_image(0, 0, anchor=NW, image=self.photo_frame3)
+        self.preview_canvas_frame3.pack(pady=50)
 
-        self.frame3_combobox_font = ttk.Combobox(frame3_frame_font_combobox, textvariable=self.font_var)
+        Label(self.frame3_frame_font_title_preview, text="Preview").pack(padx=20, pady=20)
+        Label(self.frame3_frame_font_title_font, text="Font Family").pack(padx=20, pady=20)
+        Label(self.frame3_frame_font_label, text="Font:").pack(padx=15, pady=10, anchor='nw')
+        Label(self.frame3_frame_font_label, text="Size:").pack(padx=15, pady=10, anchor='nw')
+        Label(self.frame3_frame_font_label, text="Color:").pack(padx=15, pady=10, anchor='nw')
+
+        self.frame3_combobox_font = ttk.Combobox(self.frame3_frame_font_combobox, textvariable=self.font_var)
         try:
             self.frame3_combobox_font['values'] = scribus.getFontNames()
         except:
-            self.frame3_combobox_font['values'] = ('Arial Regular', 'Arial Bold', 'Comic Regular', 'Times New Roman')
+            self.frame3_combobox_font['values'] = ('Arial Regular', 'Arial Bold', 'Comic Regular', 'Comic Bold', 'Comic Italic', 'Comic Bold Italic', 'Times New Roman')
 
         self.frame3_combobox_font.current(0)
         self.frame3_combobox_font.bind("<<ComboboxSelected>>", self.on_font_select)
         self.frame3_combobox_font.pack(pady=10, anchor='w')
 
-        self.frame3_spinbox_size = Spinbox(frame3_frame_font_combobox, wrap=True, from_=2, to=512,
+        self.frame3_spinbox_size = Spinbox(self.frame3_frame_font_combobox, wrap=True, from_=2, to=512,
                                            textvariable=self.font_size, command=self.get_font_size)
         self.frame3_spinbox_size.delete(0, 2)
         self.frame3_spinbox_size.insert(0, self.font_size)
         self.frame3_spinbox_size.bind('<ButtonPress>', self.on_font_select)
         self.frame3_spinbox_size.pack(pady=10, anchor='w')
 
-        self.frame3_combobox_color = ttk.Combobox(frame3_frame_font_combobox, textvariable=self.font_color)
+        self.frame3_combobox_color = ttk.Combobox(self.frame3_frame_font_combobox, textvariable=self.font_color)
         try:
             self.frame3_combobox_color['values'] = scribus.getColorNames()
         except:
@@ -926,10 +1002,10 @@ class TkCalendar(Tk.Frame):
         self.frame3_combobox_color.bind("<<ComboboxSelected>>", self.on_font_select)
         self.frame3_combobox_color.pack(pady=10, anchor='center')
 
-        Button(frame3_frame_font_combobox, text='Attribute Font', command=self.action_attrib).pack(pady=10,
+        Button(self.frame3_frame_font_combobox, text='Attribute Font', command=self.action_attrib).pack(pady=10,
                                                                                                    anchor='center')
 
-        self.frame3_frame_font_text = Text(frame3_frame_font_title_preview, height=40/self.font_size, width=150/self.font_size)
+        self.frame3_frame_font_text = Text(self.frame3_frame_font_title_preview, height=40/self.font_size, width=150/self.font_size)
         self.frame3_frame_font_text.insert(END, 'Aa\nBb\nCc')
         self.frame3_frame_font_text.pack(padx=10, pady=15)
 
@@ -951,7 +1027,7 @@ class TkCalendar(Tk.Frame):
         self.bottom = Frame()
         self.top_label = Label()
         self.canvas = Canvas()
-        self.previewCanvas = Canvas()
+        self.preview_canvas = Canvas()
         self.photo_img = Canvas()
         self.scrollbar_middle = Scrollbar()
         self.scrollbar_listbox_month = Scrollbar()
@@ -1003,6 +1079,7 @@ class TkCalendar(Tk.Frame):
         self.prev_day_name = BooleanVar()
         self.next_day_name = BooleanVar()
         self.week_number = BooleanVar()
+        self.font = StringVar()
         self.font_var = StringVar()
         self.font_color = StringVar()
         self.font_size = 12
