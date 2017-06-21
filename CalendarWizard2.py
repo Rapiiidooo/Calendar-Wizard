@@ -5,7 +5,6 @@ from lxml import etree
 from shutil import copyfile
 
 import ttk
-from tkColorChooser import askcolor
 import Tkinter as Tk
 import sys
 import datetime
@@ -178,6 +177,8 @@ class BoxObject:
         self.font_size = font_size
         self.color = color
         self.path_img = ''
+        self.fit_to_box = False
+        self.keep_proportion = False
 
     def attrib_font(self, font, font_size, color):
         self.font = font
@@ -550,7 +551,9 @@ class TkCalendar(Tk.Frame):
         try:
             for i in my_document.box_container:
                 if i.anname == 'image_box':
-                    pass
+                    i.path_img = self.path_image
+                    i.fit_to_box = self.fit_to_box
+                    i.keep_proportion = self.keep_proportion
                 else:
                     i.attrib_font(self.font_list[i.anname][0],
                                   self.font_list[i.anname][1],
@@ -684,9 +687,12 @@ class TkCalendar(Tk.Frame):
                                 setFontSize(i.font_size, str(i.anname) + str(run))
                                 setTextColor(i.color, str(i.anname) + str(run))
                     else:
+                        print "image"
                         createImage(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+
                         if i.path_img != "":
                             loadImage(i.path_img, str(i.anname) + str(run))
+                            setScaleImageToFrame(i.fit_to_box, i.keep_proportion, str(i.anname) + str(run))
                 run += 1
                 progressSet(run)
             # delete first empty page
@@ -710,6 +716,12 @@ class TkCalendar(Tk.Frame):
     def get_font_size(self):
         self.font_size = int(self.frame3_spinbox_size.get())
 
+    def get_fit_to_box(self):
+        self.fit_to_box = bool(self.check_option_fit_to_box.get())
+
+    def get_keep_proportion(self):
+        self.keep_proportion = bool(self.check_option_keep_proportion.get())
+
     def action_attrib(self):
         # insert dans self.font_list toutes les valeurs de police que l'utilisateurs a choisi pour tel element
         try:
@@ -722,9 +734,9 @@ class TkCalendar(Tk.Frame):
             print "no"
         print self.font_list
 
-    def get_style_from_font_string(self, str):
+    def get_style_from_font_string(self, mstr):
         # traitement de la police, transfere le style dans s
-        self.font = str
+        self.font = mstr
         s = ""
         if " Regular" in self.font:
             s += "Regular"
@@ -801,14 +813,23 @@ class TkCalendar(Tk.Frame):
             filename = askopenfilename(title="Open your image",
                                        filetypes=[('Image File', '.jpg'), ('Image File', '.jpeg'),
                                                   ('Image File', '.png'), ('Image File', '.bmp'), ('all files', '.*')])
-            if filename is None:
+            # In case of error or cancel
+            if len(filename) <= 0:
                 filename = "croix.png"
+            else:
+                self.path_image = filename
+
             self.photo_frame3 = PhotoImage(file=filename)
+            # resize img
+            while self.photo_frame3.width() > 200 and self.photo_frame3.width() > 150:
+                print self.photo_frame3.width()
+                print self.photo_frame3.height()
+                self.photo_frame3 = self.photo_frame3.subsample(8)
+
             self.preview_canvas_frame3.itemconfigure(self.photo_img_frame3, image=self.photo_frame3, anchor=NW)
             self.preview_canvas_frame3.image = self.photo_frame3
         except Exception as e:
             show_error("An error has encountered while opening image. Err :" + str(e))
-
 
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
@@ -961,10 +982,15 @@ class TkCalendar(Tk.Frame):
         self.frame3_frame_font_title_preview.grid(row=0, column=3, rowspan=3, sticky=W + E + N)
         self.frame3_frame_font_label.grid(row=1, column=1, sticky=N + W + E + S)
         self.frame3_frame_font_combobox.grid(row=1, column=2, sticky=W + E + N + S)
-        # self.frame3_frame_img_button.grid(row=0, column=1, rowspan=2, sticky=W + E + N + S)
-        # self.frame3_frame_img_preview.grid(row=0, column=2, rowspan=2, sticky=W + E + N + S)
 
-        Button(self.frame3_frame_img_button, text='Choose Image', command=self.get_image).pack(padx=30, pady=110)
+        Label(self.frame3_frame_img_button, text="").pack(pady=15)
+        Button(self.frame3_frame_img_button, text='Choose Image', command=self.get_image).pack(padx=30, pady=15)
+        Label(self.frame3_frame_img_button, text="Fit to Container :").pack(padx=30)
+        Checkbutton(self.frame3_frame_img_button, variable=self.check_option_fit_to_box,
+                    command=self.get_fit_to_box).pack(padx=30)
+        Label(self.frame3_frame_img_button, text="Keep Proportion :").pack(padx=30)
+        Checkbutton(self.frame3_frame_img_button, variable=self.check_option_keep_proportion,
+                    command=self.get_keep_proportion).pack(padx=30)
         self.photo_frame3 = PhotoImage(file="croix.png")
         self.preview_canvas_frame3 = Canvas(self.frame3_frame_img_preview, width=200, height=150)
         self.photo_img_frame3 = self.preview_canvas_frame3.create_image(0, 0, anchor=NW, image=self.photo_frame3)
@@ -1003,9 +1029,10 @@ class TkCalendar(Tk.Frame):
         self.frame3_combobox_color.pack(pady=10, anchor='center')
 
         Button(self.frame3_frame_font_combobox, text='Attribute Font', command=self.action_attrib).pack(pady=10,
-                                                                                                   anchor='center')
+                                                                                                        anchor='center')
 
-        self.frame3_frame_font_text = Text(self.frame3_frame_font_title_preview, height=40/self.font_size, width=150/self.font_size)
+        self.frame3_frame_font_text = Text(self.frame3_frame_font_title_preview, height=40/self.font_size,
+                                           width=100/self.font_size)
         self.frame3_frame_font_text.insert(END, 'Aa\nBb\nCc')
         self.frame3_frame_font_text.pack(padx=10, pady=15)
 
@@ -1025,10 +1052,18 @@ class TkCalendar(Tk.Frame):
         self.middle = Frame()
         self.canvas_frame = Frame()
         self.bottom = Frame()
+        self.frame3_frame_font_title_font = Frame()
+        self.frame3_frame_font_title_preview = Frame()
+        self.frame3_frame_font_label = Frame()
+        self.frame3_frame_font_combobox = Frame()
+        self.frame3_frame_img_button = Frame()
+        self.frame3_frame_img_preview = Frame()
         self.top_label = Label()
         self.canvas = Canvas()
         self.preview_canvas = Canvas()
+        self.preview_canvas_frame3 = Canvas()
         self.photo_img = Canvas()
+        self.photo_img_frame3 = Canvas()
         self.scrollbar_middle = Scrollbar()
         self.scrollbar_listbox_month = Scrollbar()
         self.frame1_listbox_models = Listbox()
@@ -1039,6 +1074,7 @@ class TkCalendar(Tk.Frame):
         self.frame2_spinbox_year = Spinbox()
         self.frame3_spinbox_size = Spinbox()
         self.frame3_combobox_color = ttk.Combobox()
+        self.frame3_combobox_font = ttk.Combobox()
         self.bottom_button = []
         self.frame_master_all_frames = []
         self.frame_master_last_page = 0
@@ -1055,6 +1091,8 @@ class TkCalendar(Tk.Frame):
         self.check_option_short_day = IntVar()
         self.check_option_next_short_day = IntVar()
         self.check_option_prev_short_day = IntVar()
+        self.check_option_fit_to_box = IntVar()
+        self.check_option_keep_proportion = IntVar()
         self.frame2_config_language_string_selected = 'English'
         self.frame2_config_language_index_selected = 0
         self.frame2_config_month_index_selected = []
@@ -1063,6 +1101,7 @@ class TkCalendar(Tk.Frame):
         self.frame2_config_file_i_c_s = ''
         self.frame3_frame_font_text = Text()
         self.photo = PhotoImage()
+        self.photo_frame3 = PhotoImage()
 
         # variable about the calendar information
         self.now = datetime.datetime.now()
@@ -1079,9 +1118,12 @@ class TkCalendar(Tk.Frame):
         self.prev_day_name = BooleanVar()
         self.next_day_name = BooleanVar()
         self.week_number = BooleanVar()
+        self.fit_to_box = False
+        self.keep_proportion = False
         self.font = StringVar()
         self.font_var = StringVar()
         self.font_color = StringVar()
+        self.path_image = StringVar()
         self.font_size = 12
         self.font_list = {}
 
