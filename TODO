@@ -1,11 +1,18 @@
 TODO:
 
 - PARSING MARGING - DONE
-- APPLY MODEL AFTER PARSING - TAKING WHILE
+- APPLY MODEL AFTER PARSING - DONE
 
 
-- Set correct days
+- Set correct days - DONE
 
-- Correct set_month in class Document
+- Correct set_month in class Document - DONE
 
------- BUG ON NEXT MONTH
+------ BUG ON NEXT MONTH - CORRECTED
+
+
+- SUPPORT Day Calendar / Day model
+- SUPPORT Week Calendar / Week model
+- SUPPORT Year Calendar / Year model
+
+-VERIFIER les styles (scribus styles) like p_style_date ...

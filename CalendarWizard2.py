@@ -518,11 +518,223 @@ class TkCalendar(Tk.Frame):
     def get_next_day(self):
         self.next_day_name = self.check_option_next_day.get()
 
+    def create_month_calendar(self, my_document):
+        # run is used for scribus progressbar
+        # re-draw new document from the model base
+        for run, month in enumerate(self.frame2_config_month_string_selected):
+            newPage(-1)
+            for i in my_document.box_container:
+                month_variable = month
+                if i.img is False:
+                    # init le nombre de semaine et de jour du mois
+                    if i.anname[0:4] == "next":
+                        month_variable += 1
+                        my_document.set_month(self.year_var, month_variable + 1)
+                        cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable + 1)
+                    elif i.anname[0:4] == "prev":
+                        month_variable -= 1
+                        if month_variable < 0:
+                            year = self.year_var - 1
+                            my_document.set_month(year, month_variable + 12)
+                            cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable + 12)
+                        else:
+                            my_document.set_month(self.year_var, month_variable)
+                            cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable)
+                    else:
+                        my_document.set_month(self.year_var, month_variable + 1)
+                        cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable + 1)
+
+                    # draw and fill all days strings
+                    if i.anname == "week_box" or i.anname == "next_week_box":
+                        for j, name in enumerate(my_document.day_order):
+                            cel = createText((j * i.width / my_document.nb_day_usual_week) + i.xpos, i.ypos,
+                                             i.width / my_document.nb_day_usual_week, i.height,
+                                             str(i.anname) + str(run) + '_' + str(j))
+                            # setFont(...)
+                            # setFontSize(...)
+                            print i.font
+                            print i.font_size
+                            if self.short_day_name is True and i.anname == "week_box" or \
+                                                    self.next_short_day_name is True and i.anname == "next_week_box" or \
+                                                    self.prev_short_day_name is True and i.anname == "prev_week_box":
+                                setText("\n" + str(name[0:3] + '.'), cel)
+                            else:
+                                setText("\n" + str(name), cel)
+                            setStyle(self.p_style_week, cel)
+                            selectText(0, 0, str(i.anname) + str(run) + '_' + str(j))
+                            setFont(i.font, str(i.anname) + str(run) + '_' + str(j))
+                            setFontSize(i.font_size, str(i.anname) + str(run) + '_' + str(j))
+                            setTextColor(i.color, str(i.anname) + str(run) + '_' + str(j))
+                    # draw and fill all days_box
+                    elif i.anname == "days_box" or i.anname == "next_days_box":
+                        h = 0
+                        st = 0
+                        for j, week in enumerate(cal):
+                            for day in week:
+                                cel = createText(h * i.width / my_document.nb_day_usual_week + i.xpos,
+                                                 j * i.height / my_document.nb_week + i.ypos,
+                                                 i.width / my_document.nb_day_usual_week,
+                                                 i.height / my_document.nb_week,
+                                                 str(i.anname) + str(run) + '_' + str(st))
+                                if self.prev_day_name is 1 and day.month < month_variable + 1:
+                                    setText(str(day.day), cel)
+                                if self.next_day_name is 1 and day.month > month_variable + 1:
+                                    setText(str(day.day), cel)
+                                if day.month == month_variable + 1:
+                                    setText(str(day.day), cel)
+                                setStyle(self.p_style_days, cel)
+                                selectText(0, 0, str(i.anname) + str(run) + '_' + str(st))
+                                setFont(i.font, str(i.anname) + str(run) + '_' + str(st))
+                                setFontSize(i.font_size, str(i.anname) + str(run) + '_' + str(st))
+                                setTextColor(i.color, str(i.anname) + str(run) + '_' + str(st))
+                                h += 1
+                                st += 1
+                            h = 0
+                    elif i.anname == "month_box" or i.anname == "next_month_box":
+                        cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                        setText("\n" + localization[self.lang][0][month_variable], cel)
+                        setStyle(self.p_style_month, cel)
+                        selectText(0, 0, str(i.anname) + str(run))
+                        setFont(i.font, str(i.anname) + str(run))
+                        setFontSize(i.font_size, str(i.anname) + str(run))
+                        setTextColor(i.color, str(i.anname) + str(run))
+                    # draw and fill name_week_box
+                    elif i.anname == "name_week_box" or i.anname == "next_name_week_box":
+                        cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                        setText("\n" + "#", cel)
+                        setStyle(self.p_style_name_week, cel)
+                        selectText(0, 0, str(i.anname) + str(run))
+                        setFont(i.font, str(i.anname) + str(run))
+                        setFontSize(i.font_size, str(i.anname) + str(run))
+                        setTextColor(i.color, str(i.anname) + str(run))
+                    # draw and fill all num_week_box
+                    elif i.anname == "num_week_box" or i.anname == "next_num_week_box":
+                        for j, week in enumerate(cal):
+                            cel = createText(i.xpos, j * i.height / my_document.nb_week + i.ypos, i.width,
+                                             i.height / my_document.nb_week, str(i.anname) + str(j) + str(run))
+                            # imprime le numéro de la semaine sur l'année
+                            setText("\n" + str(datetime.date(self.year_var, week[0].month, week[0].day).isocalendar()[1]),
+                                    cel)
+                            setStyle(self.p_style_num_week, cel)
+                            selectText(0, 0, str(i.anname) + str(j) + str(run))
+                            setFont(i.font, str(i.anname) + str(j) + str(run))
+                            setFontSize(i.font_size, str(i.anname) + str(j) + str(run))
+                            setTextColor(i.color, str(i.anname) + str(j) + str(run))
+                    else:
+                        cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                else:
+                    createImage(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                    if i.path_img != "":
+                        print i.path_img
+                        loadImage(i.path_img, str(i.anname) + str(run))
+                        setScaleImageToFrame(i.fit_to_box, i.keep_proportion, str(i.anname) + str(run))
+            run += 1
+            progressSet(run)
+        # delete first empty page
+        deletePage(1)
+
+    def create_year_calendar(self, my_document):
+        # run is used for scribus progressbar
+        # re-draw new document from the model base
+        newPage(-1)
+        run = 0
+        for i in my_document.box_container:
+            if i.anname == "year_box":
+                cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname))
+                setText("\n" + str(self.year_var), cel)
+                setStyle(self.p_style_year, cel)
+                selectText(0, 0, str(i.anname))
+                setFont(i.font, str(i.anname))
+                setFontSize(i.font_size, str(i.anname))
+                setTextColor(i.color, str(i.anname))
+            for imonth, month in enumerate(self.frame2_config_month_string_selected):
+                if i.img is False:
+                    # init le nombre de semaine et de jour du mois
+                    my_document.set_month(self.year_var, month + 1)
+                    cal = my_document.mycal.monthdatescalendar(self.year_var, month + 1)
+                    # draw and fill all days strings
+                    if i.anname == "week_box" + str(imonth):
+                        for j, name in enumerate(my_document.day_order):
+                            cel = createText((j * i.width / my_document.nb_day_usual_week) + i.xpos, i.ypos,
+                                             i.width / my_document.nb_day_usual_week, i.height,
+                                             str(i.anname) + str(j))
+                            if self.short_day_name is True and i.anname == "week_box" + str(imonth):
+                                setText(str(name[0:2] + '.'), cel)
+                            else:
+                                setText(str(name), cel)
+                            setStyle(self.p_style_week, cel)
+                            selectText(0, 0, str(i.anname) + str(j))
+                            setFont(i.font, str(i.anname) + str(j))
+                            setFontSize(i.font_size, str(i.anname) + str(j))
+                            setTextColor(i.color, str(i.anname) + str(j))
+                    # draw and fill all days_box
+                    elif i.anname == "days_box" + str(imonth):
+                        h = 0
+                        st = 0
+                        for j, week in enumerate(cal):
+                            for day in week:
+                                cel = createText(h * i.width / my_document.nb_day_usual_week + i.xpos,
+                                                j * i.height / my_document.nb_week + i.ypos,
+                                                i.width / my_document.nb_day_usual_week,
+                                                i.height / my_document.nb_week,
+                                                str(i.anname) + str(st))
+                                if day.month == month + 1:
+                                    setText(str(day.day), cel)
+                                setStyle(self.p_style_days, cel)
+                                selectText(0, 0, str(i.anname) + str(st))
+                                setFont(i.font, str(i.anname) + str(st))
+                                setFontSize(i.font_size, str(i.anname) + str(st))
+                                setTextColor(i.color, str(i.anname) + str(st))
+                                h += 1
+                                st += 1
+                            h = 0
+                    elif i.anname == "month_box" + str(imonth):
+                        cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname))
+                        setText(localization[self.lang][0][month], cel)
+                        setStyle(self.p_style_month, cel)
+                        selectText(0, 0, str(i.anname))
+                        setFont(i.font, str(i.anname))
+                        setFontSize(i.font_size, str(i.anname))
+                        setTextColor(i.color, str(i.anname))
+                    # draw and fill name_week_box
+                    elif i.anname == "name_week_box" + str(imonth):
+                        cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname))
+                        setText("\n" + "#", cel)
+                        setStyle(self.p_style_name_week, cel)
+                        selectText(0, 0, str(i.anname))
+                        setFont(i.font, str(i.anname))
+                        setFontSize(i.font_size, str(i.anname))
+                        setTextColor(i.color, str(i.anname))
+                    # draw and fill all num_week_box
+                    elif i.anname == "num_week_box" + str(imonth):
+                        for j, week in enumerate(cal):
+                            cel = createText(i.xpos, j * i.height / my_document.nb_week + i.ypos, i.width,
+                                             i.height / my_document.nb_week, str(i.anname) + str(j))
+                            # imprime le numéro de la semaine sur l'année
+                            setText("\n" + str(datetime.date(self.year_var, week[0].month, week[0].day).isocalendar()[1]),
+                                    cel)
+                            setStyle(self.p_style_num_week, cel)
+                            selectText(0, 0, str(i.anname) + str(j))
+                            setFont(i.font, str(i.anname) + str(j))
+                            setFontSize(i.font_size, str(i.anname) + str(j))
+                            setTextColor(i.color, str(i.anname) + str(j))
+                    else:
+                        pass
+                else:
+                    createImage(i.xpos, i.ypos, i.width, i.height, str(i.anname))
+                    if i.path_img != "":
+                        print i.path_img
+                        loadImage(i.path_img, str(i.anname))
+                        setScaleImageToFrame(i.fit_to_box, i.keep_proportion, str(i.anname))
+                run += 1
+            progressSet(run)
+        # delete first empty page
+        deletePage(1)
+
     def action_finnish(self):
-        print "test"
         # a virer apres test
         if self.frame1_config_model_name == '':
-            self.frame1_config_model_name = 'month-LANDSCAPE.sla'
+            self.frame1_config_model_name = 'year-basic.sla'
             # self.frame1_config_model_name = 'month.sla'
 
         # Create the document with DocumentClass
@@ -570,140 +782,31 @@ class TkCalendar(Tk.Frame):
                 print 'Create a new document first, please'
                 return
 
-            createParagraphStyle(name=self.p_style_date, alignment=ALIGN_RIGHT)
-            createParagraphStyle(name=self.p_style_days_box, alignment=ALIGN_RIGHT)
-            createParagraphStyle(name=self.p_style_month_box)
-            createParagraphStyle(name=self.p_style_week_box, alignment=ALIGN_RIGHT)
+            createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
+            createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
+            createParagraphStyle(name=self.p_style_month, alignment=1)
+            createParagraphStyle(name=self.p_style_week, alignment=1)
+            createParagraphStyle(name=self.p_style_name_week, alignment=ALIGN_RIGHT)
+            createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
 
-            progressTotal(len(self.frame2_config_month_string_selected))
-            # run is used for scribus progressbar
-            # re-draw from the model
-            for run, month in enumerate(self.frame2_config_month_string_selected):
-                newPage(-1)
-                for i in my_document.box_container:
-                    month_variable = month
-                    if i.img is False:
-                        # init le nombre de semaine et de jour du mois
-                        if i.anname[0:4] == "next":
-                            month_variable += 1
-                            my_document.set_month(self.year_var, month_variable + 1)
-                            cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable + 1)
-                        elif i.anname[0:4] == "prev":
-                            month_variable -= 1
-                            if month_variable < 0:
-                                year = self.year_var - 1
-                                my_document.set_month(year, month_variable+12)
-                                cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable+12)
-                            else:
-                                my_document.set_month(self.year_var, month_variable)
-                                cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable)
-                        else:
-                            my_document.set_month(self.year_var, month_variable + 1)
-                            cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable + 1)
-
-                        # draw and fill all days strings
-                        if i.anname == "week_box" or i.anname == "next_week_box":
-                            for j, name in enumerate(my_document.day_order):
-                                cel = createText((j * i.width / my_document.nb_day_usual_week) + i.xpos, i.ypos,
-                                                 i.width / my_document.nb_day_usual_week, i.height,
-                                                 str(i.anname) + str(run) + '_' + str(j))
-                                # setFont(...)
-                                # setFontSize(...)
-                                print i.font
-                                print i.font_size
-                                if self.short_day_name is True and i.anname == "week_box" or \
-                                   self.next_short_day_name is True and i.anname == "next_week_box" or \
-                                   self.prev_short_day_name is True and i.anname == "prev_week_box":
-                                    setText(str(name[0:3] + '.'), cel)
-                                else:
-                                    setText(str(name), cel)
-                                setStyle(self.p_style_week_box, cel)
-                                selectText(0, 0, str(i.anname) + str(run) + '_' + str(j))
-                                setFont(i.font, str(i.anname) + str(run) + '_' + str(j))
-                                setFontSize(i.font_size, str(i.anname) + str(run) + '_' + str(j))
-                                setTextColor(i.color, str(i.anname) + str(run) + '_' + str(j))
-                        # draw and fill all days_box
-                        elif i.anname == "days_box" or i.anname == "next_days_box":
-                            h = 0
-                            st = 0
-                            for j, week in enumerate(cal):
-                                for day in week:
-                                    cel = createText(h * i.width / my_document.nb_day_usual_week + i.xpos,
-                                                     j * i.height / my_document.nb_week + i.ypos,
-                                                     i.width / my_document.nb_day_usual_week,
-                                                     i.height / my_document.nb_week,
-                                                     str(i.anname) + str(run) + '_' + str(st))
-                                    if self.prev_day_name is 1 and day.month < month_variable + 1:
-                                        setText(str(day.day), cel)
-                                    if self.next_day_name is 1 and day.month > month_variable + 1:
-                                        setText(str(day.day), cel)
-                                    if day.month == month_variable + 1:
-                                        setText(str(day.day), cel)
-                                    setStyle(self.p_style_days_box, cel)
-                                    selectText(0, 0, str(i.anname) + str(run) + '_' + str(st))
-                                    setFont(i.font, str(i.anname) + str(run) + '_' + str(st))
-                                    setFontSize(i.font_size, str(i.anname) + str(run) + '_' + str(st))
-                                    setTextColor(i.color, str(i.anname) + str(run) + '_' + str(st))
-                                    h += 1
-                                    st += 1
-                                h = 0
-                        elif i.anname == "month_box" or i.anname == "next_month_box":
-                            cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
-                            setText(localization[self.lang][0][month_variable], cel)
-                            setStyle(self.p_style_month_box, cel)
-                            selectText(0, 0, str(i.anname) + str(run))
-                            setFont(i.font, str(i.anname) + str(run))
-                            setFontSize(i.font_size, str(i.anname) + str(run))
-                            setTextColor(i.color, str(i.anname) + str(run))
-                        # draw and fill name_week_box
-                        elif i.anname == "name_week_box" or i.anname == "next_name_week_box":
-                            cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
-                            setText("#", cel)
-                            setStyle(self.p_style_date, cel)
-                            selectText(0, 0, str(i.anname) + str(run))
-                            setFont(i.font, str(i.anname) + str(run))
-                            setFontSize(i.font_size, str(i.anname) + str(run))
-                            setTextColor(i.color, str(i.anname) + str(run))
-                        # draw and fill all num_week_box
-                        elif i.anname == "num_week_box" or i.anname == "next_num_week_box":
-                            for j, week in enumerate(cal):
-                                cel = createText(i.xpos, j * i.height / my_document.nb_week + i.ypos, i.width,
-                                                 i.height / my_document.nb_week, str(i.anname) + str(j) + str(run))
-                                # imprime le numéro de la semaine sur l'année
-                                setText(str(datetime.date(self.year_var, week[0].month, week[0].day).isocalendar()[1]),
-                                        cel)
-                                setStyle(self.p_style_date, cel)
-                                selectText(0, 0, str(i.anname) + str(j) + str(run))
-                                setFont(i.font, str(i.anname) + str(j) + str(run))
-                                setFontSize(i.font_size, str(i.anname) + str(j) + str(run))
-                                setTextColor(i.color, str(i.anname) + str(j) + str(run))
-                        else:
-                            cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
-                            setText(str(1), cel)
-                            setStyle(self.p_style_date, cel)
-                            if i.font is not '' and i.font_size is not '':
-                                selectText(0, 0, str(i.anname) + str(run))
-                                setFont(i.font, str(i.anname) + str(run))
-                                setFontSize(i.font_size, str(i.anname) + str(run))
-                                setTextColor(i.color, str(i.anname) + str(run))
-                    else:
-                        print "image"
-                        createImage(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
-
-                        if i.path_img != "":
-                            loadImage(i.path_img, str(i.anname) + str(run))
-                            setScaleImageToFrame(i.fit_to_box, i.keep_proportion, str(i.anname) + str(run))
-                run += 1
-                progressSet(run)
-            # delete first empty page
-            deletePage(1)
+            if self.frame1_config_type_string_selected == 'Day':
+                pass
+            elif self.frame1_config_type_string_selected == 'Week':
+                pass
+            elif self.frame1_config_type_string_selected == 'Month':
+                progressTotal(len(self.frame2_config_month_string_selected))
+                self.create_month_calendar(my_document)
+            elif self.frame1_config_type_string_selected == 'Year':
+                progressTotal(len(my_document.box_container) * len(self.frame2_config_month_string_selected))
+                self.create_year_calendar(my_document)
 
         except Exception as e:
             print e
             self.quit()
         try:
             self.quit()
-        except:
+        except Exception as e:
+            print e
             pass
         return
 
@@ -1082,7 +1185,7 @@ class TkCalendar(Tk.Frame):
         self.frame_master_current_page = 0
         self.frame1_config_model_name = ''
         self.frame1_config_model_path = './models/'
-        self.frame1_config_type_string_selected = ''
+        self.frame1_config_type_string_selected = 'Month'
         self.frame1_config_type_index_selected = IntVar()
         self.frame1_listbox_types = Listbox()
         self.model_index_selected = IntVar()
@@ -1123,18 +1226,17 @@ class TkCalendar(Tk.Frame):
         self.font = StringVar()
         self.font_var = StringVar()
         self.font_color = StringVar()
-        self.path_image = StringVar()
+        self.path_image = ""
         self.font_size = 12
         self.font_list = {}
 
-        # variable for scribus setStyles
-        self.p_style_date = "Date"  # paragraph styles
-        self.p_style_days_box = "Weekday"
-        self.p_style_month_box = "Month"
-        self.p_style_week_box = "WeekNo"
-        self.layer_img = 'Calendar image'
-        self.layer_cal = 'Calendar'
-        self.master_page = "Weekdays"
+        # variable for scribus # paragraph styles
+        self.p_style_year = "Year"
+        self.p_style_days = "Days"
+        self.p_style_month = "Month"
+        self.p_style_week = "Week"
+        self.p_style_name_week = "NameWeek"
+        self.p_style_num_week = "NumWeek"
 
         self.size = StringVar()
 
