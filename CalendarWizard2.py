@@ -210,6 +210,7 @@ class Document:
         self.size = size
         self.orientation = IntVar()
         self.nb_day_usual_week = 7
+        self.nb_max_days_in_month = 31
         self.begin_day = 0
         self.nb_days = 0
         self.nb_week = 0
@@ -403,7 +404,7 @@ class TkCalendar(Tk.Frame):
         months = localization[self.frame2_listbox_language.get(self.frame2_config_language_index_selected)][0]
         self.frame2_config_language_string_selected = self.frame2_listbox_language.get(
             self.frame2_config_language_index_selected)
-        self.lang = self.frame2_config_language_string_selected  # used for action_finnish
+        self.lang = self.frame2_config_language_string_selected  # used for action_finish
         self.frame2_listbox_month.delete(0, END)
         for i in months:
             self.frame2_listbox_month.insert(END, i)
@@ -481,13 +482,13 @@ class TkCalendar(Tk.Frame):
         for i in available_models:
             self.frame1_listbox_models.insert(END, i)
 
-    # show button Previous, Next, and finnish
+    # show button Previous, Next, and finish
     def make_bottom(self):
         self.bottom = Frame(self)
         self.bottom.grid(row=2, column=0)
         self.bottom_button = [Button(self.bottom, text="Previous", padx=10, command=self.action_decrement),
                               Button(self.bottom, text="Next", padx=20, command=self.action_increment),
-                              Button(self.bottom, padx=20, text="Finnish", command=self.action_finnish),
+                              Button(self.bottom, padx=20, text="Finish", command=self.action_finish),
                               Button(self.bottom, padx=20, text="Cancel", command=self.quit)]
         for i in range(0, 4):
             self.bottom_button[i].grid(padx=10, pady=10, row=0, column=i)
@@ -519,6 +520,13 @@ class TkCalendar(Tk.Frame):
         self.next_day_name = self.check_option_next_day.get()
 
     def create_month_calendar(self, my_document):
+        createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
+        createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
+        createParagraphStyle(name=self.p_style_month, alignment=1)
+        createParagraphStyle(name=self.p_style_week, alignment=1)
+        createParagraphStyle(name=self.p_style_name_week, alignment=ALIGN_RIGHT)
+        createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
+
         # run is used for scribus progressbar
         # re-draw new document from the model base
         for run, month in enumerate(self.frame2_config_month_string_selected):
@@ -550,13 +558,9 @@ class TkCalendar(Tk.Frame):
                             cel = createText((j * i.width / my_document.nb_day_usual_week) + i.xpos, i.ypos,
                                              i.width / my_document.nb_day_usual_week, i.height,
                                              str(i.anname) + str(run) + '_' + str(j))
-                            # setFont(...)
-                            # setFontSize(...)
-                            print i.font
-                            print i.font_size
                             if self.short_day_name is True and i.anname == "week_box" or \
-                                                    self.next_short_day_name is True and i.anname == "next_week_box" or \
-                                                    self.prev_short_day_name is True and i.anname == "prev_week_box":
+                               self.next_short_day_name is True and i.anname == "next_week_box" or \
+                               self.prev_short_day_name is True and i.anname == "prev_week_box":
                                 setText("\n" + str(name[0:3] + '.'), cel)
                             else:
                                 setText("\n" + str(name), cel)
@@ -634,6 +638,13 @@ class TkCalendar(Tk.Frame):
         deletePage(1)
 
     def create_year_calendar(self, my_document):
+        createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
+        createParagraphStyle(name=self.p_style_days, alignment=ALIGN_LEFT)
+        createParagraphStyle(name=self.p_style_month, alignment=1)
+        createParagraphStyle(name=self.p_style_week, alignment=1)
+        createParagraphStyle(name=self.p_style_name_week, alignment=ALIGN_RIGHT)
+        createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
+
         # run is used for scribus progressbar
         # re-draw new document from the model base
         newPage(-1)
@@ -647,6 +658,63 @@ class TkCalendar(Tk.Frame):
                 setFont(i.font, str(i.anname))
                 setFontSize(i.font_size, str(i.anname))
                 setTextColor(i.color, str(i.anname))
+            elif i.anname == "month_box":
+                nb_month = len(self.frame2_config_month_string_selected)
+                for imonth, month in enumerate(self.frame2_config_month_string_selected):
+                    cel = createText(i.xpos + (imonth * (i.width / nb_month)),
+                                     i.ypos,
+                                     i.width / nb_month,
+                                     i.height,
+                                     str(i.anname) + str(imonth))
+                    setText(localization[self.lang][0][month], cel)
+                    setStyle(self.p_style_month, cel)
+                    selectText(0, 0, str(i.anname) + str(imonth))
+                    setFont(i.font, str(i.anname) + str(imonth))
+                    setFontSize(i.font_size, str(i.anname) + str(imonth))
+                    setTextColor(i.color, str(i.anname) + str(imonth))
+                pass
+            elif i.anname == "days_and_week_box":
+                nb_month = len(self.frame2_config_month_string_selected)
+                for imonth, month in enumerate(self.frame2_config_month_string_selected):
+                    # init mois courant
+                    my_document.set_month(self.year_var, month + 1)
+                    cal = my_document.mycal.monthdatescalendar(self.year_var, month + 1)
+
+                    st = 0
+                    for j, week in enumerate(cal):
+                        for iday, day in enumerate(week):
+                            if day.month == month + 1:
+                                # days name
+                                cel = createText(i.xpos + imonth * (i.width / nb_month),
+                                                 i.ypos + st * (i.height / my_document.nb_max_days_in_month),
+                                                 i.width / nb_month / 4,
+                                                 i.height / my_document.nb_max_days_in_month,
+                                                 str(i.anname) + str(run) + '_' + str(st))
+                                if self.short_day_name is True:
+                                    setText(str(my_document.day_order[iday][0:1]), cel)
+                                else:
+                                    setText(str(my_document.day_order[iday]), cel)
+                                setStyle(self.p_style_week, cel)
+                                selectText(0, 0, str(i.anname) + str(run) + '_' + str(st))
+                                setFont(i.font, str(i.anname) + str(run) + '_' + str(st))
+                                setFontSize(i.font_size, str(i.anname) + str(run) + '_' + str(st))
+                                setTextColor(i.color, str(i.anname) + str(run) + '_' + str(st))
+
+                                # days numbers
+                                cel = createText(i.xpos + imonth * (i.width / nb_month) + i.width / nb_month / 4,
+                                                 i.ypos + st * (i.height / my_document.nb_max_days_in_month),
+                                                 i.width / nb_month - i.width / nb_month / 4,
+                                                 i.height / my_document.nb_max_days_in_month,
+                                                 str(i.anname) + str(run) + '_' + str(st))
+                                setText(str(day.day), cel)
+                                setStyle(self.p_style_days, cel)
+                                selectText(0, 0, str(i.anname) + str(run) + '_' + str(st))
+                                setFont(i.font, str(i.anname) + str(run) + '_' + str(st))
+                                setFontSize(i.font_size, str(i.anname) + str(run) + '_' + str(st))
+                                setTextColor(i.color, str(i.anname) + str(run) + '_' + str(st))
+                                st += 1
+                    run += 1
+                    progressSet(run)
             for imonth, month in enumerate(self.frame2_config_month_string_selected):
                 if i.img is False:
                     # init le nombre de semaine et de jour du mois
@@ -674,10 +742,10 @@ class TkCalendar(Tk.Frame):
                         for j, week in enumerate(cal):
                             for day in week:
                                 cel = createText(h * i.width / my_document.nb_day_usual_week + i.xpos,
-                                                j * i.height / my_document.nb_week + i.ypos,
-                                                i.width / my_document.nb_day_usual_week,
-                                                i.height / my_document.nb_week,
-                                                str(i.anname) + str(st))
+                                                 j * i.height / my_document.nb_week + i.ypos,
+                                                 i.width / my_document.nb_day_usual_week,
+                                                 i.height / my_document.nb_week,
+                                                 str(i.anname) + str(st))
                                 if day.month == month + 1:
                                     setText(str(day.day), cel)
                                 setStyle(self.p_style_days, cel)
@@ -727,11 +795,14 @@ class TkCalendar(Tk.Frame):
                         loadImage(i.path_img, str(i.anname))
                         setScaleImageToFrame(i.fit_to_box, i.keep_proportion, str(i.anname))
                 run += 1
-            progressSet(run)
+            try:
+                progressSet(run)
+            except:
+                pass
         # delete first empty page
         deletePage(1)
 
-    def action_finnish(self):
+    def action_finish(self):
         # a virer apres test
         if self.frame1_config_model_name == '':
             self.frame1_config_model_name = 'year-basic.sla'
@@ -782,13 +853,6 @@ class TkCalendar(Tk.Frame):
                 print 'Create a new document first, please'
                 return
 
-            createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
-            createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
-            createParagraphStyle(name=self.p_style_month, alignment=1)
-            createParagraphStyle(name=self.p_style_week, alignment=1)
-            createParagraphStyle(name=self.p_style_name_week, alignment=ALIGN_RIGHT)
-            createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
-
             if self.frame1_config_type_string_selected == 'Day':
                 pass
             elif self.frame1_config_type_string_selected == 'Week':
@@ -801,7 +865,7 @@ class TkCalendar(Tk.Frame):
                 self.create_year_calendar(my_document)
 
         except Exception as e:
-            print e
+            show_error(str(e))
             self.quit()
         try:
             self.quit()
