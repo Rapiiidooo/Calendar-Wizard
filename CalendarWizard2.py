@@ -166,7 +166,7 @@ def show_error(err):
 
 class BoxObject:
     """ BoxObject represent some attribute from PAGEOBJECT from scribus file. """
-    def __init__(self, xpos, ypos, width, height, anname, img=False, font='', font_size='', color='', line_color=''):
+    def __init__(self, xpos, ypos, width, height, anname, img, text, font='', font_size='', color='', line_color=''):
         self.xpos = xpos
         self.ypos = ypos
         self.width = width
@@ -180,6 +180,7 @@ class BoxObject:
         self.path_img = ''
         self.fit_to_box = False
         self.keep_proportion = False
+        self.text = text
 
     def attrib_font(self, font, font_size, color, line_color):
         self.font = font
@@ -226,26 +227,34 @@ class Document:
         tree = etree.parse(self.path_file)
         # ecrit dans box_container les objets du model
         # les objets recoivent les attributs des PAGEOBJECT tel que la taille, la position et le nom
-        for val in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT/MASTERPAGE"):
-            self.pagex = float(val.get("PAGEXPOS"))
-            self.pagey = float(val.get("PAGEYPOS"))
-            self.page_width = float(val.get("PAGEWIDTH"))
-            self.page_height = float(val.get("PAGEHEIGHT"))
-            self.orientation = int(val.get("Orientation"))
-            self.border_left = float(val.get("BORDERLEFT"))
-            self.border_right = float(val.get("BORDERRIGHT"))
-            self.border_top = float(val.get("BORDERTOP"))
-            self.border_bottom = float(val.get("BORDERBOTTOM"))
-            # self.size = str(val.get("Size"))
+        i = 0
+        text = ''
+        for parent in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT"):
+            for val in parent.xpath("//MASTERPAGE"):
+                self.pagex = float(val.get("PAGEXPOS"))
+                self.pagey = float(val.get("PAGEYPOS"))
+                self.page_width = float(val.get("PAGEWIDTH"))
+                self.page_height = float(val.get("PAGEHEIGHT"))
+                self.orientation = int(val.get("Orientation"))
+                self.border_left = float(val.get("BORDERLEFT"))
+                self.border_right = float(val.get("BORDERRIGHT"))
+                self.border_top = float(val.get("BORDERTOP"))
+                self.border_bottom = float(val.get("BORDERBOTTOM"))
+                # self.size = str(val.get("Size"))
+            for j, box in enumerate(parent.xpath("//PAGEOBJECT")):
+                # try to catch text only inside "containers.."
+                if box.get("ANNAME") == "containers" + str(i):
+                    text = box.xpath("//PAGEOBJECT/ITEXT")[i]
+                    text = text.get("CH")
+                    i += 1
 
-        for val in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT/PAGEOBJECT"):
-            if val.get("ANNAME") == "image_box":
-                new = BoxObject(float(val.get("XPOS")) - self.pagex, float(val.get("YPOS")) - self.pagey,
-                                float(val.get("WIDTH")), float(val.get("HEIGHT")), val.get("ANNAME"), True)
-            else:
-                new = BoxObject(float(val.get("XPOS")) - self.pagex, float(val.get("YPOS")) - self.pagey,
-                                float(val.get("WIDTH")), float(val.get("HEIGHT")), val.get("ANNAME"))
-            self.box_container.append(new)
+                if box.get("ANNAME") == "image_box":
+                    new = BoxObject(float(box.get("XPOS")) - self.pagex, float(box.get("YPOS")) - self.pagey,
+                                    float(box.get("WIDTH")), float(box.get("HEIGHT")), box.get("ANNAME"), True, text)
+                else:
+                    new = BoxObject(float(box.get("XPOS")) - self.pagex, float(box.get("YPOS")) - self.pagey,
+                                    float(box.get("WIDTH")), float(box.get("HEIGHT")), box.get("ANNAME"), False, text)
+                self.box_container.append(new)
 
     def set_month(self, year, month):
         # Returns weekday of first day of the month and number of days in month, for the specified year and month
@@ -522,6 +531,22 @@ class TkCalendar(Tk.Frame):
     def get_next_day(self):
         self.next_day_name = self.check_option_next_day.get()
 
+    def create_day_calendar(self, my_document):
+        createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
+        createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
+        createParagraphStyle(name=self.p_style_month, alignment=1)
+        createParagraphStyle(name=self.p_style_week, alignment=1)
+        createParagraphStyle(name=self.p_style_name_week, alignment=ALIGN_RIGHT)
+        createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
+
+        for imonth, month in enumerate(self.frame2_config_month_string_selected):
+            my_document.set_month(self.year_var, month)
+            cal = my_document.mycal.monthdatescalendar(self.year_var, month)
+
+
+
+
+
     def create_week_calendar(self, my_document):
         createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
         createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
@@ -530,29 +555,107 @@ class TkCalendar(Tk.Frame):
         createParagraphStyle(name=self.p_style_name_week, alignment=ALIGN_RIGHT)
         createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
 
-        # run is used for scribus progressbar
+        # imonth is used for scribus progressbar
         # re-draw new document from the model base
-        newPage(-1)
+
+        # for day in week:
+        # imprime le numéro de la semaine sur l'année
+        # datetime.date(self.year_var, week[0].month, week[0].day).isocalendar()[1]
         run = 0
-        for i in my_document.box_container:
-            if i.anname == "month_box":
-                nb_month = len(self.frame2_config_month_string_selected)
-                for imonth, month in enumerate(self.frame2_config_month_string_selected):
-                    cel = createText(i.xpos + (imonth * (i.width / nb_month)),
-                                     i.ypos,
-                                     i.width / nb_month,
-                                     i.height,
-                                     str(i.anname) + str(imonth))
-                    setText(localization[self.lang][0][month], cel)
-                    setStyle(self.p_style_month, cel)
-                    selectText(0, 0, cel)
-                    setFont(i.font, cel)
-                    setFontSize(i.font_size, cel)
-                    setTextColor(i.color, cel)
-                    if i.line_color != 'None':
-                        setLineColor(i.line_color, cel)
+        for imonth, month in enumerate(self.frame2_config_month_string_selected):
+            progressSet(imonth)
+            my_document.set_month(self.year_var, month)
+            cal = my_document.mycal.monthdatescalendar(self.year_var, month)
 
+            for week in cal:
+                newPage(-1)
 
+                nb_days_in_current_week = 0
+                for day in week:
+                    if self.prev_day_name is 1 and day.month < month:
+                        nb_days_in_current_week += 1
+                    if self.next_day_name is 1 and day.month > month:
+                        nb_days_in_current_week += 1
+                    if day.month == month:
+                        nb_days_in_current_week += 1
+
+                for i in my_document.box_container:
+                    if i.anname == "month_box":
+
+                        cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+
+                        iday = 0
+                        if self.prev_day_name is not 1 and week[iday].month < month:
+                            if week[iday].month < month:
+                                while week[iday].month != month:
+                                    iday += 1
+
+                        setText("\n" + str(week[iday].day) + "\t" + localization[self.lang][0][week[iday].month] + "\t"
+                                + str(self.year_var), cel)
+                        setStyle(self.p_style_month, cel)
+                        selectText(0, 0, cel)
+                        setFont(i.font, cel)
+                        setFontSize(i.font_size, cel)
+                        setTextColor(i.color, cel)
+                        if i.line_color != 'None':
+                            setLineColor(i.line_color, cel)
+                    elif i.anname == "week_box":
+                        j = 0
+                        for iday, day in enumerate(week):
+                            if day.month == month or self.prev_day_name is 1 and day.month < month \
+                                    or self.next_day_name is 1 and day.month > month:
+                                cel = createText(i.xpos + j * (i.width / nb_days_in_current_week),
+                                                 i.ypos,
+                                                 i.width / nb_days_in_current_week,
+                                                 i.height,
+                                                 str(i.anname) + str(run))
+                                setText("\n" + my_document.day_order[iday] + "\t" + str(day.day), cel)
+                                setStyle(self.p_style_week, cel)
+                                selectText(0, 0, cel)
+                                setFont(i.font, cel)
+                                setFontSize(i.font_size, cel)
+                                setTextColor(i.color, cel)
+                                if i.line_color != 'None':
+                                    setLineColor(i.line_color, cel)
+                                j += 1
+                    elif i.anname[0:19] == "containers_week_box":
+                        j = 0
+                        for iday, day in enumerate(week):
+                            if day.month == month or self.prev_day_name is 1 and day.month < month \
+                                    or self.next_day_name is 1 and day.month > month:
+                                cel = createText(i.xpos + j * (i.width / nb_days_in_current_week),
+                                                 i.ypos,
+                                                 i.width / nb_days_in_current_week,
+                                                 i.height,
+                                                 str(i.anname) + str(run))
+                                j += 1
+                    elif i.anname[0:9] == "container":
+                        cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                        setText("\n" + i.text, cel)
+                        setStyle(self.p_style_month, cel)
+                        selectText(0, 0, cel)
+                        setFont(i.font, cel)
+                        setFontSize(i.font_size, cel)
+                        setTextColor(i.color, cel)
+                        if i.line_color != 'None':
+                            setLineColor(i.line_color, cel)
+                    else:
+                        cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                        selectText(0, 0, cel)
+                        setFont(i.font, cel)
+                        setFontSize(i.font_size, cel)
+                        setTextColor(i.color, cel)
+                        if i.line_color != 'None':
+                            setLineColor(i.line_color, cel)
+                # boucle pour actualisé le string de numéro de fin de semaine
+                while self.next_day_name is not 1 and week[iday].month > month:
+                    iday -= 1
+                insertText(" / " + str(week[iday].day) + "\t" + localization[self.lang][0][week[iday].month] +
+                           "\t" + str(self.year_var), -1, "month_box" + str(run))
+                run += 1
+        # delete first empty page
+        progressSet(imonth+1)
+        deletePage(1)
 
     def create_month_calendar(self, my_document):
         createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
@@ -888,8 +991,8 @@ class TkCalendar(Tk.Frame):
             my_document.border_top = (new_page_size_height * my_document.border_top) / my_document.page_height
 
         # Attrib all font to right container
-        try:
-            for i in my_document.box_container:
+        for i in my_document.box_container:
+            try:
                 if i.anname == 'image_box':
                     i.path_img = self.path_image
                     i.fit_to_box = self.fit_to_box
@@ -899,9 +1002,8 @@ class TkCalendar(Tk.Frame):
                                   self.font_list[i.anname][1],
                                   self.font_list[i.anname][2],
                                   self.font_list[i.anname][3])
-        except Exception as e:
-            show_error("Box name not found in KEYWORD. " + str(e))
-
+            except Exception as e:
+                show_error("Box name not found in KEYWORD. " + str(e))
         try:
             # Create the Scribus New Document with right proportions
             if not newDocument((size_document[my_document.size][0], size_document[my_document.size][1]),
@@ -912,9 +1014,11 @@ class TkCalendar(Tk.Frame):
                 return
 
             if self.frame1_config_type_string_selected == 'Day':
+                self.create_day_calendar(my_document)
                 pass
             elif self.frame1_config_type_string_selected == 'Week':
-                pass
+                progressTotal(len(self.frame2_config_month_string_selected))
+                self.create_week_calendar(my_document)
             elif self.frame1_config_type_string_selected == 'Month':
                 progressTotal(len(self.frame2_config_month_string_selected))
                 self.create_month_calendar(my_document)
