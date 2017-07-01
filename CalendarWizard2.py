@@ -284,6 +284,23 @@ class TkCalendar(Tk.Frame):
                 tkMessageBox.showinfo("Error", "At least one model must be selected.")
                 self.action_decrement()
                 return
+            else:
+                if self.frame1_config_model_name != '':
+                    type_type = re.compile('type=\'(.*)\',')
+                    tree = etree.parse(self.frame1_config_model_path + self.frame1_config_model_name)
+                    keys = tree.getroot()
+                    for key in keys:
+                        val = key.attrib['KEYWORDS']
+                    types = re.findall(type_type, val)
+                    if types == []:
+                        type_type = re.compile('type=\'(.*)\'')
+                        types = re.findall(type_type, val)
+
+                for i in types:
+                    if i == 'Day':
+                        #self.frame2_label.grid_forget()
+                        #self.frame2_checkbox.grid_forget()
+                        pass
 
         if self.frame_master_current_page == 2:
             # months
@@ -405,10 +422,12 @@ class TkCalendar(Tk.Frame):
         except Exception as e:
             show_error("Can not update image from model.\n" + str(e))
 
-    # update the list of months with the right language
     def action_get_language(self, event):
+        # update the list of months with the right language
+
         # get selected line index
         self.frame2_config_language_index_selected = None
+        # check if language get selected
         try:
             self.frame2_config_language_index_selected = self.frame2_listbox_language.curselection()[0]
         except:
@@ -424,49 +443,13 @@ class TkCalendar(Tk.Frame):
         for i in months:
             self.frame2_listbox_month.insert(END, i)
 
-        # a suprimer après test
-        # self.frame2_listbox_month.select_set(8, 9)
-        # self.action_select_month(None)
-
-    # get selected month
     def action_select_month(self, event):
+        # get selected month
         self.frame2_config_month_index_selected = self.frame2_listbox_month.curselection()
         self.frame2_config_month_string_selected = []
         for month in self.frame2_config_month_index_selected:
             self.frame2_config_month_index_selected = month
             self.frame2_config_month_string_selected.append(int(month))
-
-    # define title label
-    def make_top(self):
-        self.top = Frame(self)
-        self.top.grid(row=0, column=0)
-        self.top_label = Label(self.top, text="Calendar wizard 2")
-        self.top_label.pack()
-
-    # define the middle gridPane
-    def make_middle(self):
-        self.middle = Frame(self, width=sizex-50, height=sizey-50, padx=20, pady=20)
-        self.middle.grid(row=1, column=0)
-
-        self.canvas = Canvas(self.middle, width=sizex-50, height=sizey-50)
-        self.canvas.pack()
-
-        self.canvas_frame = Frame(self.canvas, width=sizex-50, height=sizey-50, padx=10, pady=10)
-        self.canvas_frame.pack(padx=10, pady=10)
-        self.canvas_frame.bind("<Configure>", self.action_canvas)
-
-        self.scrollbar_middle = Scrollbar(self.middle, orient="vertical", command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=self.scrollbar_middle.set)
-
-        self.scrollbar_middle.pack(side="right", fill="y")
-        self.canvas.pack(side="left")
-        self.canvas.create_window((0, 0), window=self.canvas_frame, anchor='nw')
-
-        if sys.platform == "Windows":
-            self.canvas.bind_all("<MouseWheel>", self.action_mouse_weel)
-        elif sys.platform == "Linux":
-            self.canvas.bind_all("<Button-4>", self.action_mouse_weel)
-            self.canvas.bind_all("<Button-5>", self.action_mouse_weel)
 
     def action_select_type(self, event):
         self.frame1_config_type_index_selected = self.frame1_listbox_types.curselection()[0]
@@ -497,42 +480,97 @@ class TkCalendar(Tk.Frame):
         self.frame1_listbox_models.select_set(0)
         self.action_get_models(None)
 
-    # show button Previous, Next, and finish
-    def make_bottom(self):
-        self.bottom = Frame(self)
-        self.bottom.grid(row=2, column=0)
-        self.bottom_button = [Button(self.bottom, text="Previous", padx=10, command=self.action_decrement),
-                              Button(self.bottom, text="Next", padx=20, command=self.action_increment),
-                              Button(self.bottom, padx=20, text="Finish", command=self.action_finish),
-                              Button(self.bottom, padx=20, text="Cancel", command=self.quit)]
-        for i in range(0, 4):
-            self.bottom_button[i].grid(padx=10, pady=10, row=0, column=i)
+    def action_attrib(self):
+        # insert dans self.font_list toutes les valeurs de police que l'utilisateurs a choisi pour tel element
+        try:
+            for i in self.frame3_listbox_font.curselection():
+                self.font_list[self.frame3_listbox_font_elements[i]] = []
+                self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_var.get())
+                self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_size)
+                self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_color.get())
+                self.font_list[self.frame3_listbox_font_elements[i]].append(self.line_color.get())
+        except Exception as e:
+            show_error("Error while attributing font...\n" + str(e))
 
-    def select_all_month(self):
-        self.frame2_listbox_month.select_set(0, END)
-        self.action_select_month(None)
+    def action_finish(self):
+        # Create the document with DocumentClass
+        my_document = Document(self.frame1_config_model_path + self.frame1_config_model_name, self.lang,
+                               self.week_var.get(), self.size.get())
 
-    def select_all_elements(self):
-        self.frame3_listbox_font.select_set(0, END)
+        # resize all box with proportion of new document if orientation or size has been changed:
+        if my_document.orientation == 1:
+            new_page_size_height, new_page_size_width = size_document[my_document.size]
+        else:
+            new_page_size_width, new_page_size_height = size_document[my_document.size]
 
-    def unselect_all_month(self):
-        self.frame2_listbox_month.selection_clear(0, END)
-        self.action_select_month(None)
+        if my_document.page_height != new_page_size_height and my_document.page_width != new_page_size_width:
+            for i in my_document.box_container:
+                i.xpos = (new_page_size_width * i.xpos) / my_document.page_width
+                i.ypos = (new_page_size_height * i.ypos) / my_document.page_height
+                i.width = (new_page_size_width * i.width) / my_document.page_width
+                i.height = (new_page_size_height * i.height) / my_document.page_height
 
-    def get_short_day(self):
-        self.short_day_name = bool(self.check_option_short_day.get())
+            my_document.border_right = (new_page_size_width * my_document.border_right) / my_document.page_width
+            my_document.border_bottom = (new_page_size_height * my_document.border_bottom) / my_document.page_height
+            my_document.border_left = (new_page_size_width * my_document.border_left) / my_document.page_width
+            my_document.border_top = (new_page_size_height * my_document.border_top) / my_document.page_height
 
-    def get_next_short_day(self):
-        self.next_short_day_name = bool(self.check_option_next_short_day.get())
+        try:
+            # Create the Scribus New Document with right proportions
+            if not newDocument((size_document[my_document.size][0], size_document[my_document.size][1]),
+                               (my_document.border_left, my_document.border_right, my_document.border_top,
+                                my_document.border_bottom), my_document.orientation, 1, UNIT_POINTS, NOFACINGPAGES,
+                                FIRSTPAGELEFT, 1):
+                print 'Create a new document first, please'
+                return
+            # Attrib all font to right container
+            for ii, i in enumerate(my_document.box_container):
+                try:
+                    if i.anname == 'image_box':
+                        i.path_img = self.path_image
+                        i.fit_to_box = self.fit_to_box
+                        i.keep_proportion = self.keep_proportion
+                    else:
+                        if '#' in self.font_list[i.anname][2]:
+                            h = self.font_list[i.anname][2].lstrip('#')
+                            color = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+                            self.font_list[i.anname][2] = 'new_color' + str(ii)
+                            defineColorRGB(self.font_list[i.anname][2], color[0], color[1], color[2])
+                        if '#' in self.font_list[i.anname][3]:
+                            h = self.font_list[i.anname][3].lstrip('#')
+                            color = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+                            self.font_list[i.anname][3] = 'new_line_color' + str(ii)
+                            defineColorRGB(self.font_list[i.anname][3], color[0], color[1], color[2])
 
-    def get_prev_short_day(self):
-        self.prev_short_day_name = bool(self.check_option_prev_short_day.get())
+                        i.attrib_font(self.font_list[i.anname][0],
+                                      self.font_list[i.anname][1],
+                                      self.font_list[i.anname][2],
+                                      self.font_list[i.anname][3])
+                except Exception as e:
+                    show_error("Error while attrib font. " + str(e))
 
-    def get_prev_day(self):
-        self.prev_day_name = self.check_option_prev_day.get()
+            if self.frame1_config_type_string_selected == 'Day':
+                self.create_day_calendar(my_document)
+                pass
+            elif self.frame1_config_type_string_selected == 'Week':
+                progressTotal(len(self.frame2_config_month_string_selected))
+                self.create_week_calendar(my_document)
+            elif self.frame1_config_type_string_selected == 'Month':
+                progressTotal(len(self.frame2_config_month_string_selected))
+                self.create_month_calendar(my_document)
+            elif self.frame1_config_type_string_selected == 'Year':
+                progressTotal(len(my_document.box_container) * len(self.frame2_config_month_string_selected))
+                self.create_year_calendar(my_document)
 
-    def get_next_day(self):
-        self.next_day_name = self.check_option_next_day.get()
+        except Exception as e:
+            show_error(str(e))
+            self.quit()
+        try:
+            self.quit()
+        except Exception as e:
+            print e
+            pass
+        return
 
     def create_day_calendar(self, my_document):
         try:
@@ -546,7 +584,7 @@ class TkCalendar(Tk.Frame):
             run = 0
             total = 0
             for imonth, month in enumerate(self.frame2_config_month_string_selected):
-                cal = my_document.mycal.monthdatescalendar(self.year_var, month)
+                my_document.mycal.monthdatescalendar(self.year_var, month)
                 total += monthrange(self.year_var, month)[1]
             progressTotal(total)
             for imonth, month in enumerate(self.frame2_config_month_string_selected):
@@ -603,7 +641,7 @@ class TkCalendar(Tk.Frame):
                             progressSet(run)
             deletePage(1)
         except Exception as e:
-            show_error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno)+ type(e).__name__+ str(e))
+            show_error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno) + type(e).__name__ + str(e))
 
     def create_week_calendar(self, my_document):
         createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
@@ -681,11 +719,9 @@ class TkCalendar(Tk.Frame):
                         for iday, day in enumerate(week):
                             if day.month == month or self.prev_day_name is 1 and day.month < month \
                                     or self.next_day_name is 1 and day.month > month:
-                                cel = createText(i.xpos + j * (i.width / nb_days_in_current_week),
-                                                 i.ypos,
-                                                 i.width / nb_days_in_current_week,
-                                                 i.height,
-                                                 str(i.anname) + str(run))
+                                createText(i.xpos + j * (i.width / nb_days_in_current_week),
+                                           i.ypos, i.width / nb_days_in_current_week,
+                                           i.height, str(i.anname) + str(run))
                                 j += 1
                     elif i.anname[0:9] == "container":
                         cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
@@ -717,8 +753,8 @@ class TkCalendar(Tk.Frame):
                 insertText(" / " + str(week[iday].day) + "\t" + localization[self.lang][0][week[iday].month] +
                            "\t" + str(self.year_var), -1, "month_box" + str(run))
                 run += 1
+            progressSet(imonth+1)
         # delete first empty page
-        progressSet(imonth+1)
         deletePage(1)
 
     def create_month_calendar(self, my_document):
@@ -778,8 +814,8 @@ class TkCalendar(Tk.Frame):
                             setFont(i.font, cel)
                             setFontSize(i.font_size, cel)
                             setTextColor(i.color, cel)
-                        if i.line_color != 'None':
-                            setLineColor(i.line_color, cel)
+                            if i.line_color != 'None':
+                                setLineColor(i.line_color, cel)
                     # draw and fill all days_box
                     elif i.anname == "days_box" or i.anname == "next_days_box":
                         h = 0
@@ -834,8 +870,8 @@ class TkCalendar(Tk.Frame):
                             cel = createText(i.xpos, j * i.height / my_document.nb_week + i.ypos, i.width,
                                              i.height / my_document.nb_week, str(i.anname) + str(j) + str(run))
                             # imprime le numéro de la semaine sur l'année
-                            setText("\n" + str(datetime.date(self.year_var, week[0].month, week[0].day).isocalendar()[1]),
-                                    cel)
+                            setText("\n" + str(datetime.date(self.year_var, week[0].month,
+                                                             week[0].day).isocalendar()[1]), cel)
                             setStyle(self.p_style_num_week, cel)
                             selectText(0, 0, cel)
                             setFont(i.font, cel)
@@ -850,7 +886,7 @@ class TkCalendar(Tk.Frame):
                         if i.line_color != 'None':
                             setLineColor(i.line_color, cel)
                     else:
-                        cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                        createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
                 else:
                     createImage(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
                     if i.path_img != "":
@@ -1019,8 +1055,8 @@ class TkCalendar(Tk.Frame):
                             cel = createText(i.xpos, j * i.height / my_document.nb_week + i.ypos, i.width,
                                              i.height / my_document.nb_week, str(i.anname) + str(j))
                             # imprime le numéro de la semaine sur l'année
-                            setText("\n" + str(datetime.date(self.year_var, week[0].month, week[0].day).isocalendar()[1]),
-                                    cel)
+                            setText("\n" + str(datetime.date(self.year_var, week[0].month,
+                                                             week[0].day).isocalendar()[1]), cel)
                             setStyle(self.p_style_num_week, cel)
                             selectText(0, 0, cel)
                             setFont(i.font, cel)
@@ -1050,86 +1086,31 @@ class TkCalendar(Tk.Frame):
         # delete first empty page
         deletePage(1)
 
-    def action_finish(self):
-        # Create the document with DocumentClass
-        my_document = Document(self.frame1_config_model_path + self.frame1_config_model_name, self.lang,
-                               self.week_var.get(), self.size.get())
+    def select_all_month(self):
+        self.frame2_listbox_month.select_set(0, END)
+        self.action_select_month(None)
 
-        # resize all box with proportion of new document if orientation or size has been changed:
-        if my_document.orientation == 1:
-            new_page_size_height, new_page_size_width = size_document[my_document.size]
-        else:
-            new_page_size_width, new_page_size_height = size_document[my_document.size]
+    def select_all_elements(self):
+        self.frame3_listbox_font.select_set(0, END)
 
-        if my_document.page_height != new_page_size_height and my_document.page_width != new_page_size_width:
-            for i in my_document.box_container:
-                i.xpos = (new_page_size_width * i.xpos) / my_document.page_width
-                i.ypos = (new_page_size_height * i.ypos) / my_document.page_height
-                i.width = (new_page_size_width * i.width) / my_document.page_width
-                i.height = (new_page_size_height * i.height) / my_document.page_height
+    def unselect_all_month(self):
+        self.frame2_listbox_month.selection_clear(0, END)
+        self.action_select_month(None)
 
-            my_document.border_right = (new_page_size_width * my_document.border_right) / my_document.page_width
-            my_document.border_bottom = (new_page_size_height * my_document.border_bottom) / my_document.page_height
-            my_document.border_left = (new_page_size_width * my_document.border_left) / my_document.page_width
-            my_document.border_top = (new_page_size_height * my_document.border_top) / my_document.page_height
+    def get_short_day(self):
+        self.short_day_name = bool(self.check_option_short_day.get())
 
-        try:
-            # Create the Scribus New Document with right proportions
-            if not newDocument((size_document[my_document.size][0], size_document[my_document.size][1]),
-                               (my_document.border_left, my_document.border_right, my_document.border_top,
-                                my_document.border_bottom), my_document.orientation, 1, UNIT_POINTS, NOFACINGPAGES,
-                                FIRSTPAGELEFT, 1):
-                print 'Create a new document first, please'
-                return
-            # Attrib all font to right container
-            for ii, i in enumerate(my_document.box_container):
-                try:
-                    if i.anname == 'image_box':
-                        i.path_img = self.path_image
-                        i.fit_to_box = self.fit_to_box
-                        i.keep_proportion = self.keep_proportion
-                    else:
-                        if '#' in self.font_list[i.anname][2]:
-                            h = self.font_list[i.anname][2].lstrip('#')
-                            color = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
-                            self.font_list[i.anname][2] = 'new_color' + str(ii)
-                            defineColorRGB(self.font_list[i.anname][2], color[0], color[1], color[2])
-                        if '#' in self.font_list[i.anname][3]:
-                            h = self.font_list[i.anname][3].lstrip('#')
-                            color = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
-                            self.font_list[i.anname][3] = 'new_line_color' + str(ii)
-                            defineColorRGB(self.font_list[i.anname][3], color[0], color[1], color[2])
-                            print self.font_list[i.anname][3]
+    def get_next_short_day(self):
+        self.next_short_day_name = bool(self.check_option_next_short_day.get())
 
-                        i.attrib_font(self.font_list[i.anname][0],
-                                      self.font_list[i.anname][1],
-                                      self.font_list[i.anname][2],
-                                      self.font_list[i.anname][3])
-                except Exception as e:
-                    show_error("Error while attrib font. " + str(e))
+    def get_prev_short_day(self):
+        self.prev_short_day_name = bool(self.check_option_prev_short_day.get())
 
-            if self.frame1_config_type_string_selected == 'Day':
-                self.create_day_calendar(my_document)
-                pass
-            elif self.frame1_config_type_string_selected == 'Week':
-                progressTotal(len(self.frame2_config_month_string_selected))
-                self.create_week_calendar(my_document)
-            elif self.frame1_config_type_string_selected == 'Month':
-                progressTotal(len(self.frame2_config_month_string_selected))
-                self.create_month_calendar(my_document)
-            elif self.frame1_config_type_string_selected == 'Year':
-                progressTotal(len(my_document.box_container) * len(self.frame2_config_month_string_selected))
-                self.create_year_calendar(my_document)
+    def get_prev_day(self):
+        self.prev_day_name = self.check_option_prev_day.get()
 
-        except Exception as e:
-            show_error(str(e))
-            self.quit()
-        try:
-            self.quit()
-        except Exception as e:
-            print e
-            pass
-        return
+    def get_next_day(self):
+        self.next_day_name = self.check_option_next_day.get()
 
     def get_year(self):
         self.year_var = int(self.frame2_spinbox_year.get())
@@ -1142,18 +1123,6 @@ class TkCalendar(Tk.Frame):
 
     def get_keep_proportion(self):
         self.keep_proportion = bool(self.check_option_keep_proportion.get())
-
-    def action_attrib(self):
-        # insert dans self.font_list toutes les valeurs de police que l'utilisateurs a choisi pour tel element
-        try:
-            for i in self.frame3_listbox_font.curselection():
-                self.font_list[self.frame3_listbox_font_elements[i]] = []
-                self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_var.get())
-                self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_size)
-                self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_color.get())
-                self.font_list[self.frame3_listbox_font_elements[i]].append(self.line_color.get())
-        except Exception as e:
-            show_error("Error while attributing font...\n" + str(e))
 
     def get_style_from_font_string(self, mstr):
         # traitement de la police, transfere le style dans s
@@ -1176,14 +1145,13 @@ class TkCalendar(Tk.Frame):
         return s
 
     def ask_color(self):
-        color = askcolor()
-        return color
+        self.new_color = askcolor()
 
     def on_font_color_select(self, event):
         # Permettre personnalisation de couleur
         self.new_font_color = self.font_color.get()
         if self.font_color.get() == "Personalized color...":
-            self.new_color = self.ask_color()
+            self.ask_color()
             if self.new_color == (None, None):
                 self.frame3_combobox_color.current(0)
                 self.new_font_color = self.font_color.get()
@@ -1195,7 +1163,7 @@ class TkCalendar(Tk.Frame):
     def on_outline_color_select(self, event):
         self.new_line_color = self.line_color.get()
         if self.line_color.get() == "Personalized color...":
-            self.new_color = self.ask_color()
+            self.ask_color()
             if self.new_color == (None, None):
                 self.frame3_combobox_line_color.current(0)
                 self.new_line_color = self.line_color.get()
@@ -1220,7 +1188,7 @@ class TkCalendar(Tk.Frame):
                                                       foreground=self.new_font_color,
                                                       highlightthickness=0)
         else:
-            if new_line_color != 'None':
+            if self.new_line_color != 'None':
                 self.frame3_frame_font_text.configure(font=(self.font[0:-8], self.font_size, s.lower()),
                                                       foreground=self.new_font_color,
                                                       highlightbackground=self.new_line_color,
@@ -1309,8 +1277,7 @@ class TkCalendar(Tk.Frame):
     def get_image(self):
         try:
             filename = askopenfilename(title="Open your image",
-                                       filetypes=[('Image File', '.jpg'), ('Image File', '.jpeg'),
-                                                  ('Image File', '.png'), ('Image File', '.bmp'), ('all files', '.*')])
+                                       filetypes=[('Image File', '.png'), ('Image File', '.bmp'), ('all files', '.*')])
             # In case of error or cancel
             if len(filename) <= 0:
                 filename = "croix.png"
@@ -1326,6 +1293,49 @@ class TkCalendar(Tk.Frame):
             self.preview_canvas_frame3.image = self.photo_frame3
         except Exception as e:
             show_error("An error has encountered while opening image. \n" + str(e))
+
+    def make_top(self):
+        # define title label
+        self.top = Frame(self)
+        self.top.grid(row=0, column=0)
+        self.top_label = Label(self.top, text="Calendar wizard 2")
+        self.top_label.pack()
+
+    def make_middle(self):
+        # define the middle gridPane
+        self.middle = Frame(self, width=sizex - 50, height=sizey - 50, padx=20, pady=20)
+        self.middle.grid(row=1, column=0)
+
+        self.canvas = Canvas(self.middle, width=sizex - 50, height=sizey - 50)
+        self.canvas.pack()
+
+        self.canvas_frame = Frame(self.canvas, width=sizex - 50, height=sizey - 50, padx=10, pady=10)
+        self.canvas_frame.pack(padx=10, pady=10)
+        self.canvas_frame.bind("<Configure>", self.action_canvas)
+
+        self.scrollbar_middle = Scrollbar(self.middle, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.scrollbar_middle.set)
+
+        self.scrollbar_middle.pack(side="right", fill="y")
+        self.canvas.pack(side="left")
+        self.canvas.create_window((0, 0), window=self.canvas_frame, anchor='nw')
+
+        if sys.platform == "Windows":
+            self.canvas.bind_all("<MouseWheel>", self.action_mouse_weel)
+        elif sys.platform == "Linux":
+            self.canvas.bind_all("<Button-4>", self.action_mouse_weel)
+            self.canvas.bind_all("<Button-5>", self.action_mouse_weel)
+
+    def make_bottom(self):
+        # show button Previous, Next, and finish
+        self.bottom = Frame(self)
+        self.bottom.grid(row=2, column=0)
+        self.bottom_button = [Button(self.bottom, text="Previous", padx=10, command=self.action_decrement),
+                              Button(self.bottom, text="Next", padx=20, command=self.action_increment),
+                              Button(self.bottom, padx=20, text="Finish", command=self.action_finish),
+                              Button(self.bottom, padx=20, text="Cancel", command=self.quit)]
+        for i in range(0, 4):
+            self.bottom_button[i].grid(padx=10, pady=10, row=0, column=i)
 
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
@@ -1405,37 +1415,37 @@ class TkCalendar(Tk.Frame):
                                command=self.action_import_ics, padx=30, pady=10)
         frame2_button.pack(pady=20)
 
-        frame2_checkbox = Frame(frame2_root)
+        self.frame2_checkbox = Frame(frame2_root)
         frame2_empty = Frame(frame2_root)
         frame2_empty.grid(row=0, column=2, pady=20, sticky=W + N + E + S)
 
-        frame2_label = Frame(frame2_root)
-        frame2_label.grid(row=1, column=2, padx=10, sticky=W + N + E + S)
-        frame2_checkbox.grid(row=1, column=3, sticky=W + N + E + S)
+        self.frame2_label = Frame(frame2_root)
+        self.frame2_label.grid(row=1, column=2, padx=10, sticky=W + N + E + S)
+        self.frame2_checkbox.grid(row=1, column=3, sticky=W + N + E + S)
 
-        Label(frame2_label, text="Show previous days:").pack(padx=4, pady=4, anchor='w')
-        Label(frame2_label, text="Show next days:").pack(padx=4, pady=4, anchor='w')
-        Label(frame2_label, text="Short day name:").pack(padx=4, pady=4, anchor='w')
-        Label(frame2_label, text="Next short day name:").pack(padx=4, pady=4, anchor='w')
-        Label(frame2_label, text="Prev short day name:").pack(padx=4, pady=4, anchor='w')
-        Label(frame2_label, text='Week begins with:').pack(padx=4, pady=4, anchor='w')
-        Label(frame2_label, text='Year:').pack(padx=4, pady=20, anchor='w')
+        Label(self.frame2_label, text="Show previous days:").pack(padx=4, pady=4, anchor='w')
+        Label(self.frame2_label, text="Show next days:").pack(padx=4, pady=4, anchor='w')
+        Label(self.frame2_label, text="Short day name:").pack(padx=4, pady=4, anchor='w')
+        Label(self.frame2_label, text="Next short day name:").pack(padx=4, pady=4, anchor='w')
+        Label(self.frame2_label, text="Prev short day name:").pack(padx=4, pady=4, anchor='w')
+        Label(self.frame2_label, text='Week begins with:').pack(padx=4, pady=4, anchor='w')
+        Label(self.frame2_label, text='Year:').pack(padx=4, pady=20, anchor='w')
 
-        Checkbutton(frame2_checkbox, variable=self.check_option_prev_day,
+        Checkbutton(self.frame2_checkbox, variable=self.check_option_prev_day,
                     command=self.get_prev_day).pack(padx=3, pady=3, anchor='w')
-        Checkbutton(frame2_checkbox, variable=self.check_option_next_day,
+        Checkbutton(self.frame2_checkbox, variable=self.check_option_next_day,
                     command=self.get_next_day).pack(padx=3, pady=3, anchor='w')
-        Checkbutton(frame2_checkbox, variable=self.check_option_short_day,
+        Checkbutton(self.frame2_checkbox, variable=self.check_option_short_day,
                     command=self.get_short_day).pack(padx=3, pady=3, anchor='w')
-        Checkbutton(frame2_checkbox, variable=self.check_option_next_short_day,
+        Checkbutton(self.frame2_checkbox, variable=self.check_option_next_short_day,
                     command=self.get_next_short_day).pack(padx=3, pady=3, anchor='w')
-        Checkbutton(frame2_checkbox, variable=self.check_option_prev_short_day,
+        Checkbutton(self.frame2_checkbox, variable=self.check_option_prev_short_day,
                     command=self.get_prev_short_day).pack(padx=3, pady=3, anchor='w')
 
-        Radiobutton(frame2_checkbox, text='Mon', variable=self.week_var, value=calendar.MONDAY).pack()
-        Radiobutton(frame2_checkbox, text='Sun', variable=self.week_var, value=calendar.SUNDAY).pack()
+        Radiobutton(self.frame2_checkbox, text='Mon', variable=self.week_var, value=calendar.MONDAY).pack()
+        Radiobutton(self.frame2_checkbox, text='Sun', variable=self.week_var, value=calendar.SUNDAY).pack()
 
-        self.frame2_spinbox_year = Spinbox(frame2_checkbox, width=5, from_=0, to=2132, wrap=True,
+        self.frame2_spinbox_year = Spinbox(self.frame2_checkbox, width=5, from_=0, to=2132, wrap=True,
                                            textvariable=self.year_var, command=self.get_year)
         self.frame2_spinbox_year.delete(0, 1600)
         self.frame2_spinbox_year.insert(0, self.year_var)
@@ -1501,7 +1511,8 @@ class TkCalendar(Tk.Frame):
         try:
             self.frame3_combobox_font['values'] = scribus.getFontNames()
         except:
-            self.frame3_combobox_font['values'] = ('Arial Regular', 'Arial Bold', 'Comic Regular', 'Comic Bold', 'Comic Italic', 'Comic Bold Italic', 'Times New Roman')
+            self.frame3_combobox_font['values'] = ('Arial Regular', 'Arial Bold', 'Comic Regular', 'Comic Bold',
+                                                   'Comic Italic', 'Comic Bold Italic', 'Times New Roman')
 
         self.frame3_combobox_font.current(0)
         self.frame3_combobox_font.bind("<<ComboboxSelected>>", self.on_font_select)
@@ -1570,6 +1581,8 @@ class TkCalendar(Tk.Frame):
         self.frame3_frame_font_combobox = Frame()
         self.frame3_frame_img_button = Frame()
         self.frame3_frame_img_preview = Frame()
+        self.frame2_checkbox = Frame()
+        self.frame2_label = Frame()
         self.top_label = Label()
         self.canvas = Canvas()
         self.preview_canvas = Canvas()
@@ -1675,14 +1688,18 @@ def main():
     TkCalendar(root).pack(side="top", fill="both", expand=True)
     root.mainloop()
 
-# except:
-# 	print("failed")
-# finally:
-# 	if haveDoc() > 0:
-# 		redrawAll()
-# 	statusMessage('Done.')
-# 	progressReset()
-
+#    print('Running script...')
+#    try:
+#        progressReset()
+#        root = Tk.Tk()
+#        root.resizable(width=False, height=False)
+#        TkCalendar(root).pack(side="top", fill="both", expand=True)
+#        root.mainloop()
+#    finally:
+#        if haveDoc() > 0:
+#            redrawAll()
+#        statusMessage('Done.')
+#        progressReset()
 
 if __name__ == '__main__':
     main()
