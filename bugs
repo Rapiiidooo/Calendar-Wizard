@@ -1,0 +1,6 @@
+Changer la preview directement lors d'un clic (page 1) - HAVE BEEN PATCHED
+Bad month number 13. Must be 1-12 - HAVE BEEN PATCHED
+Bug avec la preview font (outline none) - HAVE BEEN PATCHED
+Pas de customisation des couleurs - defineColorRGB("nom", r, v, b) - DONE ! - HAVE BEEN PATCHED
+Lente interaction preview/selection lors des fonts
+Boutons inutile selon le .sla

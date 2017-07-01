@@ -3,6 +3,7 @@ from Tkinter import *
 from tkFileDialog import *
 from lxml import etree
 from shutil import copyfile
+from tkColorChooser import askcolor
 
 import ttk
 import Tkinter as Tk
@@ -12,6 +13,8 @@ import re
 import os
 import calendar
 import tkMessageBox
+
+from calendar import monthrange
 
 try:
     import scribus
@@ -277,9 +280,10 @@ class TkCalendar(Tk.Frame):
         # print(self.frame_master_current_page)  # show in terminal the number of the current page
 
         if self.frame_master_current_page == 1:
-            # a supprimer
-            self.frame2_listbox_language.select_set(9)
-            self.action_get_language(None)
+            if self.frame1_config_model_name == '':
+                tkMessageBox.showinfo("Error", "At least one model must be selected.")
+                self.action_decrement()
+                return
 
         if self.frame_master_current_page == 2:
             # months
@@ -394,13 +398,12 @@ class TkCalendar(Tk.Frame):
         self.model_index_selected = self.frame1_listbox_models.curselection()[0]
         self.frame1_config_model_name = self.frame1_listbox_models.get(self.model_index_selected)
         model_name = self.frame1_config_model_name[0:-4]
-
         try:
             self.photo = PhotoImage(file="format/" + model_name + ".png")
             self.preview_canvas.itemconfigure(self.photo_img, image=self.photo, anchor=NW)
             self.preview_canvas.image = self.photo
         except Exception as e:
-            show_error("Can not update image from model. Err :" + str(e))
+            show_error("Can not update image from model.\n" + str(e))
 
     # update the list of months with the right language
     def action_get_language(self, event):
@@ -422,8 +425,8 @@ class TkCalendar(Tk.Frame):
             self.frame2_listbox_month.insert(END, i)
 
         # a suprimer après test
-        self.frame2_listbox_month.select_set(8, 9)
-        self.action_select_month(None)
+        # self.frame2_listbox_month.select_set(8, 9)
+        # self.action_select_month(None)
 
     # get selected month
     def action_select_month(self, event):
@@ -477,7 +480,6 @@ class TkCalendar(Tk.Frame):
         #  repertoire qui contient les modeles
         for model in os.listdir(self.frame1_config_model_path):
             if model.endswith(".sla"):
-
                 #  On parse chaque modele pour voir quels sont les keywords definis
                 tree = etree.parse(self.frame1_config_model_path + model)
                 keys = tree.getroot()
@@ -488,11 +490,12 @@ class TkCalendar(Tk.Frame):
                     avail = re.findall(type_cal, val)
                     if avail:
                         available_models.append(model)
-        # print available_models
 
         self.frame1_listbox_models.delete(0, END)
         for i in available_models:
             self.frame1_listbox_models.insert(END, i)
+        self.frame1_listbox_models.select_set(0)
+        self.action_get_models(None)
 
     # show button Previous, Next, and finish
     def make_bottom(self):
@@ -532,20 +535,75 @@ class TkCalendar(Tk.Frame):
         self.next_day_name = self.check_option_next_day.get()
 
     def create_day_calendar(self, my_document):
-        createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
-        createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
-        createParagraphStyle(name=self.p_style_month, alignment=1)
-        createParagraphStyle(name=self.p_style_week, alignment=1)
-        createParagraphStyle(name=self.p_style_name_week, alignment=ALIGN_RIGHT)
-        createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
+        try:
+            createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
+            createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
+            createParagraphStyle(name=self.p_style_month, alignment=1)
+            createParagraphStyle(name=self.p_style_week, alignment=1)
+            createParagraphStyle(name=self.p_style_name_week, alignment=ALIGN_RIGHT)
+            createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
 
-        for imonth, month in enumerate(self.frame2_config_month_string_selected):
-            my_document.set_month(self.year_var, month)
-            cal = my_document.mycal.monthdatescalendar(self.year_var, month)
-
-
-
-
+            run = 0
+            total = 0
+            for imonth, month in enumerate(self.frame2_config_month_string_selected):
+                cal = my_document.mycal.monthdatescalendar(self.year_var, month)
+                total += monthrange(self.year_var, month)[1]
+            progressTotal(total)
+            for imonth, month in enumerate(self.frame2_config_month_string_selected):
+                my_document.set_month(self.year_var, month)
+                cal = my_document.mycal.monthdatescalendar(self.year_var, month)
+                for week in cal:
+                    for iday, day in enumerate(week):
+                        if day.month == month:
+                            newPage(-1)
+                            for i in my_document.box_container:
+                                if i.anname == "week_box":
+                                    cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                                    setText(my_document.day_order[iday], cel)
+                                    setStyle(self.p_style_week, cel)
+                                    selectText(0, 0, cel)
+                                    setFont(i.font, cel)
+                                    setFontSize(i.font_size, cel)
+                                    setTextColor(i.color, cel)
+                                    if i.line_color != 'None':
+                                        setLineColor(i.line_color, cel)
+                                elif i.anname == "days_box":
+                                    cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                                    setText(str(day.day), cel)
+                                    setStyle(self.p_style_week, cel)
+                                    selectText(0, 0, cel)
+                                    setFont(i.font, cel)
+                                    setFontSize(i.font_size, cel)
+                                    setTextColor(i.color, cel)
+                                    if i.line_color != 'None':
+                                        setLineColor(i.line_color, cel)
+                                elif i.anname == "month_box":
+                                    cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                                    setText(localization[self.lang][0][month], cel)
+                                    setStyle(self.p_style_week, cel)
+                                    selectText(0, 0, cel)
+                                    setFont(i.font, cel)
+                                    setFontSize(i.font_size, cel)
+                                    setTextColor(i.color, cel)
+                                    if i.line_color != 'None':
+                                        setLineColor(i.line_color, cel)
+                                elif i.anname == "image_box":
+                                    createImage(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
+                                    if i.path_img != "":
+                                        print i.path_img
+                                        loadImage(i.path_img, str(i.anname) + str(run))
+                                        setScaleImageToFrame(i.fit_to_box, i.keep_proportion, str(i.anname) + str(run))
+                                elif i.anname[0:4] == "line":
+                                    cel = createLine(i.xpos, i.ypos,
+                                                     i.xpos + i.width,
+                                                     i.ypos + i.height, str(i.anname) + str(run))
+                                    if i.line_color != 'None':
+                                        setLineColor(i.line_color, cel)
+                            run += 1
+                            progressSet(run)
+            deletePage(1)
+        except Exception as e:
+            show_error('Error on line {}'.format(sys.exc_info()[-1].tb_lineno)+ type(e).__name__+ str(e))
 
     def create_week_calendar(self, my_document):
         createParagraphStyle(name=self.p_style_year, alignment=1)  # alignment=1 == center
@@ -639,6 +697,12 @@ class TkCalendar(Tk.Frame):
                         setTextColor(i.color, cel)
                         if i.line_color != 'None':
                             setLineColor(i.line_color, cel)
+                    elif i.anname[0:4] == "line":
+                        cel = createLine(i.xpos, i.ypos,
+                                         i.xpos + i.width,
+                                         i.ypos + i.height, str(i.anname) + str(run))
+                        if i.line_color != 'None':
+                            setLineColor(i.line_color, cel)
                     else:
                         cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
                         selectText(0, 0, cel)
@@ -670,17 +734,24 @@ class TkCalendar(Tk.Frame):
         for run, month in enumerate(self.frame2_config_month_string_selected):
             newPage(-1)
             for i in my_document.box_container:
+                year = self.year_var
                 month_variable = month
                 if i.img is False:
                     # init le nombre de semaine et de jour du mois
                     if i.anname[0:4] == "next":
                         month_variable += 1
-                        my_document.set_month(self.year_var, month_variable + 1)
-                        cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable + 1)
+                        if month_variable >= 12:
+                            year += 1
+                            month_variable = 0
+                            my_document.set_month(year, month_variable + 1)
+                            cal = my_document.mycal.monthdatescalendar(year, month_variable + 1)
+                        else:
+                            my_document.set_month(self.year_var, month_variable + 1)
+                            cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable + 1)
                     elif i.anname[0:4] == "prev":
                         month_variable -= 1
                         if month_variable < 0:
-                            year = self.year_var - 1
+                            year -= 1
                             my_document.set_month(year, month_variable + 12)
                             cal = my_document.mycal.monthdatescalendar(self.year_var, month_variable + 12)
                         else:
@@ -772,6 +843,12 @@ class TkCalendar(Tk.Frame):
                             setTextColor(i.color, cel)
                             if i.line_color != 'None':
                                 setLineColor(i.line_color, cel)
+                    elif i.anname[0:4] == "line":
+                        cel = createLine(i.xpos, i.ypos,
+                                         i.xpos + i.width,
+                                         i.ypos + i.height, str(i.anname) + str(run))
+                        if i.line_color != 'None':
+                            setLineColor(i.line_color, cel)
                     else:
                         cel = createText(i.xpos, i.ypos, i.width, i.height, str(i.anname) + str(run))
                 else:
@@ -951,6 +1028,12 @@ class TkCalendar(Tk.Frame):
                             setTextColor(i.color, cel)
                             if i.line_color != 'None':
                                 setLineColor(i.line_color, cel)
+                    elif i.anname[0:4] == "line":
+                        cel = createLine(i.xpos, i.ypos,
+                                         i.xpos + i.width,
+                                         i.ypos + i.height, str(i.anname) + str(run))
+                        if i.line_color != 'None':
+                            setLineColor(i.line_color, cel)
                     else:
                         pass
                 else:
@@ -990,20 +1073,6 @@ class TkCalendar(Tk.Frame):
             my_document.border_left = (new_page_size_width * my_document.border_left) / my_document.page_width
             my_document.border_top = (new_page_size_height * my_document.border_top) / my_document.page_height
 
-        # Attrib all font to right container
-        for i in my_document.box_container:
-            try:
-                if i.anname == 'image_box':
-                    i.path_img = self.path_image
-                    i.fit_to_box = self.fit_to_box
-                    i.keep_proportion = self.keep_proportion
-                else:
-                    i.attrib_font(self.font_list[i.anname][0],
-                                  self.font_list[i.anname][1],
-                                  self.font_list[i.anname][2],
-                                  self.font_list[i.anname][3])
-            except Exception as e:
-                show_error("Box name not found in KEYWORD. " + str(e))
         try:
             # Create the Scribus New Document with right proportions
             if not newDocument((size_document[my_document.size][0], size_document[my_document.size][1]),
@@ -1012,6 +1081,32 @@ class TkCalendar(Tk.Frame):
                                 FIRSTPAGELEFT, 1):
                 print 'Create a new document first, please'
                 return
+            # Attrib all font to right container
+            for ii, i in enumerate(my_document.box_container):
+                try:
+                    if i.anname == 'image_box':
+                        i.path_img = self.path_image
+                        i.fit_to_box = self.fit_to_box
+                        i.keep_proportion = self.keep_proportion
+                    else:
+                        if '#' in self.font_list[i.anname][2]:
+                            h = self.font_list[i.anname][2].lstrip('#')
+                            color = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+                            self.font_list[i.anname][2] = 'new_color' + str(ii)
+                            defineColorRGB(self.font_list[i.anname][2], color[0], color[1], color[2])
+                        if '#' in self.font_list[i.anname][3]:
+                            h = self.font_list[i.anname][3].lstrip('#')
+                            color = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+                            self.font_list[i.anname][3] = 'new_line_color' + str(ii)
+                            defineColorRGB(self.font_list[i.anname][3], color[0], color[1], color[2])
+                            print self.font_list[i.anname][3]
+
+                        i.attrib_font(self.font_list[i.anname][0],
+                                      self.font_list[i.anname][1],
+                                      self.font_list[i.anname][2],
+                                      self.font_list[i.anname][3])
+                except Exception as e:
+                    show_error("Error while attrib font. " + str(e))
 
             if self.frame1_config_type_string_selected == 'Day':
                 self.create_day_calendar(my_document)
@@ -1058,7 +1153,7 @@ class TkCalendar(Tk.Frame):
                 self.font_list[self.frame3_listbox_font_elements[i]].append(self.font_color.get())
                 self.font_list[self.frame3_listbox_font_elements[i]].append(self.line_color.get())
         except Exception as e:
-            show_error("Error while attributing font..." + str(e))
+            show_error("Error while attributing font...\n" + str(e))
 
     def get_style_from_font_string(self, mstr):
         # traitement de la police, transfere le style dans s
@@ -1076,32 +1171,64 @@ class TkCalendar(Tk.Frame):
         if " Oblique" in self.font:
             s += " Oblique"
             self.font = self.font.replace(" Oblique", "")
+        if s == "":
+            s = mstr
         return s
+
+    def ask_color(self):
+        color = askcolor()
+        return color
+
+    def on_font_color_select(self, event):
+        # Permettre personnalisation de couleur
+        self.new_font_color = self.font_color.get()
+        if self.font_color.get() == "Personalized color...":
+            self.new_color = self.ask_color()
+            if self.new_color == (None, None):
+                self.frame3_combobox_color.current(0)
+                self.new_font_color = self.font_color.get()
+            else:
+                self.frame3_combobox_color.set(str(self.new_color[1]))
+                self.new_font_color = self.new_color[1]
+        self.on_font_select(None)
+
+    def on_outline_color_select(self, event):
+        self.new_line_color = self.line_color.get()
+        if self.line_color.get() == "Personalized color...":
+            self.new_color = self.ask_color()
+            if self.new_color == (None, None):
+                self.frame3_combobox_line_color.current(0)
+                self.new_line_color = self.line_color.get()
+            else:
+                self.frame3_combobox_line_color.set(str(self.new_color[1]))
+                self.new_line_color = self.new_color[1]
+        self.on_font_select(None)
 
     def on_font_select(self, event):
         # refresh le Text de font preview d'après les fonts family box
         s = self.get_style_from_font_string(self.font_var.get())
+
         if "Regular" in s:
             if self.line_color.get() != 'None':
                 self.frame3_frame_font_text.configure(font=(self.font[0:-8], self.font_size),
-                                                      foreground=self.font_color.get(),
-                                                      highlightbackground=self.line_color.get(),
-                                                      highlightcolor=self.line_color.get(),
+                                                      foreground=self.new_font_color,
+                                                      highlightbackground=self.new_line_color,
+                                                      highlightcolor=self.new_line_color,
                                                       highlightthickness=1)
             else:
                 self.frame3_frame_font_text.configure(font=(self.font[0:-8], self.font_size),
-                                                      foreground=self.font_color.get(),
+                                                      foreground=self.new_font_color,
                                                       highlightthickness=0)
         else:
-            if self.line_color.get() != 'None':
-                self.frame3_frame_font_text.configure(font=(self.font, self.font_size, s.lower()),
-                                                      foreground=self.font_color.get(),
-                                                      highlightbackground=self.line_color.get(),
-                                                      highlightcolor=self.line_color.get(),
+            if new_line_color != 'None':
+                self.frame3_frame_font_text.configure(font=(self.font[0:-8], self.font_size, s.lower()),
+                                                      foreground=self.new_font_color,
+                                                      highlightbackground=self.new_line_color,
+                                                      highlightcolor=self.new_line_color,
                                                       highlightthickness=1)
             else:
-                self.frame3_frame_font_text.configure(font=(self.font[0:-8], self.font_size),
-                                                      foreground=self.font_color.get(),
+                self.frame3_frame_font_text.configure(font=(self.font[0:-8], self.font_size, s.lower()),
+                                                      foreground=self.new_font_color,
                                                       highlightthickness=0)
 
     def unshow_frame3_image(self):
@@ -1121,6 +1248,7 @@ class TkCalendar(Tk.Frame):
         self.frame3_frame_img_preview.grid(row=0, column=2, rowspan=2, sticky=W + E + N + S)
 
     def on_font_select_listbox(self, event):
+        print self.font_list
         if self.frame1_config_model_name != '':
             if self.frame3_listbox_font.curselection()[0] >= 0:
                 # refresh le label de font preview avec les fonts attribuer precedement
@@ -1150,14 +1278,14 @@ class TkCalendar(Tk.Frame):
                 else:
                     if self.font_list[self.frame3_listbox_font_elements[i]][3] != 'None':
                         self.frame3_frame_font_text.configure(
-                            font=(self.font, self.font_list[self.frame3_listbox_font_elements[i]][1], s),
+                            font=(self.font, self.font_list[self.frame3_listbox_font_elements[i]][1], s.lower()),
                             foreground=self.font_list[self.frame3_listbox_font_elements[i]][2],
                             highlightbackground=self.font_list[self.frame3_listbox_font_elements[i]][3],
                             highlightcolor=self.font_list[self.frame3_listbox_font_elements[i]][3],
                             highlightthickness=1)
                     else:
                         self.frame3_frame_font_text.configure(
-                            font=(self.font, self.font_list[self.frame3_listbox_font_elements[i]][1], s),
+                            font=(self.font, self.font_list[self.frame3_listbox_font_elements[i]][1], s.lower()),
                             foreground=self.font_list[self.frame3_listbox_font_elements[i]][2],
                             highlightthickness=0)
                 # refresh les fonts family box d'après les valeurs attribuer
@@ -1191,15 +1319,13 @@ class TkCalendar(Tk.Frame):
 
             self.photo_frame3 = PhotoImage(file=filename)
             # resize img
-            while self.photo_frame3.width() > 200 and self.photo_frame3.width() > 150:
-                print self.photo_frame3.width()
-                print self.photo_frame3.height()
+            while self.photo_frame3.width() > 400 and self.photo_frame3.width() > 300:
                 self.photo_frame3 = self.photo_frame3.subsample(8)
 
             self.preview_canvas_frame3.itemconfigure(self.photo_img_frame3, image=self.photo_frame3, anchor=NW)
             self.preview_canvas_frame3.image = self.photo_frame3
         except Exception as e:
-            show_error("An error has encountered while opening image. Err :" + str(e))
+            show_error("An error has encountered while opening image. \n" + str(e))
 
     def make_frames(self):
         # ELEMENT MIDDLE FRAME 1
@@ -1251,7 +1377,7 @@ class TkCalendar(Tk.Frame):
         frame1_frame_preview.grid(row=0, column=2, rowspan=6, columnspan=1, padx=20, sticky=W + E + N + S)
         Label(frame1_frame_preview, text="Preview").pack(padx=10, pady=10)
 
-        self.photo = PhotoImage(file="format/month.png")
+        self.photo = PhotoImage()
         self.preview_canvas = Canvas(frame1_frame_preview, width=200, height=200)
         self.photo_img = self.preview_canvas.create_image(0, 0, anchor=NW, image=self.photo)
         self.preview_canvas.pack()
@@ -1389,25 +1515,29 @@ class TkCalendar(Tk.Frame):
         self.frame3_spinbox_size.pack(pady=10, anchor='w')
 
         self.frame3_combobox_color = ttk.Combobox(self.frame3_frame_font_combobox, textvariable=self.font_color)
+        # support personalized color only with version >= 1.5
         try:
-            self.frame3_combobox_color['values'] = scribus.getColorNames()
+            if scribus.scribus_version[0:3] >= 1.5:
+                self.frame3_combobox_color['values'] = scribus.getColorNames() + 'Personalized color...'
+            else:
+                self.frame3_combobox_color['values'] = scribus.getColorNames()
         except:
-            self.frame3_combobox_color['values'] = ('Black', 'Red', 'Yellow')
+            self.frame3_combobox_color['values'] = ['Black', 'Red', 'Yellow', 'Personalized color...']
+            # self.frame3_combobox_color['values'].insert(len(self.frame3_combobox_color), 'Personalized color...')
         self.frame3_combobox_color.current(0)
-        self.frame3_combobox_color.bind("<<ComboboxSelected>>", self.on_font_select)
+        self.frame3_combobox_color.bind("<<ComboboxSelected>>", self.on_font_color_select)
         self.frame3_combobox_color.pack(pady=10, anchor='center')
 
         self.frame3_combobox_line_color = ttk.Combobox(self.frame3_frame_font_combobox, textvariable=self.line_color)
-        get_enable_color = []
         try:
-            get_enable_color = scribus.getColorNames()
-            get_enable_color.insert(0, 'None')
+            if scribus.scribus_version[0:3] >= 1.5:
+                self.frame3_combobox_line_color['values'] = 'None' + scribus.getColorNames() + 'Personalized color...'
+            else:
+                self.frame3_combobox_line_color['values'] = 'None' + scribus.getColorNames()
         except:
-            get_enable_color = ['Black', 'Red', 'Yellow']
-            get_enable_color.insert(0, 'None')
-        self.frame3_combobox_line_color['values'] = get_enable_color
+            self.frame3_combobox_line_color['values'] = ['None', 'Black', 'Red', 'Yellow', 'Personalized color...']
         self.frame3_combobox_line_color.current(0)
-        self.frame3_combobox_line_color.bind("<<ComboboxSelected>>", self.on_font_select)
+        self.frame3_combobox_line_color.bind("<<ComboboxSelected>>", self.on_outline_color_select)
         self.frame3_combobox_line_color.pack(pady=10, anchor='center')
 
         Button(self.frame3_frame_font_combobox, text='Attribute Font', command=self.action_attrib).pack(pady=10,
@@ -1510,6 +1640,9 @@ class TkCalendar(Tk.Frame):
         self.path_image = ""
         self.font_size = 12
         self.font_list = {}
+        self.new_color = (None, None)
+        self.new_font_color = 'Black'
+        self.new_line_color = 'Black'
 
         # variable for scribus # paragraph styles
         self.p_style_year = "Year"
