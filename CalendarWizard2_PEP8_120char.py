@@ -1683,6 +1683,7 @@ def main():
     except:
         pass
     root = Tk.Tk()
+    root.title("Calendar Wizard 2")
     root.resizable(width=False, height=False)
     TkCalendar(root).pack(side="top", fill="both", expand=True)
     root.mainloop()

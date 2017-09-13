@@ -166,6 +166,8 @@ localization = {
           'Söndag']]
 }
 
+
+# dimension used for the size of the document
 size_document = {
     'A0': [2383.94, 3370.39], 'A1': [1683.78, 2383.94],
     'A2': [1190.55, 1683.78], 'A3': [841.89, 1190.55],
@@ -180,59 +182,64 @@ size_document = {
     'LEGAL': [612.00, 1008.00], 'LETTER': [612.00, 792.00]
 }
 
-sizex = 650
+sizex = 670
 sizey = 350
 posx = 300
 posy = 200
 
 
 def show_error(err):
+    """ Show attempt errors in a dialog """
     tkMessageBox.showinfo('Error', err)
 
 
 class BoxObject:
-    """ BoxObject represent some attribute from PAGEOBJECT
-    from scribus file. """
+    """ BoxObject represents some attributes from the PageObject object."""
 
     def __init__(self, xpos, ypos, width, height, anname, img, text, font='',
                  font_size='', color='', line_color=''):
-        self.xpos = xpos
-        self.ypos = ypos
-        self.width = width
-        self.height = height
-        self.anname = anname
-        self.img = img
-        self.font = font
-        self.font_size = font_size
-        self.color = color
-        self.line_color = line_color
-        self.path_img = ''
-        self.fit_to_box = False
-        self.keep_proportion = False
-        self.text = text
+        self.xpos = xpos  # position x of an object
+        self.ypos = ypos  # position y of an object
+        self.width = width  # the width of an object
+        self.height = height  # the height of an object
+        self.anname = anname  # the name of an object
+        self.img = img  # boolean val, true for an image
+        self.font = font  # font style for this object
+        self.font_size = font_size  # font size for this object
+        self.color = color  # text color of an object
+        self.line_color = line_color  # outline color of an object
+        self.path_img = ''  # init path of an image to empty
+        self.fit_to_box = False  # option image : fit to object
+        self.keep_proportion = False  # option image : keep the proportion
+        self.text = text  # text inside of an object
 
     def attrib_font(self, font, font_size, color, line_color):
+        """ Button which attribute the font, size, color and outline color
+        for the selected object"""
+
         self.font = font
         self.font_size = font_size
         self.color = color
-        self.line_color = line_color
+        self.line_color = line_color  # outline color
 
 
 class Document:
-    """ Document contains all attribute useful about master page, margin,
+    """ The Class Document contains all attribute useful about master page, margin,
     etc."""
 
     def __init__(self, path_file, lang, first_day, size):
-        self.path_file = path_file
-        self.lang = lang
-        self.day_order = localization[self.lang][1]
+        self.path_file = path_file  # path of the file to parse it
+        self.lang = lang  # lang choosen for calendar
+        self.day_order = localization[self.lang][1]  # day order init to MONDAY
 
-        if first_day == calendar.SUNDAY:
+        if first_day == calendar.SUNDAY:  # modify day order if sunday selected
             dl = self.day_order[:6]
             dl.insert(0, self.day_order[6])
             self.day_order = dl
+        # init var mycal containing calendar from calendar library
         self.mycal = calendar.Calendar(first_day)
 
+        # init some variable
         self.pagex = 0.0
         self.pagey = 0.0
         self.page_width = 0.0
@@ -254,11 +261,11 @@ class Document:
         self.doc_parsing()
 
     def doc_parsing(self):
-        # parse le fichier selectionne
+        """ Parse the selected model of calendar : write in a box_container
+        all objects of selected model, and attributes argument of these
+        objects, like position, name, ... """
+
         tree = etree.parse(self.path_file)
-        # ecrit dans box_container les objets du model
-        # les objets recoivent les attributs des PAGEOBJECT tel que la taille,
-        # la position et le nom
         i = 0
         text = ''
         for parent in tree.xpath("/SCRIBUSUTF8NEW/DOCUMENT"):
@@ -295,10 +302,11 @@ class Document:
                 self.box_container.append(new)
 
     def set_month(self, year, month):
-        # Returns weekday of first day of the month and number of days in
-        # month, for the specified year and month
+        """ Returns weekday of first day of the month and number of days in
+        month, for the specified year and month """
+
         (self.begin_day, self.nb_days) = calendar.monthrange(year, month)
-        # Calcule le nombre de semaine du mois courant
+        # Number of weeks for the current month
         self.nb_week = 1
         spend_days = 0
         i = self.begin_day
@@ -311,10 +319,12 @@ class Document:
 
 
 class TkCalendar(Tk.Frame):
-    # update the current page of the wizard
+    """ Main class of Calendar wizard, this regroup the interface and all
+    selected option for our calendar.
+     This class contains also the method to create the calendar. """
+
     def update(self):
-        # print(self.frame_master_current_page)  # show in terminal the
-        # number of the current page
+        """ Update the current page of the wizard """
 
         if self.frame_master_current_page == 1:
             if self.frame1_config_model_name == '':
@@ -335,6 +345,7 @@ class TkCalendar(Tk.Frame):
                     type_type = re.compile('type=\'(.*)\'')
                     types = re.findall(type_type, val)
 
+                # not working...
                 for i in types:
                     if i == 'Day':
                         # self.frame2_label.grid_forget()
@@ -362,18 +373,15 @@ class TkCalendar(Tk.Frame):
                     val = key.attrib['KEYWORDS']
                 elements = re.findall(type_ele, val)
                 self.frame3_listbox_font_elements = re.split(",", elements[0])
-                # print(self.frame3_listbox_font_elements)
                 self.frame3_listbox_font.delete(0, END)
                 for i in self.frame3_listbox_font_elements:
                     self.frame3_listbox_font.insert(END, i)
-                    # print self.frame3_listbox_font_elements
                 for i, val in enumerate(self.frame3_listbox_font_elements):
                     self.font_list[val] = []
                     self.font_list[val].append(self.font_var.get())
                     self.font_list[val].append(self.font_size)
                     self.font_list[val].append(self.font_color.get())
                     self.font_list[val].append(self.line_color.get())
-                # print self.font_list
                 self.frame3_listbox_font.select_set(0)
                 self.on_font_select(None)
 
@@ -397,21 +405,23 @@ class TkCalendar(Tk.Frame):
         self.canvas.yview_moveto(0.0)
         self.scrollbar_middle.set(0.0, 1.0)
 
-    # import file .sla
     def action_import_model(self):
+        """ Callback to import file new model, a file ".sla" """
+
         try:
             filename = askopenfilename(title="Open your file",
                                        filetypes=[('scribus files', '.sla'),
                                                   ('all files', '.*')])
-            if filename is None:
-                raise ValueError
-            copyfile(filename, self.frame1_config_model_path +
-                     os.path.basename(filename))
+            if not filename:  # if the user cancel
+                pass
+            else:
+                copyfile(filename, self.frame1_config_model_path +
+                         os.path.basename(filename))
         except Exception as e:
-            show_error("Can not import file. Err :" + str(e))
+            show_error("Can not import file.\nErr :" + str(e))
 
-    # import an ICS file
     def action_import_ics(self):
+        """ import an ICS file, this function is not working at this moment """
         try:
             filename = askopenfilename(title="Open your file",
                                        filetypes=[('ics files', '.ics'),
@@ -424,37 +434,42 @@ class TkCalendar(Tk.Frame):
         except Exception as e:
             show_error("Can not import file. Err :" + str(e))
 
-    # go to next page
     def action_increment(self):
+        """ Go to next page """
+
         self.frame_master_current_page = self.frame_master_current_page + 1
         self.update()
 
-    # go to previous page
     def action_decrement(self):
+        """ Go to previous page """
+
         self.frame_master_current_page = self.frame_master_current_page - 1
         self.update()
 
-    # get all elements of the wizard inside a canvas.
     def action_canvas(self, event):
+        """ Get all the elements of the wizard inside a canvas. """
         tup = self.scrollbar_middle.get()
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         if tup[0] == 0 and tup[1] == 1:
             self.canvas.yview_moveto(0.0)
 
-    # define the scroll
-    def action_mouse_weel(self, event):
-        if event.num == 5:
-            event.delta = -120
-        elif event.num == 4:
-            event.delta = 120
-        print(datetime.datetime.now())
-        tup = self.scrollbar_middle.get()
-        if tup[0] != 0 or tup[1] != 1:
-            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        print(event.num)
+    # un-comment for main scroll
+    # def action_mouse_weel(self, event):
+    #    """ Callback for the main scroll """
+    #    if event.num == 5:
+    #        event.delta = -120
+    #    elif event.num == 4:
+    #        event.delta = 120
+    #    print(datetime.datetime.now())
+    #    tup = self.scrollbar_middle.get()
+    #    if tup[0] != 0 or tup[1] != 1:
+    #        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+    #    print(event.num)
 
-    # update preview with the selected model
     def action_get_models(self, event):
+        """ Callback to get selected model in page 1 of Wizard and refresh
+        image """
+
         # get selected line index
         self.model_index_selected = self.frame1_listbox_model.curselection()[0]
         self.frame1_config_model_name = self.frame1_listbox_model.get(
@@ -469,7 +484,7 @@ class TkCalendar(Tk.Frame):
             show_error("Can not update image from model.\n" + str(e))
 
     def action_get_language(self, event):
-        # update the list of months with the right language
+        """ Update the list of months with the right language """
 
         # get selected line index
         self.frame2_config_language_index_selected = None
@@ -494,7 +509,8 @@ class TkCalendar(Tk.Frame):
             self.frame2_listbox_month.insert(END, i)
 
     def action_select_month(self, event):
-        # get selected month
+        """ Callback to get selected month in page 2 of Wizard """
+
         self.frame2_config_month_index_selected = \
             self.frame2_listbox_month.curselection()
         self.frame2_config_month_string_selected = []
@@ -503,28 +519,27 @@ class TkCalendar(Tk.Frame):
             self.frame2_config_month_string_selected.append(int(month))
 
     def action_select_type(self, event):
+        """ Callback to get available models with type selected """
+
         self.frame1_config_type_index_selected = \
             self.frame1_listbox_types.curselection()[0]
         search_type = self.frame1_listbox_types.get(
             self.frame1_config_type_index_selected)
         self.frame1_config_type_string_selected = search_type
         type_cal = re.compile('type=\'.*' + search_type + '.*\'')
-        # On cherche dans le repertoire avec les modeles
+        # Try to find inside the model directory
         available_models = []
 
-        #  On parcours tous les documents qui se terminent par .sla dans le
-        #  repertoire qui contient les modeles
+        # Check all the files with endless ".sla"
         for model in os.listdir(self.frame1_config_model_path):
             if model.endswith(".sla"):
-                #  On parse chaque modele pour voir quels sont les keywords
-                # definis
+                # Parsing of selected model to get the keywords
                 tree = etree.parse(self.frame1_config_model_path + model)
                 keys = tree.getroot()
                 for key in keys:
                     val = key.attrib['KEYWORDS']
-                    #  Si on trouve un type de calendrier dans les KEYWORDS
-                    # du document on recupere ce modele pour l'afficher dans
-                    # l'etape suivante
+                    # If there is a type inside keywords, we print it inside
+                    # the right listbox
                     avail = re.findall(type_cal, val)
                     if avail:
                         available_models.append(model)
@@ -536,8 +551,8 @@ class TkCalendar(Tk.Frame):
         self.action_get_models(None)
 
     def action_attrib(self):
-        # insert dans self.font_list toutes les valeurs de police que
-        # l'utilisateurs a choisi pour tel element
+        """ Insert inside font_list, each value for the selected font """
+
         try:
             for i in self.frame3_listbox_font.curselection():
                 self.font_list[self.frame3_listbox_font_elements[i]] = []
@@ -553,6 +568,7 @@ class TkCalendar(Tk.Frame):
             show_error("Error while attributing font...\n" + str(e))
 
     def action_finish(self):
+        """ Final method which generate the new Scribus document """
         # Create the document with DocumentClass
         my_document = Document(
             self.frame1_config_model_path + self.frame1_config_model_name,
@@ -662,6 +678,7 @@ class TkCalendar(Tk.Frame):
         return
 
     def create_day_calendar(self, my_document):
+        """ Method to create the calendar from days based models """
         try:
             createParagraphStyle(name=self.p_style_year,
                                  alignment=1)  # alignment=1 == center
@@ -755,6 +772,8 @@ class TkCalendar(Tk.Frame):
                     e).__name__ + str(e))
 
     def create_week_calendar(self, my_document):
+        """ Method to create the calendar from week based models """
+
         createParagraphStyle(name=self.p_style_year,
                              alignment=1)  # alignment=1 == center
         createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
@@ -767,8 +786,6 @@ class TkCalendar(Tk.Frame):
         # imonth is used for scribus progressbar
         # re-draw new document from the model base
 
-        # for day in week:
-        # imprime le numéro de la semaine sur l'année
         try:
             run = 0
             for imonth, month in enumerate(
@@ -877,8 +894,7 @@ class TkCalendar(Tk.Frame):
                             setTextColor(i.color, cel)
                             if i.line_color != 'None':
                                 setLineColor(i.line_color, cel)
-                    # boucle pour actualisé le string de numéro
-                    # de fin de semaine
+                    # loop to refresh the string number of "end of week"
                     while self.next_day_name is not 1 \
                             and week[iday].month > month + 1:
                         iday -= 1
@@ -896,6 +912,8 @@ class TkCalendar(Tk.Frame):
                     e).__name__ + str(e))
 
     def create_month_calendar(self, my_document):
+        """ Method to create the calendar from month based models """
+
         createParagraphStyle(name=self.p_style_year,
                              alignment=1)  # alignment=1 == center
         createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
@@ -913,7 +931,7 @@ class TkCalendar(Tk.Frame):
                 year = self.year_var
                 month_variable = month
                 if i.img is False:
-                    # init le nombre de semaine et de jour du mois
+                    # init the numbers of week and month for the selected year
                     if i.anname[0:4] == "next":
                         month_variable += 1
                         if month_variable >= 12:
@@ -963,7 +981,7 @@ class TkCalendar(Tk.Frame):
                                     and i.anname == "next_week_box" or \
                                     self.prev_short_day_name is True \
                                     and i.anname == "prev_week_box":
-                                setText("\n" + str(name[0:3] + '.'), cel)
+                                setText("\n" + str(name[0:3]), cel)
                             else:
                                 setText("\n" + str(name), cel)
                             setStyle(self.p_style_week, cel)
@@ -1047,7 +1065,7 @@ class TkCalendar(Tk.Frame):
                                              i.width,
                                              i.height / my_document.nb_week,
                                              str(i.anname) + str(j) + str(run))
-                            # imprime le numéro de la semaine sur l'année
+                            # print the number of week near year
                             setText("\n" + str(
                                 datetime.date(self.year_var, week[0].month,
                                               week[0].day).isocalendar()[1]),
@@ -1083,6 +1101,7 @@ class TkCalendar(Tk.Frame):
         deletePage(1)
 
     def create_year_calendar(self, my_document):
+        """ Method to create the calendar from year based models """
         createParagraphStyle(name=self.p_style_year,
                              alignment=1)  # alignment=1 == center
         createParagraphStyle(name=self.p_style_days, alignment=ALIGN_LEFT)
@@ -1129,7 +1148,7 @@ class TkCalendar(Tk.Frame):
                 nb_month = len(self.frame2_config_month_string_selected)
                 for imonth, month in enumerate(
                         self.frame2_config_month_string_selected):
-                    # init mois courant
+                    # init current month
                     my_document.set_month(self.year_var, month + 1)
                     cal = my_document.mycal.monthdatescalendar(self.year_var,
                                                                month + 1)
@@ -1189,7 +1208,7 @@ class TkCalendar(Tk.Frame):
             for imonth, month in enumerate(
                     self.frame2_config_month_string_selected):
                 if i.img is False:
-                    # init le nombre de semaine et de jour du mois
+                    # init the numbers of week and month for the selected year
                     my_document.set_month(self.year_var, month + 1)
                     cal = my_document.mycal.monthdatescalendar(self.year_var,
                                                                month + 1)
@@ -1203,7 +1222,7 @@ class TkCalendar(Tk.Frame):
                                 i.height, str(i.anname) + str(j))
                             if self.short_day_name is True \
                                     and i.anname == "week_box" + str(imonth):
-                                setText(str(name[0:2] + '.'), cel)
+                                setText(str(name[0:2]), cel)
                             else:
                                 setText(str(name), cel)
                             setStyle(self.p_style_week, cel)
@@ -1271,7 +1290,7 @@ class TkCalendar(Tk.Frame):
                                              i.width,
                                              i.height / my_document.nb_week,
                                              str(i.anname) + str(j))
-                            # imprime le numéro de la semaine sur l'année
+                            # print the number of week near year
                             setText("\n" + str(
                                 datetime.date(self.year_var, week[0].month,
                                               week[0].day).isocalendar()[1]),
@@ -1309,46 +1328,70 @@ class TkCalendar(Tk.Frame):
         deletePage(1)
 
     def select_all_month(self):
+        """ Callback to select all month in page 2 of Wizard """
+
         self.frame2_listbox_month.select_set(0, END)
         self.action_select_month(None)
 
     def select_all_elements(self):
+        """ Callback to select all elements in page 3 of Wizard """
+
         self.frame3_listbox_font.select_set(0, END)
 
     def unselect_all_month(self):
+        """ Callback to un-select all month in page 2 of Wizard """
+
         self.frame2_listbox_month.selection_clear(0, END)
         self.action_select_month(None)
 
     def get_short_day(self):
+        """ Callback to get value of check_option_short_day """
+
         self.short_day_name = bool(self.check_option_short_day.get())
 
     def get_next_short_day(self):
+        """ Callback to get value of check_option_next_short_day """
+
         self.next_short_day_name = bool(self.check_option_next_short_day.get())
 
     def get_prev_short_day(self):
+        """ Callback to get value of check_option_prev_short_day """
+
         self.prev_short_day_name = bool(self.check_option_prev_short_day.get())
 
     def get_prev_day(self):
+        """ Callback to get value of check_option_prev_day """
+
         self.prev_day_name = self.check_option_prev_day.get()
-        print self.prev_day_name
 
     def get_next_day(self):
+        """ Callback to get value of check_option_next_day """
+
         self.next_day_name = self.check_option_next_day.get()
 
     def get_year(self):
+        """ Callback to get value of frame2_spinbox_year """
+
         self.year_var = int(self.frame2_spinbox_year.get())
 
     def get_font_size(self):
+        """ Callback to get value of frame3_spinbox_size """
+
         self.font_size = int(self.frame3_spinbox_size.get())
 
     def get_fit_to_box(self):
+        """ Callback checkoption of check_option_fit_to_box """
+
         self.fit_to_box = bool(self.check_option_fit_to_box.get())
 
     def get_keep_proportion(self):
+        """ Callback checkoption of check_option_keep_proportion """
+
         self.keep_proportion = bool(self.check_option_keep_proportion.get())
 
     def get_style_from_font_string(self, mstr):
-        # traitement de la police, transfere le style dans s
+        """ Check font, and return it in a string """
+
         self.font = mstr
         s = ""
         if " Regular" in self.font:
@@ -1368,10 +1411,13 @@ class TkCalendar(Tk.Frame):
         return s
 
     def ask_color(self):
+        """ Panel of askcolor() from tkColorChooser library """
+
         self.new_color = askcolor()
 
     def on_font_color_select(self, event):
-        # Permettre personnalisation de couleur
+        """ Allow user to choose is own color """
+
         self.new_font_color = self.font_color.get()
         if self.font_color.get() == "Personalized color...":
             self.ask_color()
@@ -1384,6 +1430,8 @@ class TkCalendar(Tk.Frame):
         self.on_font_select(None)
 
     def on_outline_color_select(self, event):
+        """ Callback for outline event in page 3 of Wizard """
+
         self.new_line_color = self.line_color.get()
         if self.line_color.get() == "Personalized color...":
             self.ask_color()
@@ -1396,6 +1444,8 @@ class TkCalendar(Tk.Frame):
         self.on_font_select(None)
 
     def on_font_select(self, event):
+        """ Callback for combobox when user change something of the text
+        style """
         # refresh le Text de font preview d'après les fonts family box
         s = self.get_style_from_font_string(self.font_var.get())
 
@@ -1427,6 +1477,9 @@ class TkCalendar(Tk.Frame):
                     highlightthickness=0)
 
     def unshow_frame3_image(self):
+        """ Update third page of wizard to hide "image panel" and show
+        "text panel" if the element selected is not an image """
+
         self.frame3_frame_font_title_font.grid(row=0, column=1, columnspan=2,
                                                sticky=W + E + N)
         self.frame3_frame_font_title_preview.grid(row=0, column=3, rowspan=3,
@@ -1439,6 +1492,9 @@ class TkCalendar(Tk.Frame):
         self.frame3_frame_img_preview.grid_forget()
 
     def show_frame3_image(self):
+        """ Update third page of wizard to show "image panel"
+        if the element selected is an image """
+
         self.frame3_frame_font_title_font.grid_forget()
         self.frame3_frame_font_title_preview.grid_forget()
         self.frame3_frame_font_label.grid_forget()
@@ -1449,11 +1505,13 @@ class TkCalendar(Tk.Frame):
                                            sticky=W + E + N + S)
 
     def on_font_select_listbox(self, event):
-        print self.font_list
+        """ Callback when user select an element in page 3 of Wizard"""
+
         if self.frame1_config_model_name != '':
             if self.frame3_listbox_font.curselection()[0] >= 0:
-                # refresh le label de font preview avec les fonts attribuer
-                # precedement
+                # refresh the font label in preview with the previous
+                # attributes
+
                 i = self.frame3_listbox_font.curselection()[0]
 
                 if "image_box" in self.frame3_listbox_font_elements[i]:
@@ -1463,11 +1521,11 @@ class TkCalendar(Tk.Frame):
 
                 s = self.get_style_from_font_string(
                     self.font_list[self.frame3_listbox_font_elements[i]][0])
-                # verifie le style de font
+                # check the font style
                 if "Regular" in \
                         self.font_list[self.frame3_listbox_font_elements[i]][
                             0]:
-                    # Si le contour du cadre n'est pas None
+                    # if outline is not None
                     if self.font_list[self.frame3_listbox_font_elements[i]][
                        3] != 'None':
                         self.frame3_frame_font_text.configure(
@@ -1509,7 +1567,7 @@ class TkCalendar(Tk.Frame):
                             foreground=self.font_list[
                                 self.frame3_listbox_font_elements[i]][2],
                             highlightthickness=0)
-                # refresh les fonts family box d'après les valeurs attribuer
+                # refresh les fonts family box after pressed attribute
                 self.frame3_combobox_font.set(
                     self.font_list[self.frame3_listbox_font_elements[i]][0])
                 self.frame3_spinbox_size.delete(0, self.font_size)
@@ -1534,6 +1592,8 @@ class TkCalendar(Tk.Frame):
                         highlightthickness=0)
 
     def get_image(self):
+        """ Define image to draw inside the selected object in page 3 of
+        wizard """
         try:
             filename = askopenfilename(title="Open your image",
                                        filetypes=[('Image File', '.png'),
@@ -1560,14 +1620,16 @@ class TkCalendar(Tk.Frame):
                 "An error has encountered while opening image. \n" + str(e))
 
     def make_top(self):
-        # define title label
+        """ Define title label """
+
         self.top = Frame(self)
         self.top.grid(row=0, column=0)
         self.top_label = Label(self.top, text="Calendar wizard 2")
         self.top_label.pack()
 
     def make_middle(self):
-        # define the middle gridPane
+        """ Define the middle gridPane """
+
         self.middle = Frame(self, width=sizex - 50, height=sizey - 50, padx=20,
                             pady=20)
         self.middle.grid(row=1, column=0)
@@ -1580,23 +1642,28 @@ class TkCalendar(Tk.Frame):
         self.canvas_frame.pack(padx=10, pady=10)
         self.canvas_frame.bind("<Configure>", self.action_canvas)
 
-        self.scrollbar_middle = Scrollbar(self.middle, orient="vertical",
-                                          command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=self.scrollbar_middle.set)
+        # un-comment for main scroll bar
+        # self.scrollbar_middle = Scrollbar(self.middle, orient="vertical",
+        #                                   command=self.canvas.yview)
+        # self.canvas.configure(yscrollcommand=self.scrollbar_middle.set)
 
-        self.scrollbar_middle.pack(side="right", fill="y")
+        # self.scrollbar_middle.pack(side="right", fill="y")
         self.canvas.pack(side="left")
         self.canvas.create_window((0, 0), window=self.canvas_frame,
                                   anchor='nw')
 
-        if sys.platform == "Windows":
-            self.canvas.bind_all("<MouseWheel>", self.action_mouse_weel)
-        elif sys.platform == "Linux":
-            self.canvas.bind_all("<Button-4>", self.action_mouse_weel)
-            self.canvas.bind_all("<Button-5>", self.action_mouse_weel)
+        # un-comment if you want enable the scroll and the mouse-weel correct
+        # set
+
+        # if sys.platform == "Windows":
+        #    self.canvas.bind_all("<MouseWheel>", self.action_mouse_weel)
+        # elif sys.platform == "Linux":
+        #    self.canvas.bind_all("<Button-4>", self.action_mouse_weel)
+        #    self.canvas.bind_all("<Button-5>", self.action_mouse_weel)
 
     def make_bottom(self):
-        # show button Previous, Next, and finish
+        """ Show button Previous, Next, and finish"""
+
         self.bottom = Frame(self)
         self.bottom.grid(row=2, column=0)
         self.bottom_button = [Button(self.bottom, text="Previous", padx=10,
@@ -1611,6 +1678,7 @@ class TkCalendar(Tk.Frame):
             self.bottom_button[i].grid(padx=10, pady=10, row=0, column=i)
 
     def make_frames(self):
+        """ This is the main method to draw the user interface """
         # ELEMENT MIDDLE FRAME 1
         frame1_root = Frame(self.canvas_frame)
 
@@ -1707,7 +1775,7 @@ class TkCalendar(Tk.Frame):
 
         frame2_button = Button(frame2_list_language, text="Import ICS",
                                command=self.action_import_ics, padx=30,
-                               pady=10)
+                               pady=10, state=DISABLED)
         frame2_button.pack(pady=20)
 
         self.frame2_checkbox = Frame(frame2_root)
@@ -1725,10 +1793,10 @@ class TkCalendar(Tk.Frame):
                                                               anchor='w')
         Label(self.frame2_label, text="Short day name:").pack(padx=4, pady=4,
                                                               anchor='w')
-        Label(self.frame2_label, text="Next short day name:").pack(padx=4,
+        Label(self.frame2_label, text="Next month short name:").pack(padx=4,
                                                                    pady=4,
                                                                    anchor='w')
-        Label(self.frame2_label, text="Prev short day name:").pack(padx=4,
+        Label(self.frame2_label, text="Prev month short name:").pack(padx=4,
                                                                    pady=4,
                                                                    anchor='w')
         Label(self.frame2_label, text='Week begins with:').pack(padx=4, pady=4,
@@ -1873,18 +1941,16 @@ class TkCalendar(Tk.Frame):
 
         self.frame3_combobox_color = ttk.Combobox(
             self.frame3_frame_font_combobox, textvariable=self.font_color)
-        # support personalized color only with version >= 1.5
+
+        # The support of personalized color is only with version >= 1.5
 
         color_for_font_custom = scribus.getColorNames()
-        color_for_font_custom.insert(len(color_for_font_custom),
-                                     'Personalized color...')
         color_for_line_custom = scribus.getColorNames()
         color_for_line_custom.insert(0, 'None')
-        color_for_line_custom.insert(len(color_for_font_custom),
-                                     'Personalized color...')
         if scribus.scribus_version[0:3] >= 1.5:
+            color_for_line_custom.insert(len(color_for_font_custom),
+                                         'Personalized color...')
             self.frame3_combobox_color['values'] = color_for_font_custom
-
         else:
             self.frame3_combobox_color['values'] = scribus.getColorNames()
         self.frame3_combobox_color.current(0)
@@ -1921,12 +1987,12 @@ class TkCalendar(Tk.Frame):
 
     def __init__(self, parent):
         Tk.Frame.__init__(self, parent)
-        # configuration variable global
+        # Setting the globals variables
         self.parent = parent
 
-        # variable for the GUI
-        self.top = Frame()
-        self.middle = Frame()
+        # Variables for the GUI
+        self.top = Frame()  # top frame is for the title label
+        self.middle = Frame()  # contains the middle gridPane
         self.canvas_frame = Frame()
         self.bottom = Frame()
         self.frame3_frame_font_title_font = Frame()
@@ -1983,12 +2049,12 @@ class TkCalendar(Tk.Frame):
         self.photo = PhotoImage()
         self.photo_frame3 = PhotoImage()
 
-        # variable about the calendar information
+        # Variable about the calendar information
         self.now = datetime.datetime.now()
         self.year_var = self.now.year
         self.first_day = calendar.SUNDAY
 
-        # variable about option for the calendar
+        # Variable about option for the calendar
         self.months = []
         self.lang = 'English'
         self.week_var = IntVar()
@@ -2011,7 +2077,7 @@ class TkCalendar(Tk.Frame):
         self.new_font_color = 'Black'
         self.new_line_color = 'Black'
 
-        # variable for scribus # paragraph styles
+        # Variable for scribus # paragraph styles
         self.p_style_year = "Year"
         self.p_style_days = "Days"
         self.p_style_month = "Month"
@@ -2031,12 +2097,12 @@ class TkCalendar(Tk.Frame):
 
 def main():
     """ Application/Dialog loop with Scribus sauce around """
-    # try:
     print('Running script...')
     try:
         progressReset()
         root = Tk.Tk()
         root.resizable(width=False, height=False)
+        root.title("Calendar Wizard 2")
         TkCalendar(root).pack(side="top", fill="both", expand=True)
         root.mainloop()
     finally:
