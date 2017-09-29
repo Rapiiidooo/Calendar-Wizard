@@ -20,6 +20,7 @@ try:
     from scribus import *
 except ImportError:
     print('This Python script is written for the Scribus scripting interface.')
+    quit(1)
 
 # Translation day/month
 localization = {
@@ -265,6 +266,7 @@ class Document:
         all objects of selected model, and attributes argument of these
         objects, like position, name, ... """
 
+        # usage of xpath library to parse the document (the selected model)
         tree = etree.parse(self.path_file)
         i = 0
         text = ''
@@ -333,7 +335,7 @@ class TkCalendar(Tk.Frame):
                 self.action_decrement()
                 return
             else:
-                # verif les Boutons inutile selon le .sla
+                # check unused buttons with selected model
                 type_type = re.compile('type=\'(.*)\',')
                 tree = etree.parse(self.frame1_config_model_path +
                                    self.frame1_config_model_name)
@@ -345,7 +347,7 @@ class TkCalendar(Tk.Frame):
                     type_type = re.compile('type=\'(.*)\'')
                     types = re.findall(type_type, val)
 
-                # not working...
+                # this is not actually working...
                 for i in types:
                     if i == 'Day':
                         # self.frame2_label.grid_forget()
@@ -353,7 +355,7 @@ class TkCalendar(Tk.Frame):
                         pass
 
         if self.frame_master_current_page == 2:
-            # months
+            # check if some months are selected
             if len(self.frame2_config_month_string_selected) == 0:
                 tkMessageBox.showinfo("Error",
                                       "At least one month must be selected.")
@@ -362,8 +364,11 @@ class TkCalendar(Tk.Frame):
         # remove the last current page
         self.frame_master_all_frames[self.frame_master_last_page].pack_forget()
 
-        # If page == 2
+        # If page of wizard is the third
         if self.frame_master_current_page == 2:
+            # show all element what are inside the selected model
+            # then parse selected model just to get 'KEYWORDS' and add it to
+            # the listbox
             if self.frame1_config_model_name != '':
                 type_ele = re.compile('element=\'(.*)\'')
                 tree = etree.parse(self.frame1_config_model_path +
@@ -385,7 +390,8 @@ class TkCalendar(Tk.Frame):
                 self.frame3_listbox_font.select_set(0)
                 self.on_font_select(None)
 
-        # if page == 1
+        # if page of wizard is the second
+        # then disable or activate some button
         if self.frame_master_current_page <= 0:
             self.frame_master_current_page = 0
             self.bottom_button[0].config(state=DISABLED)
@@ -453,7 +459,7 @@ class TkCalendar(Tk.Frame):
         if tup[0] == 0 and tup[1] == 1:
             self.canvas.yview_moveto(0.0)
 
-    # un-comment for main scroll
+    # un-comment for main scroll # working
     # def action_mouse_weel(self, event):
     #    """ Callback for the main scroll """
     #    if event.num == 5:
@@ -476,6 +482,7 @@ class TkCalendar(Tk.Frame):
             self.model_index_selected)
         model_name = self.frame1_config_model_name[0:-4]
         try:
+            # show correspondent image to the preview
             self.photo = PhotoImage(file="format/" + model_name + ".png")
             self.preview_canvas.itemconfigure(self.photo_img, image=self.photo,
                                               anchor=NW)
@@ -488,7 +495,7 @@ class TkCalendar(Tk.Frame):
 
         # get selected line index
         self.frame2_config_language_index_selected = None
-        # check if language get selected
+        # check if a language is selected
         try:
             self.frame2_config_language_index_selected = \
                 self.frame2_listbox_language.curselection()[0]
@@ -497,12 +504,13 @@ class TkCalendar(Tk.Frame):
 
         if self.frame2_config_language_index_selected is None:
             return
+        # then refresh month listbox with the right langage
         months = localization[self.frame2_listbox_language.get(
             self.frame2_config_language_index_selected)][0]
         self.frame2_config_language_string_selected = \
             self.frame2_listbox_language.get(
                 self.frame2_config_language_index_selected)
-        # used for action_finish
+        # this is used for action_finish
         self.lang = self.frame2_config_language_string_selected
         self.frame2_listbox_month.delete(0, END)
         for i in months:
@@ -551,7 +559,8 @@ class TkCalendar(Tk.Frame):
         self.action_get_models(None)
 
     def action_attrib(self):
-        """ Insert inside font_list, each value for the selected font """
+        """ Insert inside font_list (in the third page), each value for the
+        selected font """
 
         try:
             for i in self.frame3_listbox_font.curselection():
@@ -692,20 +701,29 @@ class TkCalendar(Tk.Frame):
 
             run = 0
             total = 0
+            # calculate elapsed time to progressTotal
             for imonth, month in enumerate(
                     self.frame2_config_month_string_selected):
                 my_document.mycal.monthdatescalendar(self.year_var, month + 1)
                 total += monthrange(self.year_var, month + 1)[1]
             progressTotal(total)
+
+            # the begining of creation of the objects to the document
+
+            # the main loop correspond to the number of month selected
             for imonth, month in enumerate(
                     self.frame2_config_month_string_selected):
                 my_document.set_month(self.year_var, month + 1)
                 cal = my_document.mycal.monthdatescalendar(self.year_var,
                                                            month + 1)
+                # loop for the number of week in the current month
                 for week in cal:
+                    # loop for the number of day in the current week
                     for iday, day in enumerate(week):
                         if day.month == month + 1:
                             newPage(-1)
+                            # loop go through to of the box list based from
+                            # the model
                             for i in my_document.box_container:
                                 if i.anname == "week_box":
                                     cel = createText(i.xpos, i.ypos, i.width,
@@ -794,6 +812,7 @@ class TkCalendar(Tk.Frame):
                 my_document.set_month(self.year_var, month + 1)
                 cal = my_document.mycal.monthdatescalendar(self.year_var, month + 1)
                 # TODO CORRECT THIS...
+
                 for week in cal:
                     newPage(-1)
 
@@ -1862,8 +1881,15 @@ class TkCalendar(Tk.Frame):
         frame3_frame_list.grid(row=0, column=0, rowspan=3,
                                sticky=W + E + N + S)
         Label(frame3_frame_list, text="Elements").pack(padx=10, pady=10)
-        self.frame3_listbox_font = Listbox(frame3_frame_list,
-                                           exportselection=0)
+        scrollbar_listbox_font = Scrollbar(frame3_frame_list,
+                                           orient=VERTICAL)
+        self.frame3_listbox_font = Listbox(
+                                frame3_frame_list,
+                                exportselection=0,
+                                yscrollcommand=scrollbar_listbox_font.set)
+        scrollbar_listbox_font.config(
+            command=self.frame3_listbox_font.yview)
+        scrollbar_listbox_font.pack(anchor='n', side=RIGHT, ipady=63)
         self.frame3_listbox_font.bind('<<ListboxSelect>>',
                                       self.on_font_select_listbox)
         self.frame3_listbox_font.pack()

@@ -1,27 +1,28 @@
 # Calendar Wizard 2
 
-This is an advanced 'Calendar creation wizard' for Scribus. It's inspired from CalendarWizard.py. Thanks to Petr Vanek.
-This script is not hard to use. You have got some initial model, and you can perform your own model as you want.
+Ceci est un script avancé du script originel 'Calendar creation wizard' for Scribus. Et il en à été inspiré, merci à Petr Vanek.
+Ce script n'est pas très difficile à utiliser, vous avez quelques model initiaux, mais vous pouvez toujours utilisez vos propres création de model !
 
 ## Page 1
 
-Select the type and choose the right model as your wishes. Then you have got the preview as the model pre-selected, then press next.
-You can if you have it, a new model by pressing the button "import .sla".
+Selectionnez le type et choisisez le model que vous voulez. Alors vous aurez l'aperçu du model pré-selectionner puis appuyez sur 'Next'.
+Vous pouvez aussi si vous en avez au préalable créer un, importer un nouveau model en cliquant sur 'Import model'.
 
 [![N|Solid](https://cldup.com/D6_9xoBllE.png)](https://nodesource.com/products/nsolid)
 
 ## Page 2
 
-In the second window you can choose the language and the different month, which will be implements to your calendar, this is pretty the same look as Calendar Wizard 2.
-But you can also choose if you want the number of the week, if you want the right full name of the day, and if you wanna show the days before and after the current month.
-You can also import an ICS file to match with special days.
+Dans la seconde page, vous pouvez choisir le langage et les différents mois qui seront implémenté dans votre calendrier, c'est à peu près la même interface que dans le script originel de scribus.
+Mais vous pouvez aussi choisir les options tels que : le numéro de la semaine, les noms complets des jours, et si vous voulez afficher les jours des mois suivants et précèdents.
+Vous pouvez aussi importez un fichier ICS pour reporté sur le calendrier les journées spécial. (Cette fonctionnalité n'est malheureusement pas encore active!)
+
 
 [![N|Solid](https://cldup.com/REqErZxBiM-3000x3000.png)](https://nodesource.com/products/nsolid)
 
 ## Page 3
 
-The last page integrate all elements that can be found in the model choosen by the users.
-You can change Font, style, size and color.
+La dernière page represente une liste de tous les éléments qui ont pu être trouvés selon le model choisi en page 1.
+Vous pouvez y changer pour chacun de ses éléments la police, le style, la taille, et la couleur de la police, ainsi que la couleur des contours du cadre.
 
 [![N|Solid](https://cldup.com/AI3lELgAlR-3000x3000.png)](https://nodesource.com/products/nsolid)
 
@@ -29,57 +30,59 @@ You can change Font, style, size and color.
 
 # **DESCRIPTION & USAGE:**
 
-This script needs **Tkinter**, **lxml** and **shutil**. This script needs also a model as scribus file, this will be useful for the generation in space for the calendar.
-It will create a GUI with available options
-for easy calendar page creation. You'll get new pages with calendar
-tables into a new document based on the model you asked for. Position of the
-objects in page is calculated with the original box in the model.
+Ce script est dépendant de **Tkinter**, **lxml** et **shutil**. Normalement uniquement lxml n'est pas intégrer nativement.
+Mais ce script à aussi besoin d'un model, dans le format de fichier de scribus, cela sera utile pour la génération du calendrier.
+Ce script créera une interface avec différentes options activable pour la création facile d'une page de calendrier.
+A la fin, vous obtiendrez un nouveau document scribus avec votre calendrier auto-générer d'après les dates que vous avez demandé.
+Les positions des objets dans la page sont calculé d'après les objets du model.
 
-## Steps to create calendar:
-- 1) Choose an existing model or import a new one
-- 2) Fill requested values in the second and third page of the Calendar dialogue
-- 3) Press Finnish and the new document is auto generated from the model.
 
-There are 4 types of calender supported yet:
+## Etape pour créer un calendrier :
+- 1) Choisisez un model existant ou importez en un
+- 2) Cochez et cliquez sur les valeurs et option que vous voulez dans les pages 2 et 3
+- 3) Appuyez 'Finnish' et le document sera auto-générer d'après le model selectionné
+
+Il y a 4 types de calendrier supporté pour le moment:
 - Year calendar with all months matrix on one page.
 - Month calendar with one month matrix per page.
 - Week calendar with only the week matrix per page.
 - Day calendar which represent one day with hours per page.
 
-## Steps to create model:
+## Etape pour créer un model de calendrier:
 
-- 1) Create new scribus document, with right size, marge and orientation that you want.
-- 2) Draw textBox in your model which regroup elements
-- 3) Rename textBox in the property
+- 1) Créez un nouveau document scribus avec les proportions et les marge que vous voulez.
+- 2) Dessinez vos texBox dans votre model.
+- 3) Renomez les textBox dans les propriétés avec les noms correspondant.
 
-Beware, the names of boxes are very important, this script recognize all these explicit keyword :
+Attention, les noms des objets sont extremement important, voici une liste de nom explicite qu'il reconnaît :
 
-| Element Key | Necessity | Contains |
+| Element clef | Necessité | Contient |
 | ------ | ------ | ------ |
-| month_box | Necessary | The string of the current month
-| week_box | Necessary | The string of each days of the week |
-| days_box | Necessary | The days number |
-| image_box | Optional | The image |
-| num_week_box | Optional | The number of the week |
-| name_week_box | Optional | The string of the "num_week_box" |
-| next_month_box | Optional | The string of the next month |
-| next_week_box | Necessary if | next_month_box|
-| next_days_box | Necessary if | next_month_box |
-| next_image_box | Optional | The image for the next month|
-| next_num_week_box | Optional | The number of the week |
-| next_name_week_box | Optional | The string of the "next_num_week_box" |
-| prev_month_box | Optional | |
-| prev_image_box | Optional | |
-| prev_week_box | Necessary | if prev_month_box |
-| prev_days_box	| Necessary | if prev_month_box |
-| prev_num_week_box | Optional | |
-| next_name_week_box | Optional | |
+| month_box | Necessaire | Le string du mois courant |
+| week_box | Necessaire | Le string de chaque jour de la semaine |
+| days_box | Necessaire | Le string du nombre du jour |
+| image_box | Optionel | L'image |
+| num_week_box | Optionel | Le numéro de la semaine |
+| name_week_box | Optionel | Le string de la colonne du numéro de la semaine |
+| next_month_box | Optionel | Le string du mois suivant |
+| next_week_box | Necessaire if | next_month_box| ... |
+| next_days_box | Necessaire if | next_month_box | ... |
+| next_image_box | Optionel | ... |
+| next_num_week_box | Optionel | ... |
+| next_name_week_box | Optionel | ... |
+| prev_month_box | Optionel | ... |
+| prev_image_box | Optionel | ... |
+| prev_week_box | Necessaire | si prev_month_box |
+| prev_days_box	| Necessaire | si prev_month_box |
+| prev_num_week_box | Optionel | |
+| next_name_week_box | Optionel | |
 
 ##### Exemple : 
 [![N|Solid](https://cldup.com/8ew_xCdyM_-3000x3000.png)](https://nodesource.com/products/nsolid)
 
-For year model, as the image, add number to the end of string from 1.
-In case of many images, add number to the end of string from 1.
+Pour le model 'year', comme l'image, ajoutez à la fin du string du nom des chiffres, à partir de 1.
+Si il y a plusieurs images, faire la même chose
+
 ##### Exemple : 
     month_box1
 

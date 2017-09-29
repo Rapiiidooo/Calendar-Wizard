@@ -1,29 +1,7 @@
 TODO:
 
-- PARSING MARGING - DONE
-- APPLY MODEL AFTER PARSING - DONE
+- CHECK STYLES (scribus styles) like p_style_date ... I think it doesn't work properly ...
 
+- ADD SMOOTH INTERACTION IN PAGE 3 - This is not intuitive ...
 
-- Set correct days - DONE
-
-- Correct set_month in class Document - DONE
-
------- BUG ON NEXT MONTH - CORRECTED
-
-
-- SUPPORT Day Calendar / Day model
-- SUPPORT Week Calendar / Week model
-- SUPPORT Year Calendar / Year model
-
--VERIFIER les styles (scribus styles) like p_style_date ...
-
-
-<para ALIGN="1"/>
-<para ALIGN="1"/>
-<ITEXT CH="08:00"/>
-<trail ALIGN="1"/>
-
-createLine(x1, y1, x2, y2, ["nom"]) -> chaîne
-
-
-remplacer, str(...) by : cel
+- SHOW AND UNSHOW RIGHT BUTTON AFTER CHECKING THE MODEL
