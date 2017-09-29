@@ -4,6 +4,8 @@ This script is not hard to use. You have got some initial model, and you can per
 
 ## Getting Started
 
+How to use !
+
 ### Linux installation
 
 * Automatic : Run install.sh as sudo and it will copy all the files about the script (for a common installation).
