@@ -811,7 +811,6 @@ class TkCalendar(Tk.Frame):
                 progressSet(imonth)
                 my_document.set_month(self.year_var, month + 1)
                 cal = my_document.mycal.monthdatescalendar(self.year_var, month + 1)
-                # TODO CORRECT THIS...
 
                 for week in cal:
                     newPage(-1)
@@ -1620,7 +1619,7 @@ class TkCalendar(Tk.Frame):
                                                   ('all files', '.*')])
             # In case of error or cancel
             if len(filename) <= 0:
-                filename = "croix.png"
+                filename = "img/croix.png"
             else:
                 self.path_image = filename
 
@@ -1924,7 +1923,7 @@ class TkCalendar(Tk.Frame):
         Checkbutton(self.frame3_frame_img_button,
                     variable=self.check_option_keep_proportion,
                     command=self.get_keep_proportion).pack(padx=30)
-        self.photo_frame3 = PhotoImage(file="croix.png")
+        self.photo_frame3 = PhotoImage(file="./img/croix.png")
         self.preview_canvas_frame3 = Canvas(self.frame3_frame_img_preview,
                                             width=200, height=150)
         self.photo_img_frame3 = self.preview_canvas_frame3.create_image(

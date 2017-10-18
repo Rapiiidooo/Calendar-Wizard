@@ -1,15 +1,18 @@
 #!/bin/sh
 
 USUALPATH="/usr/share/scribus/scripts/"
+USUALPATHIMG="/usr/share/scribus/scripts/img"
 set -x
 
-if cp $PWD/CalendarWizard2.py $USUALPATH
+mkdir USUALPATHIMG
+
+if cp $PWD/src/CalendarWizard2.py $USUALPATH
 then
-    if cp $PWD/croix.png $USUALPATH
+    if cp $PWD/src/img/croix.png $USUALPATHIMG
     then
-        if cp -R $PWD/format/ $USUALPATH
+        if cp -R $PWD/src/format/ $USUALPATH
         then
-            if cp -R $PWD/models/ $USUALPATH
+            if cp -R $PWD/src/models/ $USUALPATH
             then
                 echo "Success"
             else
