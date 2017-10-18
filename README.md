@@ -2,7 +2,7 @@
 
 This script is not hard to use. You have got some initial model, and you can perform your own model.
 
-## Getting Started
+## Getting Started
 
 ### Linux installation
 
