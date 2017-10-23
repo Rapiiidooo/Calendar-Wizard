@@ -34,15 +34,31 @@ then
     then
         if rm ${USUALPATH}CalendarWizard2.py
         then
-            if rm -r ${USUALPATHIMG}
+            if rm -r ${USUALPATHIMG}croix.png
             then
-                if rm -R ${USUALPATH}format/
+                if [ -n "$(ls -A ${USUALPATHIMG})" ]
                 then
-                    if rm -R ${USUALPATH}models/
+                    if rm -R ${USUALPATH}format/
                     then
-                        echo "Success"
-                        echo "Remove Done !"
-                        echo "You now can not use CalendarWizard2 script anymore."
+                        if rm -R ${USUALPATH}models/
+                        then
+                            echo "Success"
+                            echo "Remove Done !"
+                            echo "You now can not use CalendarWizard2 script anymore."
+                        fi
+                    fi
+                else
+                    if rm -r ${USUALPATHIMG}
+                    then
+                        if rm -R ${USUALPATH}format/
+                        then
+                            if rm -R ${USUALPATH}models/
+                            then
+                                echo "Success"
+                                echo "Remove Done !"
+                                echo "You now can not use CalendarWizard2 script anymore."
+                            fi
+                        fi
                     fi
                 fi
             fi
