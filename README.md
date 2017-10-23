@@ -39,14 +39,24 @@ This is an advanced 'Calendar creation wizard' for Scribus. It's inspired from C
 In page 1 : Select the type and choose the right model as your wishes. Then you have got the preview as the model pre-selected, then press next.
 You can if you have it, a new model by pressing the button "Import model".
 
+![alt text](screenshots/1.png "Represent the first page")
+
 In page 2 : You can choose the language and the different month, which will be implements to your calendar, this is pretty the same look as Calendar Wizard 2.
 But you can also choose if you want the number of the week, if you want the right full name of the day, and if you wanna show the days before and after the current month.
 You can also import an ICS file to match with special days. (Unfortunatly this utility does'nt work yet !)
 
+![alt text](screenshots/2.png "Represent the second page")
+
 In page 3 : It integrate all elements that can be found in the model choosen by the users.
 You can change Font, style, size and color.
 
-## Usage:
+![alt text](screenshots/3.png "Represent the third page")
+
+## Exemple
+
+![alt text](screenshots/example.png "An example of generated calendar")
+
+## Usage
 This script needs a model as scribus file because it will parse your model.
 It will create a GUI with available options
 for easy calendar page creation. You'll get new pages with calendar
