@@ -6,11 +6,6 @@ This script is not hard to use. You have got some initial model, and you can per
 
 ### Linux install
 
-* Automatic : Run install.sh as sudo and it will copy all the files about the script (for a common installation).
-```
-sudo ./install.sh
-```
-
 * Manual :
 ```
 cp ./CalendarWizard2.py /your/scribus/location/of/scripts
@@ -27,10 +22,6 @@ cp -R ./models/ /your/scribus/location/of/scripts
 
 Copy files and directory : CalendarWizard2.py, croix.png, format, models into /scripts in your PATH installation.
 
-### Linux uninstall
-```
-sudo ./install.sh remove
-```
 
 ## Description
 
