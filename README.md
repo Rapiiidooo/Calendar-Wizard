@@ -52,7 +52,7 @@ You can change Font, style, size and color.
 
 ![alt text](screenshots/3.png "Represent the third page")
 
-## Exemple
+## Example
 
 ![alt text](screenshots/example.png "An example of generated calendar")
 
