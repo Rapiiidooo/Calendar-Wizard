@@ -13,10 +13,11 @@ sudo ./install.sh
 
 * Manual :
 ```
-cp ./CalendarWizard2.py /your/scribus/location//of/scripts
-cp ./croix.png /your/scribus/location//of/scripts
-cp -R ./format/ /your/scribus/location//of/scripts
-cp -R ./models/ /your/scribus/location//of/scripts
+cp ./CalendarWizard2.py /your/scribus/location/of/scripts
+mkdir /your/scribus/location/of/scripts/img
+cp ./croix.png /your/scribus/location/of/scripts/img
+cp -R ./format/ /your/scribus/location/of/scripts
+cp -R ./models/ /your/scribus/location/of/scripts
 ```
 ##### Dependencies : 
 * ```sudo apt-get install python-lxml```
@@ -25,6 +26,11 @@ cp -R ./models/ /your/scribus/location//of/scripts
 ### Windows
 
 Copy files and directory : CalendarWizard2.py, croix.png, format, models into /scripts in your PATH installation.
+
+### Linux Uninstallation
+```
+sudo ./install.sh remove
+```
 
 ## Description
 

@@ -1,26 +1,53 @@
 #!/bin/sh
+#!/bin/bash
 
 USUALPATH="/usr/share/scribus/scripts/"
-USUALPATHIMG="/usr/share/scribus/scripts/img"
-set -x
+USUALPATHIMG="/usr/share/scribus/scripts/img/"
 
-mkdir USUALPATHIMG
-
-if cp $PWD/src/CalendarWizard2.py $USUALPATH
+if [ $# -lt 1 ]
 then
-    if cp $PWD/src/img/croix.png $USUALPATHIMG
+    if cp ${PWD}/src/CalendarWizard2.py ${USUALPATH}
     then
-        if cp -R $PWD/src/format/ $USUALPATH
+        if [ ! -d "$USUALPATHIMG" ]; then
+            mkdir ${USUALPATHIMG}
+        fi
+        if cp ${PWD}/src/img/croix.png ${USUALPATHIMG}
         then
-            if cp -R $PWD/src/models/ $USUALPATH
+            if cp -R ${PWD}/src/format/ ${USUALPATH}
             then
-                echo "Success"
-            else
-                echo "Failure, exit status $?"
+                if cp -R ${PWD}/src/models/ ${USUALPATH}
+                then
+                    echo "Success"
+                    echo "Installation Done !"
+                    echo "You can run Scribus and use CalendarWizard2 script."
+                else
+                    echo "Failure, exit status $?"
+                fi
             fi
         fi
     fi
 fi
 
-echo "Installation Done !"
-echo "You can run Scribus and use CalendarWizard2 script."
+if [ $# -ne 2 ]
+then
+    if [ "$1" = "remove" ]
+    then
+        if rm ${USUALPATH}CalendarWizard2.py
+        then
+            if rm -r ${USUALPATHIMG}
+            then
+                if rm -R ${USUALPATH}format/
+                then
+                    if rm -R ${USUALPATH}models/
+                    then
+                        echo "Success"
+                        echo "Remove Done !"
+                        echo "You now can not use CalendarWizard2 script anymore."
+                    fi
+                fi
+            fi
+        fi
+    fi
+else
+    echo "Wrong usage : sudo $0 or sudo $0 remove"
+fi

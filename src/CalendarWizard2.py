@@ -1,4 +1,22 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+
+"""
+    This is an update of 'Calendar creation wizard' for Scribus. 
+    Thanks to Petr Vanek and Bernhard Reiter from Scribus scripts. Enjoy.
+
+    Check README.md for more documentation
+
+    AUTHORS:
+        Vincent Le Jeune <vincent.ljeune@gmail.com>
+    
+    LICENSE:
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+"""
 
 import calendar
 import datetime
@@ -199,20 +217,34 @@ class BoxObject:
 
     def __init__(self, xpos, ypos, width, height, anname, img, text, font='',
                  font_size='', color='', line_color=''):
-        self.xpos = xpos  # position x of an object
-        self.ypos = ypos  # position y of an object
-        self.width = width  # the width of an object
-        self.height = height  # the height of an object
-        self.anname = anname  # the name of an object
-        self.img = img  # boolean val, true for an image
-        self.font = font  # font style for this object
-        self.font_size = font_size  # font size for this object
-        self.color = color  # text color of an object
-        self.line_color = line_color  # outline color of an object
-        self.path_img = ''  # init path of an image to empty
-        self.fit_to_box = False  # option image : fit to object
-        self.keep_proportion = False  # option image : keep the proportion
-        self.text = text  # text inside of an object
+        ## position x of an object
+        self.xpos = xpos
+        ## position y of an object
+        self.ypos = ypos
+        # the width of an object
+        self.width = width
+        ## the height of an object
+        self.height = height
+        ## the name of an object
+        self.anname = anname
+        ## boolean val, true for an image
+        self.img = img
+        ## font style for this object
+        self.font = font
+        ## font size for this object
+        self.font_size = font_size
+        ## text color of an object
+        self.color = color
+        ## outline color of an object
+        self.line_color = line_color
+        ## init path of an image to empty
+        self.path_img = ''
+        ## option image : fit to object
+        self.fit_to_box = False
+        ## option image : keep the proportion
+        self.keep_proportion = False
+        ## text inside of an object
+        self.text = text
 
     def attrib_font(self, font, font_size, color, line_color):
         """ Button which attribute the font, size, color and outline color
@@ -221,7 +253,8 @@ class BoxObject:
         self.font = font
         self.font_size = font_size
         self.color = color
-        self.line_color = line_color  # outline color
+        ## outline color
+        self.line_color = line_color
 
 
 class Document:
@@ -1363,47 +1396,47 @@ class TkCalendar(Tk.Frame):
         self.action_select_month(None)
 
     def get_short_day(self):
-        """ Callback to get value of check_option_short_day """
+        """ Getter to get value of check_option_short_day """
 
         self.short_day_name = bool(self.check_option_short_day.get())
 
     def get_next_short_day(self):
-        """ Callback to get value of check_option_next_short_day """
+        """ Getter to get value of check_option_next_short_day """
 
         self.next_short_day_name = bool(self.check_option_next_short_day.get())
 
     def get_prev_short_day(self):
-        """ Callback to get value of check_option_prev_short_day """
+        """ Getter to get value of check_option_prev_short_day """
 
         self.prev_short_day_name = bool(self.check_option_prev_short_day.get())
 
     def get_prev_day(self):
-        """ Callback to get value of check_option_prev_day """
+        """ Getter to get value of check_option_prev_day """
 
         self.prev_day_name = self.check_option_prev_day.get()
 
     def get_next_day(self):
-        """ Callback to get value of check_option_next_day """
+        """ Getter to get value of check_option_next_day """
 
         self.next_day_name = self.check_option_next_day.get()
 
     def get_year(self):
-        """ Callback to get value of frame2_spinbox_year """
+        """ Getter to get value of frame2_spinbox_year """
 
         self.year_var = int(self.frame2_spinbox_year.get())
 
     def get_font_size(self):
-        """ Callback to get value of frame3_spinbox_size """
+        """ Getter to get value of frame3_spinbox_size """
 
         self.font_size = int(self.frame3_spinbox_size.get())
 
     def get_fit_to_box(self):
-        """ Callback checkoption of check_option_fit_to_box """
+        """ Getter checkoption of check_option_fit_to_box """
 
         self.fit_to_box = bool(self.check_option_fit_to_box.get())
 
     def get_keep_proportion(self):
-        """ Callback checkoption of check_option_keep_proportion """
+        """ Getter checkoption of check_option_keep_proportion """
 
         self.keep_proportion = bool(self.check_option_keep_proportion.get())
 
