@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 
 """
     This is an update of 'Calendar creation wizard' for Scribus. 
@@ -35,7 +33,6 @@ import Tkinter as Tk
 
 try:
     import scribus
-    from scribus import *
 except ImportError:
     print('This Python script is written for the Scribus scripting interface.')
     quit(1)
@@ -653,15 +650,15 @@ class TkCalendar(Tk.Frame):
 
         try:
             # Create the Scribus New Document with right proportions
-            if not newDocument((size_document[my_document.size][0],
+            if not scribus.newDocument((size_document[my_document.size][0],
                                 size_document[my_document.size][1]),
                                (my_document.border_left,
                                 my_document.border_right,
                                 my_document.border_top,
                                 my_document.border_bottom),
-                               my_document.orientation, 1, UNIT_POINTS,
-                               NOFACINGPAGES,
-                               FIRSTPAGELEFT, 1):
+                               my_document.orientation, 1, scribus.UNIT_POINTS,
+                               scribus.NOFACINGPAGES,
+                               scribus.FIRSTPAGELEFT, 1):
                 print 'Create a new document first, please'
                 return
             # Attrib all font to right container
@@ -677,7 +674,7 @@ class TkCalendar(Tk.Frame):
                             color = tuple(
                                 int(h[i:i + 2], 16) for i in (0, 2, 4))
                             self.font_list[i.anname][2] = 'new_color' + str(ii)
-                            defineColorRGB(self.font_list[i.anname][2],
+                            scribus.defineColorRGB(self.font_list[i.anname][2],
                                            color[0], color[1], color[2])
                         if '#' in self.font_list[i.anname][3]:
                             h = self.font_list[i.anname][3].lstrip('#')
@@ -685,7 +682,7 @@ class TkCalendar(Tk.Frame):
                                 int(h[i:i + 2], 16) for i in (0, 2, 4))
                             self.font_list[i.anname][
                                 3] = 'new_line_color' + str(ii)
-                            defineColorRGB(self.font_list[i.anname][3],
+                            scribus.defineColorRGB(self.font_list[i.anname][3],
                                            color[0], color[1], color[2])
 
                         i.attrib_font(self.font_list[i.anname][0],
@@ -699,13 +696,13 @@ class TkCalendar(Tk.Frame):
                 self.create_day_calendar(my_document)
                 pass
             elif self.frame1_config_type_string_selected == 'Week':
-                progressTotal(len(self.frame2_config_month_string_selected))
+                scribus.progressTotal(len(self.frame2_config_month_string_selected))
                 self.create_week_calendar(my_document)
             elif self.frame1_config_type_string_selected == 'Month':
-                progressTotal(len(self.frame2_config_month_string_selected))
+                scribus.progressTotal(len(self.frame2_config_month_string_selected))
                 self.create_month_calendar(my_document)
             elif self.frame1_config_type_string_selected == 'Year':
-                progressTotal(len(my_document.box_container) * len(
+                scribus.progressTotal(len(my_document.box_container) * len(
                     self.frame2_config_month_string_selected))
                 self.create_year_calendar(my_document)
 
@@ -722,15 +719,15 @@ class TkCalendar(Tk.Frame):
     def create_day_calendar(self, my_document):
         """ Method to create the calendar from days based models """
         try:
-            createParagraphStyle(name=self.p_style_year,
+            scribus.createParagraphStyle(name=self.p_style_year,
                                  alignment=1)  # alignment=1 == center
-            createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
-            createParagraphStyle(name=self.p_style_month, alignment=1)
-            createParagraphStyle(name=self.p_style_week, alignment=1)
-            createParagraphStyle(name=self.p_style_name_week,
-                                 alignment=ALIGN_RIGHT)
-            createParagraphStyle(name=self.p_style_num_week,
-                                 alignment=ALIGN_RIGHT)
+            scribus.createParagraphStyle(name=self.p_style_days, alignment=scribus.ALIGN_RIGHT)
+            scribus.createParagraphStyle(name=self.p_style_month, alignment=1)
+            scribus.createParagraphStyle(name=self.p_style_week, alignment=1)
+            scribus.createParagraphStyle(name=self.p_style_name_week,
+                                 alignment=scribus.ALIGN_RIGHT)
+            scribus.createParagraphStyle(name=self.p_style_num_week,
+                                 alignment=scribus.ALIGN_RIGHT)
 
             run = 0
             total = 0
@@ -739,7 +736,7 @@ class TkCalendar(Tk.Frame):
                     self.frame2_config_month_string_selected):
                 my_document.mycal.monthdatescalendar(self.year_var, month + 1)
                 total += monthrange(self.year_var, month + 1)[1]
-            progressTotal(total)
+                scribus.progressTotal(total)
 
             # the begining of creation of the objects to the document
 
@@ -754,69 +751,69 @@ class TkCalendar(Tk.Frame):
                     # loop for the number of day in the current week
                     for iday, day in enumerate(week):
                         if day.month == month + 1:
-                            newPage(-1)
+                            scribus.newPage(-1)
                             # loop go through to of the box list based from
                             # the model
                             for i in my_document.box_container:
                                 if i.anname == "week_box":
-                                    cel = createText(i.xpos, i.ypos, i.width,
+                                    cel = scribus.createText(i.xpos, i.ypos, i.width,
                                                      i.height,
                                                      str(i.anname) + str(run))
-                                    setText(my_document.day_order[iday], cel)
-                                    setStyle(self.p_style_week, cel)
-                                    selectText(0, 0, cel)
-                                    setFont(i.font, cel)
-                                    setFontSize(i.font_size, cel)
-                                    setTextColor(i.color, cel)
+                                    scribus.setText(my_document.day_order[iday], cel)
+                                    scribus.setStyle(self.p_style_week, cel)
+                                    scribus.selectText(0, 0, cel)
+                                    scribus.setFont(i.font, cel)
+                                    scribus.setFontSize(i.font_size, cel)
+                                    scribus.setTextColor(i.color, cel)
                                     if i.line_color != 'None':
-                                        setLineColor(i.line_color, cel)
+                                        scribus.setLineColor(i.line_color, cel)
                                 elif i.anname == "days_box":
-                                    cel = createText(i.xpos, i.ypos, i.width,
+                                    cel = scribus.createText(i.xpos, i.ypos, i.width,
                                                      i.height,
                                                      str(i.anname) + str(run))
-                                    setText(str(day.day), cel)
-                                    setStyle(self.p_style_week, cel)
-                                    selectText(0, 0, cel)
-                                    setFont(i.font, cel)
-                                    setFontSize(i.font_size, cel)
-                                    setTextColor(i.color, cel)
+                                    scribus.setText(str(day.day), cel)
+                                    scribus.setStyle(self.p_style_week, cel)
+                                    scribus.selectText(0, 0, cel)
+                                    scribus.setFont(i.font, cel)
+                                    scribus.setFontSize(i.font_size, cel)
+                                    scribus.setTextColor(i.color, cel)
                                     if i.line_color != 'None':
-                                        setLineColor(i.line_color, cel)
+                                        scribus.setLineColor(i.line_color, cel)
                                 elif i.anname == "month_box":
-                                    cel = createText(i.xpos, i.ypos, i.width,
+                                    cel = scribus.createText(i.xpos, i.ypos, i.width,
                                                      i.height,
                                                      str(i.anname) + str(run))
-                                    setText(localization[self.lang][0][month],
+                                    scribus.setText(localization[self.lang][0][month],
                                             cel)
-                                    setStyle(self.p_style_week, cel)
-                                    selectText(0, 0, cel)
-                                    setFont(i.font, cel)
-                                    setFontSize(i.font_size, cel)
-                                    setTextColor(i.color, cel)
+                                    scribus.setStyle(self.p_style_week, cel)
+                                    scribus.selectText(0, 0, cel)
+                                    scribus.setFont(i.font, cel)
+                                    scribus.setFontSize(i.font_size, cel)
+                                    scribus.setTextColor(i.color, cel)
                                     if i.line_color != 'None':
-                                        setLineColor(i.line_color, cel)
+                                        scribus.setLineColor(i.line_color, cel)
                                 elif i.anname == "image_box":
-                                    createImage(i.xpos, i.ypos, i.width,
+                                    scribus.createImage(i.xpos, i.ypos, i.width,
                                                 i.height,
                                                 str(i.anname) + str(run))
                                     if i.path_img != "":
                                         print i.path_img
-                                        loadImage(i.path_img,
+                                        scribus.loadImage(i.path_img,
                                                   str(i.anname) + str(run))
-                                        setScaleImageToFrame(i.fit_to_box,
+                                        scribus.setScaleImageToFrame(i.fit_to_box,
                                                              i.keep_proportion,
                                                              str(i.anname) +
                                                              str(run))
                                 elif i.anname[0:4] == "line":
-                                    cel = createLine(i.xpos, i.ypos,
+                                    cel = scribus.createLine(i.xpos, i.ypos,
                                                      i.xpos + i.width,
                                                      i.ypos + i.height,
                                                      str(i.anname) + str(run))
                                     if i.line_color != 'None':
-                                        setLineColor(i.line_color, cel)
+                                        scribus.setLineColor(i.line_color, cel)
                             run += 1
-                            progressSet(run)
-            deletePage(1)
+                            scribus.progressSet(run)
+            scribus.deletePage(1)
         except Exception as e:
             show_error(
                 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno) + type(
@@ -825,14 +822,14 @@ class TkCalendar(Tk.Frame):
     def create_week_calendar(self, my_document):
         """ Method to create the calendar from week based models """
 
-        createParagraphStyle(name=self.p_style_year,
+        scribus.createParagraphStyle(name=self.p_style_year,
                              alignment=1)  # alignment=1 == center
-        createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
-        createParagraphStyle(name=self.p_style_month, alignment=1)
-        createParagraphStyle(name=self.p_style_week, alignment=1)
-        createParagraphStyle(name=self.p_style_name_week,
-                             alignment=ALIGN_RIGHT)
-        createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
+        scribus.createParagraphStyle(name=self.p_style_days, alignment=scribus.ALIGN_RIGHT)
+        scribus.createParagraphStyle(name=self.p_style_month, alignment=1)
+        scribus.createParagraphStyle(name=self.p_style_week, alignment=1)
+        scribus.createParagraphStyle(name=self.p_style_name_week,
+                             alignment=scribus.ALIGN_RIGHT)
+        scribus.createParagraphStyle(name=self.p_style_num_week, alignment=scribus.ALIGN_RIGHT)
 
         # imonth is used for scribus progressbar
         # re-draw new document from the model base
@@ -841,12 +838,12 @@ class TkCalendar(Tk.Frame):
             run = 0
             for imonth, month in enumerate(
                     self.frame2_config_month_string_selected):
-                progressSet(imonth)
+                scribus.progressSet(imonth)
                 my_document.set_month(self.year_var, month + 1)
                 cal = my_document.mycal.monthdatescalendar(self.year_var, month + 1)
 
                 for week in cal:
-                    newPage(-1)
+                    scribus.newPage(-1)
 
                     nb_days_in_current_week = 0
                     for day in week:
@@ -863,7 +860,7 @@ class TkCalendar(Tk.Frame):
 
                     for i in my_document.box_container:
                         if i.anname == "month_box":
-                            cel = createText(i.xpos, i.ypos, i.width, i.height,
+                            cel = scribus.createText(i.xpos, i.ypos, i.width, i.height,
                                              str(i.anname) + str(run))
                             iday = 0
                             if self.prev_day_name is not 1 and week[iday].month < month + 1:
@@ -871,17 +868,17 @@ class TkCalendar(Tk.Frame):
                                     while week[iday].month != month + 1:
                                         iday += 1
 
-                            setText("\n" + str(week[iday].day) + "\t" +
+                            scribus.setText("\n" + str(week[iday].day) + "\t" +
                                     localization[self.lang][0][
                                         week[iday].month - 1] + "\t" +
                                     str(self.year_var), cel)
-                            setStyle(self.p_style_month, cel)
-                            selectText(0, 0, cel)
-                            setFont(i.font, cel)
-                            setFontSize(i.font_size, cel)
-                            setTextColor(i.color, cel)
+                            scribus.setStyle(self.p_style_month, cel)
+                            scribus.selectText(0, 0, cel)
+                            scribus.setFont(i.font, cel)
+                            scribus.setFontSize(i.font_size, cel)
+                            scribus.setTextColor(i.color, cel)
                             if i.line_color != 'None':
-                                setLineColor(i.line_color, cel)
+                                scribus.setLineColor(i.line_color, cel)
                         elif i.anname == "week_box":
                             j = 0
                             for iday, day in enumerate(week):
@@ -889,21 +886,21 @@ class TkCalendar(Tk.Frame):
                                         and day.month < month + 1 \
                                         or self.next_day_name is 1 \
                                         and day.month > month + 1:
-                                    cel = createText(i.xpos + j * (
+                                    cel = scribus.createText(i.xpos + j * (
                                         i.width / nb_days_in_current_week),
                                         i.ypos,
                                         i.width / nb_days_in_current_week,
                                         i.height,
                                         str(i.anname) + str(run))
-                                    setText("\n" + my_document.day_order[
+                                    scribus.setText("\n" + my_document.day_order[
                                         iday] + "\t" + str(day.day), cel)
-                                    setStyle(self.p_style_week, cel)
-                                    selectText(0, 0, cel)
-                                    setFont(i.font, cel)
-                                    setFontSize(i.font_size, cel)
-                                    setTextColor(i.color, cel)
+                                    scribus.setStyle(self.p_style_week, cel)
+                                    scribus.selectText(0, 0, cel)
+                                    scribus.setFont(i.font, cel)
+                                    scribus.setFontSize(i.font_size, cel)
+                                    scribus.setTextColor(i.color, cel)
                                     if i.line_color != 'None':
-                                        setLineColor(i.line_color, cel)
+                                        scribus.setLineColor(i.line_color, cel)
                                     j += 1
                         elif i.anname[0:19] == "containers_week_box":
                             j = 0
@@ -912,51 +909,51 @@ class TkCalendar(Tk.Frame):
                                         and day.month < month + 1 \
                                         or self.next_day_name is 1 \
                                         and day.month > month + 1:
-                                    createText(i.xpos + j * (
+                                    scribus.createText(i.xpos + j * (
                                         i.width / nb_days_in_current_week),
                                                i.ypos,
                                                i.width / nb_days_in_current_week,
                                                i.height, str(i.anname) + str(run))
                                     j += 1
                         elif i.anname[0:9] == "container":
-                            cel = createText(i.xpos, i.ypos, i.width, i.height,
+                            cel = scribus.createText(i.xpos, i.ypos, i.width, i.height,
                                              str(i.anname) + str(run))
-                            setText("\n" + i.text, cel)
-                            setStyle(self.p_style_month, cel)
-                            selectText(0, 0, cel)
-                            setFont(i.font, cel)
-                            setFontSize(i.font_size, cel)
-                            setTextColor(i.color, cel)
+                            scribus.setText("\n" + i.text, cel)
+                            scribus.setStyle(self.p_style_month, cel)
+                            scribus.selectText(0, 0, cel)
+                            scribus.setFont(i.font, cel)
+                            scribus.setFontSize(i.font_size, cel)
+                            scribus.setTextColor(i.color, cel)
                             if i.line_color != 'None':
-                                setLineColor(i.line_color, cel)
+                                scribus.setLineColor(i.line_color, cel)
                         elif i.anname[0:4] == "line":
-                            cel = createLine(i.xpos, i.ypos,
+                            cel = scribus.createLine(i.xpos, i.ypos,
                                              i.xpos + i.width,
                                              i.ypos + i.height,
                                              str(i.anname) + str(run))
                             if i.line_color != 'None':
-                                setLineColor(i.line_color, cel)
+                                scribus.setLineColor(i.line_color, cel)
                         else:
-                            cel = createText(i.xpos, i.ypos, i.width, i.height,
+                            cel = scribus.createText(i.xpos, i.ypos, i.width, i.height,
                                              str(i.anname) + str(run))
-                            selectText(0, 0, cel)
-                            setFont(i.font, cel)
-                            setFontSize(i.font_size, cel)
-                            setTextColor(i.color, cel)
+                            scribus.selectText(0, 0, cel)
+                            scribus.setFont(i.font, cel)
+                            scribus.setFontSize(i.font_size, cel)
+                            scribus.setTextColor(i.color, cel)
                             if i.line_color != 'None':
-                                setLineColor(i.line_color, cel)
+                                scribus.setLineColor(i.line_color, cel)
                     # loop to refresh the string number of "end of week"
                     while self.next_day_name is not 1 \
                             and week[iday].month > month + 1:
                         iday -= 1
-                    insertText(" / " + str(week[iday].day) + "\t" +
+                        scribus.insertText(" / " + str(week[iday].day) + "\t" +
                                localization[self.lang][0][week[iday].month - 1]
                                + "\t" + str(self.year_var), -1,
                                "month_box" + str(run))
                     run += 1
-                progressSet(imonth + 1)
+                scribus.progressSet(imonth + 1)
             # delete first empty page
-            deletePage(1)
+            scribus.deletePage(1)
         except Exception as e:
             show_error(
                 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno) + type(
@@ -965,19 +962,19 @@ class TkCalendar(Tk.Frame):
     def create_month_calendar(self, my_document):
         """ Method to create the calendar from month based models """
 
-        createParagraphStyle(name=self.p_style_year,
+        scribus.createParagraphStyle(name=self.p_style_year,
                              alignment=1)  # alignment=1 == center
-        createParagraphStyle(name=self.p_style_days, alignment=ALIGN_RIGHT)
-        createParagraphStyle(name=self.p_style_month, alignment=1)
-        createParagraphStyle(name=self.p_style_week, alignment=1)
-        createParagraphStyle(name=self.p_style_name_week,
-                             alignment=ALIGN_RIGHT)
-        createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
+        scribus.createParagraphStyle(name=self.p_style_days, alignment=scribus.ALIGN_RIGHT)
+        scribus.createParagraphStyle(name=self.p_style_month, alignment=1)
+        scribus.createParagraphStyle(name=self.p_style_week, alignment=1)
+        scribus.createParagraphStyle(name=self.p_style_name_week,
+                             alignment=scribus.ALIGN_RIGHT)
+        scribus.createParagraphStyle(name=self.p_style_num_week, alignment=scribus.ALIGN_RIGHT)
 
         # run is used for scribus progressbar
         # re-draw new document from the model base
         for run, month in enumerate(self.frame2_config_month_string_selected):
-            newPage(-1)
+            scribus.newPage(-1)
             for i in my_document.box_container:
                 year = self.year_var
                 month_variable = month
@@ -1017,7 +1014,7 @@ class TkCalendar(Tk.Frame):
                     # draw and fill all days strings
                     if i.anname == "week_box" or i.anname == "next_week_box":
                         for j, name in enumerate(my_document.day_order):
-                            cel = createText((j * i.width /
+                            cel = scribus.createText((j * i.width /
                                               my_document.nb_day_usual_week) +
                                              i.xpos,
                                              i.ypos,
@@ -1032,23 +1029,23 @@ class TkCalendar(Tk.Frame):
                                     and i.anname == "next_week_box" or \
                                     self.prev_short_day_name is True \
                                     and i.anname == "prev_week_box":
-                                setText("\n" + str(name[0:3]), cel)
+                                scribus.setText("\n" + str(name[0:3]), cel)
                             else:
-                                setText("\n" + str(name), cel)
-                            setStyle(self.p_style_week, cel)
-                            selectText(0, 0, cel)
-                            setFont(i.font, cel)
-                            setFontSize(i.font_size, cel)
-                            setTextColor(i.color, cel)
+                                scribus.setText("\n" + str(name), cel)
+                            scribus.setStyle(self.p_style_week, cel)
+                            scribus.selectText(0, 0, cel)
+                            scribus.setFont(i.font, cel)
+                            scribus.setFontSize(i.font_size, cel)
+                            scribus.setTextColor(i.color, cel)
                             if i.line_color != 'None':
-                                setLineColor(i.line_color, cel)
+                                scribus.setLineColor(i.line_color, cel)
                     # draw and fill all days_box
                     elif i.anname == "days_box" or i.anname == "next_days_box":
                         h = 0
                         st = 0
                         for j, week in enumerate(cal):
                             for day in week:
-                                cel = createText(
+                                cel = scribus.createText(
                                     h * i.width /
                                     my_document.nb_day_usual_week + i.xpos,
                                     j * i.height / my_document.nb_week +
@@ -1058,143 +1055,143 @@ class TkCalendar(Tk.Frame):
                                     str(i.anname) + str(run) + '_' + str(st))
                                 if self.prev_day_name is 1 \
                                         and day.month < month_variable + 1:
-                                    setText(str(day.day), cel)
+                                    scribus.setText(str(day.day), cel)
                                 if self.next_day_name is 1 \
                                         and day.month > month_variable + 1:
-                                    setText(str(day.day), cel)
+                                    scribus.setText(str(day.day), cel)
                                 if day.month == month_variable + 1:
-                                    setText(str(day.day), cel)
-                                setStyle(self.p_style_days, cel)
-                                selectText(0, 0, str(i.anname) + str(
+                                    scribus.setText(str(day.day), cel)
+                                scribus.setStyle(self.p_style_days, cel)
+                                scribus.selectText(0, 0, str(i.anname) + str(
                                     run) + '_' + str(st))
-                                setFont(i.font,
+                                scribus.setFont(i.font,
                                         str(i.anname) + str(run) + '_' + str(
                                             st))
-                                setFontSize(i.font_size, str(i.anname) + str(
+                                scribus.setFontSize(i.font_size, str(i.anname) + str(
                                     run) + '_' + str(st))
-                                setTextColor(i.color, str(i.anname) + str(
+                                scribus.setTextColor(i.color, str(i.anname) + str(
                                     run) + '_' + str(st))
                                 if i.line_color != 'None':
-                                    setLineColor(i.line_color, cel)
+                                    scribus.setLineColor(i.line_color, cel)
                                 h += 1
                                 st += 1
                             h = 0
                     elif i.anname == "month_box" \
                             or i.anname == "next_month_box":
-                        cel = createText(i.xpos, i.ypos, i.width, i.height,
+                        cel = scribus.createText(i.xpos, i.ypos, i.width, i.height,
                                          str(i.anname) + str(run))
-                        setText(
+                        scribus.setText(
                             "\n" + localization[self.lang][0][month_variable],
                             cel)
-                        setStyle(self.p_style_month, cel)
-                        selectText(0, 0, cel)
-                        setFont(i.font, cel)
-                        setFontSize(i.font_size, cel)
-                        setTextColor(i.color, cel)
+                        scribus.setStyle(self.p_style_month, cel)
+                        scribus.selectText(0, 0, cel)
+                        scribus.setFont(i.font, cel)
+                        scribus.setFontSize(i.font_size, cel)
+                        scribus.setTextColor(i.color, cel)
                         if i.line_color != 'None':
-                            setLineColor(i.line_color, cel)
+                            scribus.setLineColor(i.line_color, cel)
                     # draw and fill name_week_box
                     elif i.anname == "name_week_box" \
                             or i.anname == "next_name_week_box":
-                        cel = createText(i.xpos, i.ypos, i.width, i.height,
+                        cel = scribus.createText(i.xpos, i.ypos, i.width, i.height,
                                          str(i.anname) + str(run))
-                        setText("\n" + "#", cel)
-                        setStyle(self.p_style_name_week, cel)
-                        selectText(0, 0, cel)
-                        setFont(i.font, cel)
-                        setFontSize(i.font_size, cel)
-                        setTextColor(i.color, cel)
+                        scribus.setText("\n" + "#", cel)
+                        scribus.setStyle(self.p_style_name_week, cel)
+                        scribus.selectText(0, 0, cel)
+                        scribus.setFont(i.font, cel)
+                        scribus.setFontSize(i.font_size, cel)
+                        scribus.setTextColor(i.color, cel)
                         if i.line_color != 'None':
-                            setLineColor(i.line_color, cel)
+                            scribus.setLineColor(i.line_color, cel)
                     # draw and fill all num_week_box
                     elif i.anname == "num_week_box" \
                             or i.anname == "next_num_week_box":
                         for j, week in enumerate(cal):
-                            cel = createText(i.xpos,
+                            cel = scribus.createText(i.xpos,
                                              j * i.height /
                                              my_document.nb_week + i.ypos,
                                              i.width,
                                              i.height / my_document.nb_week,
                                              str(i.anname) + str(j) + str(run))
                             # print the number of week near year
-                            setText("\n" + str(
+                            scribus.setText("\n" + str(
                                 datetime.date(self.year_var, week[0].month,
                                               week[0].day).isocalendar()[1]),
                                     cel)
-                            setStyle(self.p_style_num_week, cel)
-                            selectText(0, 0, cel)
-                            setFont(i.font, cel)
-                            setFontSize(i.font_size, cel)
-                            setTextColor(i.color, cel)
+                            scribus.setStyle(self.p_style_num_week, cel)
+                            scribus.selectText(0, 0, cel)
+                            scribus.setFont(i.font, cel)
+                            scribus.setFontSize(i.font_size, cel)
+                            scribus.setTextColor(i.color, cel)
                             if i.line_color != 'None':
-                                setLineColor(i.line_color, cel)
+                                scribus.setLineColor(i.line_color, cel)
                     elif i.anname[0:4] == "line":
-                        cel = createLine(i.xpos, i.ypos,
+                        cel = scribus.createLine(i.xpos, i.ypos,
                                          i.xpos + i.width,
                                          i.ypos + i.height,
                                          str(i.anname) + str(run))
                         if i.line_color != 'None':
-                            setLineColor(i.line_color, cel)
+                            scribus.setLineColor(i.line_color, cel)
                     else:
-                        createText(i.xpos, i.ypos, i.width, i.height,
+                        scribus.createText(i.xpos, i.ypos, i.width, i.height,
                                    str(i.anname) + str(run))
                 else:
-                    createImage(i.xpos, i.ypos, i.width, i.height,
+                    scribus.createImage(i.xpos, i.ypos, i.width, i.height,
                                 str(i.anname) + str(run))
                     if i.path_img != "":
                         print i.path_img
-                        loadImage(i.path_img, str(i.anname) + str(run))
-                        setScaleImageToFrame(i.fit_to_box, i.keep_proportion,
+                        scribus.loadImage(i.path_img, str(i.anname) + str(run))
+                        scribus.setScaleImageToFrame(i.fit_to_box, i.keep_proportion,
                                              str(i.anname) + str(run))
             run += 1
-            progressSet(run)
+            scribus.progressSet(run)
         # delete first empty page
-        deletePage(1)
+            scribus.deletePage(1)
 
     def create_year_calendar(self, my_document):
         """ Method to create the calendar from year based models """
-        createParagraphStyle(name=self.p_style_year,
+        scribus.createParagraphStyle(name=self.p_style_year,
                              alignment=1)  # alignment=1 == center
-        createParagraphStyle(name=self.p_style_days, alignment=ALIGN_LEFT)
-        createParagraphStyle(name=self.p_style_month, alignment=1)
-        createParagraphStyle(name=self.p_style_week, alignment=1)
-        createParagraphStyle(name=self.p_style_name_week,
-                             alignment=ALIGN_RIGHT)
-        createParagraphStyle(name=self.p_style_num_week, alignment=ALIGN_RIGHT)
+        scribus.createParagraphStyle(name=self.p_style_days, alignment=scribus.ALIGN_LEFT)
+        scribus.createParagraphStyle(name=self.p_style_month, alignment=1)
+        scribus.createParagraphStyle(name=self.p_style_week, alignment=1)
+        scribus.createParagraphStyle(name=self.p_style_name_week,
+                             alignment=scribus.ALIGN_RIGHT)
+        scribus.createParagraphStyle(name=self.p_style_num_week, alignment=scribus.ALIGN_RIGHT)
 
         # run is used for scribus progressbar
         # re-draw new document from the model base
-        newPage(-1)
+        scribus.newPage(-1)
         run = 0
         for i in my_document.box_container:
             if i.anname == "year_box":
-                cel = createText(i.xpos, i.ypos, i.width, i.height,
+                cel = scribus.createText(i.xpos, i.ypos, i.width, i.height,
                                  str(i.anname))
-                setText("\n" + str(self.year_var), cel)
-                setStyle(self.p_style_year, cel)
-                selectText(0, 0, cel)
-                setFont(i.font, cel)
-                setFontSize(i.font_size, cel)
-                setTextColor(i.color, cel)
+                scribus.setText("\n" + str(self.year_var), cel)
+                scribus.setStyle(self.p_style_year, cel)
+                scribus.selectText(0, 0, cel)
+                scribus.setFont(i.font, cel)
+                scribus.setFontSize(i.font_size, cel)
+                scribus.setTextColor(i.color, cel)
                 if i.line_color != 'None':
-                    setLineColor(i.line_color, cel)
+                    scribus.setLineColor(i.line_color, cel)
             elif i.anname == "month_box":
                 nb_month = len(self.frame2_config_month_string_selected)
                 for imonth, month in enumerate(
                         self.frame2_config_month_string_selected):
-                    cel = createText(i.xpos + (imonth * (i.width / nb_month)),
+                    cel = scribus.createText(i.xpos + (imonth * (i.width / nb_month)),
                                      i.ypos,
                                      i.width / nb_month,
                                      i.height,
                                      str(i.anname) + str(imonth))
-                    setText(localization[self.lang][0][month], cel)
-                    setStyle(self.p_style_month, cel)
-                    selectText(0, 0, cel)
-                    setFont(i.font, cel)
-                    setFontSize(i.font_size, cel)
-                    setTextColor(i.color, cel)
+                    scribus.setText(localization[self.lang][0][month], cel)
+                    scribus.setStyle(self.p_style_month, cel)
+                    scribus.selectText(0, 0, cel)
+                    scribus.setFont(i.font, cel)
+                    scribus.setFontSize(i.font_size, cel)
+                    scribus.setTextColor(i.color, cel)
                     if i.line_color != 'None':
-                        setLineColor(i.line_color, cel)
+                        scribus.setLineColor(i.line_color, cel)
             elif i.anname == "days_and_week_box":
                 nb_month = len(self.frame2_config_month_string_selected)
                 for imonth, month in enumerate(
@@ -1209,7 +1206,7 @@ class TkCalendar(Tk.Frame):
                         for iday, day in enumerate(week):
                             if day.month == month + 1:
                                 # days name
-                                cel = createText(
+                                cel = scribus.createText(
                                     i.xpos + imonth * (i.width / nb_month),
                                     i.ypos + st * (
                                         i.height /
@@ -1219,22 +1216,22 @@ class TkCalendar(Tk.Frame):
                                     my_document.nb_max_days_in_month,
                                     str(i.anname) + str(run) + '_' + str(st))
                                 if self.short_day_name is True:
-                                    setText(
+                                    scribus.setText(
                                         str(my_document.day_order[iday][0:1]),
                                         cel)
                                 else:
-                                    setText(str(my_document.day_order[iday]),
+                                    scribus.setText(str(my_document.day_order[iday]),
                                             cel)
-                                setStyle(self.p_style_week, cel)
-                                selectText(0, 0, cel)
-                                setFont(i.font, cel)
-                                setFontSize(i.font_size, cel)
-                                setTextColor(i.color, cel)
+                                scribus.setStyle(self.p_style_week, cel)
+                                scribus.selectText(0, 0, cel)
+                                scribus.setFont(i.font, cel)
+                                scribus.setFontSize(i.font_size, cel)
+                                scribus.setTextColor(i.color, cel)
                                 if i.line_color != 'None':
-                                    setLineColor(i.line_color, cel)
+                                    scribus.setLineColor(i.line_color, cel)
 
                                 # days numbers
-                                cel = createText(i.xpos + imonth * (
+                                cel = scribus.createText(i.xpos + imonth * (
                                     i.width / nb_month) + i.width /
                                     nb_month / 4,
                                     i.ypos + st * (
@@ -1245,17 +1242,17 @@ class TkCalendar(Tk.Frame):
                                     i.height /
                                     my_document.nb_max_days_in_month,
                                     str(i.anname) + str(run) + '_' + str(st))
-                                setText(str(day.day), cel)
-                                setStyle(self.p_style_days, cel)
-                                selectText(0, 0, cel)
-                                setFont(i.font, cel)
-                                setFontSize(i.font_size, cel)
-                                setTextColor(i.color, cel)
+                                scribus.setText(str(day.day), cel)
+                                scribus.setStyle(self.p_style_days, cel)
+                                scribus.selectText(0, 0, cel)
+                                scribus.setFont(i.font, cel)
+                                scribus.setFontSize(i.font_size, cel)
+                                scribus.setTextColor(i.color, cel)
                                 if i.line_color != 'None':
-                                    setLineColor(i.line_color, cel)
+                                    scribus.setLineColor(i.line_color, cel)
                                 st += 1
                     run += 1
-                    progressSet(run)
+                    scribus.progressSet(run)
             for imonth, month in enumerate(
                     self.frame2_config_month_string_selected):
                 if i.img is False:
@@ -1266,30 +1263,30 @@ class TkCalendar(Tk.Frame):
                     # draw and fill all days strings
                     if i.anname == "week_box" + str(imonth):
                         for j, name in enumerate(my_document.day_order):
-                            cel = createText(
+                            cel = scribus.createText(
                                 (j * i.width / my_document.nb_day_usual_week) +
                                 i.xpos, i.ypos,
                                 i.width / my_document.nb_day_usual_week,
                                 i.height, str(i.anname) + str(j))
                             if self.short_day_name is True \
                                     and i.anname == "week_box" + str(imonth):
-                                setText(str(name[0:2]), cel)
+                                scribus.setText(str(name[0:2]), cel)
                             else:
-                                setText(str(name), cel)
-                            setStyle(self.p_style_week, cel)
-                            selectText(0, 0, cel)
-                            setFont(i.font, cel)
-                            setFontSize(i.font_size, cel)
-                            setTextColor(i.color, cel)
+                                scribus.setText(str(name), cel)
+                            scribus.setStyle(self.p_style_week, cel)
+                            scribus.selectText(0, 0, cel)
+                            scribus.setFont(i.font, cel)
+                            scribus.setFontSize(i.font_size, cel)
+                            scribus.setTextColor(i.color, cel)
                             if i.line_color != 'None':
-                                setLineColor(i.line_color, cel)
+                                scribus.setLineColor(i.line_color, cel)
                     # draw and fill all days_box
                     elif i.anname == "days_box" + str(imonth):
                         h = 0
                         st = 0
                         for j, week in enumerate(cal):
                             for day in week:
-                                cel = createText(
+                                cel = scribus.createText(
                                     h * i.width /
                                     my_document.nb_day_usual_week + i.xpos,
                                     j * i.height / my_document.nb_week +
@@ -1298,85 +1295,85 @@ class TkCalendar(Tk.Frame):
                                     i.height / my_document.nb_week,
                                     str(i.anname) + str(st))
                                 if day.month == month + 1:
-                                    setText(str(day.day), cel)
-                                setStyle(self.p_style_days, cel)
-                                selectText(0, 0, cel)
-                                setFont(i.font, cel)
-                                setFontSize(i.font_size, cel)
-                                setTextColor(i.color, cel)
+                                    scribus.setText(str(day.day), cel)
+                                scribus.setStyle(self.p_style_days, cel)
+                                scribus.selectText(0, 0, cel)
+                                scribus.setFont(i.font, cel)
+                                scribus.setFontSize(i.font_size, cel)
+                                scribus.setTextColor(i.color, cel)
                                 if i.line_color != 'None':
-                                    setLineColor(i.line_color, cel)
+                                    scribus.setLineColor(i.line_color, cel)
                                 h += 1
                                 st += 1
                             h = 0
                     elif i.anname == "month_box" + str(imonth):
-                        cel = createText(i.xpos, i.ypos, i.width, i.height,
+                        cel = scribus.createText(i.xpos, i.ypos, i.width, i.height,
                                          str(i.anname))
-                        setText(localization[self.lang][0][month], cel)
-                        setStyle(self.p_style_month, cel)
-                        selectText(0, 0, cel)
-                        setFont(i.font, cel)
-                        setFontSize(i.font_size, cel)
-                        setTextColor(i.color, cel)
+                        scribus.setText(localization[self.lang][0][month], cel)
+                        scribus.setStyle(self.p_style_month, cel)
+                        scribus.selectText(0, 0, cel)
+                        scribus.setFont(i.font, cel)
+                        scribus.setFontSize(i.font_size, cel)
+                        scribus.setTextColor(i.color, cel)
                         if i.line_color != 'None':
-                            setLineColor(i.line_color, cel)
+                            scribus.setLineColor(i.line_color, cel)
                     # draw and fill name_week_box
                     elif i.anname == "name_week_box" + str(imonth):
-                        cel = createText(i.xpos, i.ypos, i.width, i.height,
+                        cel = scribus.createText(i.xpos, i.ypos, i.width, i.height,
                                          str(i.anname))
-                        setText("\n" + "#", cel)
-                        setStyle(self.p_style_name_week, cel)
-                        selectText(0, 0, cel)
-                        setFont(i.font, cel)
-                        setFontSize(i.font_size, cel)
-                        setTextColor(i.color, cel)
+                        scribus.setText("\n" + "#", cel)
+                        scribus.setStyle(self.p_style_name_week, cel)
+                        scribus.selectText(0, 0, cel)
+                        scribus.setFont(i.font, cel)
+                        scribus.setFontSize(i.font_size, cel)
+                        scribus.setTextColor(i.color, cel)
                         if i.line_color != 'None':
-                            setLineColor(i.line_color, cel)
+                            scribus.setLineColor(i.line_color, cel)
                     # draw and fill all num_week_box
                     elif i.anname == "num_week_box" + str(imonth):
                         for j, week in enumerate(cal):
-                            cel = createText(i.xpos,
+                            cel = scribus.createText(i.xpos,
                                              j * i.height /
                                              my_document.nb_week + i.ypos,
                                              i.width,
                                              i.height / my_document.nb_week,
                                              str(i.anname) + str(j))
                             # print the number of week near year
-                            setText("\n" + str(
+                            scribus.setText("\n" + str(
                                 datetime.date(self.year_var, week[0].month,
                                               week[0].day).isocalendar()[1]),
                                     cel)
-                            setStyle(self.p_style_num_week, cel)
-                            selectText(0, 0, cel)
-                            setFont(i.font, cel)
-                            setFontSize(i.font_size, cel)
-                            setTextColor(i.color, cel)
+                            scribus.setStyle(self.p_style_num_week, cel)
+                            scribus.selectText(0, 0, cel)
+                            scribus.setFont(i.font, cel)
+                            scribus.setFontSize(i.font_size, cel)
+                            scribus.setTextColor(i.color, cel)
                             if i.line_color != 'None':
-                                setLineColor(i.line_color, cel)
+                                scribus.setLineColor(i.line_color, cel)
                     elif i.anname[0:4] == "line":
-                        cel = createLine(i.xpos, i.ypos,
+                        cel = scribus.createLine(i.xpos, i.ypos,
                                          i.xpos + i.width,
                                          i.ypos + i.height,
                                          str(i.anname) + str(run))
                         if i.line_color != 'None':
-                            setLineColor(i.line_color, cel)
+                            scribus.setLineColor(i.line_color, cel)
                     else:
                         pass
                 else:
-                    createImage(i.xpos, i.ypos, i.width, i.height,
+                    scribus.createImage(i.xpos, i.ypos, i.width, i.height,
                                 str(i.anname))
                     if i.path_img != "":
                         print i.path_img
-                        loadImage(i.path_img, str(i.anname))
-                        setScaleImageToFrame(i.fit_to_box, i.keep_proportion,
+                        scribus.loadImage(i.path_img, str(i.anname))
+                        scribus.setScaleImageToFrame(i.fit_to_box, i.keep_proportion,
                                              str(i.anname))
                 run += 1
             try:
-                progressSet(run)
+                scribus.progressSet(run)
             except:
                 pass
         # delete first empty page
-        deletePage(1)
+        scribus.deletePage(1)
 
     def select_all_month(self):
         """ Callback to select all month in page 2 of Wizard """
@@ -2021,7 +2018,7 @@ class TkCalendar(Tk.Frame):
         if scribus.scribus_version[0:3] >= 1.5:
             self.frame3_combobox_line_color['values'] = color_for_line_custom
         else:
-            self.frame3_combobox_line_color['values'] = color_for_line
+            self.frame3_combobox_line_color['values'] = scribus.getColorNames()
         self.frame3_combobox_line_color.current(0)
         self.frame3_combobox_line_color.bind("<<ComboboxSelected>>",
                                              self.on_outline_color_select)
@@ -2157,17 +2154,17 @@ def main():
     """ Application/Dialog loop with Scribus sauce around """
     print('Running script...')
     try:
-        progressReset()
+        scribus.progressReset()
         root = Tk.Tk()
         root.resizable(width=False, height=False)
         root.title("Calendar Wizard 2")
         TkCalendar(root).pack(side="top", fill="both", expand=True)
         root.mainloop()
     finally:
-        if haveDoc() > 0:
-            redrawAll()
-        statusMessage('Done.')
-        progressReset()
+        if scribus.haveDoc() > 0:
+            scribus.redrawAll()
+        scribus.statusMessage('Done.')
+        scribus.progressReset()
 
 if __name__ == '__main__':
     main()
