@@ -1649,20 +1649,20 @@ class TkCalendar(Tk.Frame):
                                                   ('all files', '.*')])
             # In case of error or cancel
             if len(filename) <= 0:
-                filename = "img/croix.png"
+                pass
             else:
                 self.path_image = filename
 
-            self.photo_frame3 = PhotoImage(file=filename)
-            # resize img
-            while self.photo_frame3.width() > 400 \
-                    and self.photo_frame3.width() > 300:
-                self.photo_frame3 = self.photo_frame3.subsample(8)
+                self.photo_frame3 = PhotoImage(file=filename)
+                # resize img
+                while self.photo_frame3.width() > 400 \
+                        and self.photo_frame3.width() > 300:
+                    self.photo_frame3 = self.photo_frame3.subsample(8)
 
-            self.preview_canvas_frame3.itemconfigure(self.photo_img_frame3,
+                self.preview_canvas_frame3.itemconfigure(self.photo_img_frame3,
                                                      image=self.photo_frame3,
                                                      anchor=NW)
-            self.preview_canvas_frame3.image = self.photo_frame3
+                self.preview_canvas_frame3.image = self.photo_frame3
         except Exception as e:
             show_error(
                 "An error has encountered while opening image. \n" + str(e))
@@ -1953,12 +1953,14 @@ class TkCalendar(Tk.Frame):
         Checkbutton(self.frame3_frame_img_button,
                     variable=self.check_option_keep_proportion,
                     command=self.get_keep_proportion).pack(padx=30)
-        self.photo_frame3 = PhotoImage(file="./img/croix.png")
         self.preview_canvas_frame3 = Canvas(self.frame3_frame_img_preview,
                                             width=200, height=150)
-        self.photo_img_frame3 = self.preview_canvas_frame3.create_image(
+        try:
+            self.photo_img_frame3 = self.preview_canvas_frame3.create_image(
             0, 0, anchor=NW, image=self.photo_frame3)
-        self.preview_canvas_frame3.pack(pady=50)
+            self.preview_canvas_frame3.pack(pady=50)
+        except:
+            pass
 
         Label(self.frame3_frame_font_title_preview, text="Preview").pack(
             padx=20, pady=20)
