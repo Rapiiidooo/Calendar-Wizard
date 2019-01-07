@@ -1,6 +1,8 @@
-# Calendar Wizard 2
+# Calendar Wizard 2 For SCRIBUS
 
-This script is not hard to use. You have got some initial model, and you can perform your own model.
+This script is used for Scribus Software. 
+
+You have got some initial model, and you can perform your own model.
 
 ## Getting Started
 
